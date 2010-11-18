@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="FortranProject" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="default">
+				<Option output="FortranProject" prefix_auto="0" extension_auto="1" />
+				<Option type="3" />
+				<Option compiler="gcc" />
+				<Option host_application="codeblocks" />
+				<Compiler>
+					<Add option="`wx-config --cflags`" />
+					<Add directory="../../CBtrunk/cbsvn2010-11-10/trunk/src/include" />
+					<Add directory="../../CBtrunk/cbsvn2010-11-10/trunk/src/sdk/wxscintilla/include" />
+				</Compiler>
+				<Linker>
+					<Add option="`wx-config --libs`" />
+					<Add library="libcodeblocks.a" />
+					<Add directory="../../CBtrunk/trunk/src/devel" />
+				</Linker>
+				<ExtraCommands>
+					<Add after="zip -j9 FortranProject.zip manifest.xml resources/workspacebrowserf.xrc resources/settings.xrc resources/fortranprojecttoolbar.xrc" />
+					<Add after="zip -r9  FortranProject.zip images" />
+					<Add after="zip -j9 FortranProject.cbplugin FortranProject.so FortranProject.zip" />
+				</ExtraCommands>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-Wall" />
+			<Add option="-g" />
+			<Add option="-Ulinux" />
+			<Add option="-Uunix" />
+			<Add option="-Winvalid-pch" />
+			<Add option="-fexceptions" />
+			<Add option="-fPIC" />
+			<Add option="-DCB_PRECOMP" />
+			<Add option="-DcbDEBUG" />
+		</Compiler>
+		<Unit filename="ccsmartfilter.cpp" />
+		<Unit filename="ccsmartfilter.h" />
+		<Unit filename="finfowindow.cpp" />
+		<Unit filename="finfowindow.h" />
+		<Unit filename="fortranproject.cpp" />
+		<Unit filename="fortranproject.h" />
+		<Unit filename="fpoptionsdlg.cpp" />
+		<Unit filename="fpoptionsdlg.h" />
+		<Unit filename="jumptracker.cpp" />
+		<Unit filename="jumptracker.h" />
+		<Unit filename="keywordsparserf.cpp" />
+		<Unit filename="keywordsparserf.h" />
+		<Unit filename="manifest.xml" />
+		<Unit filename="nativeparserf.cpp" />
+		<Unit filename="nativeparserf.h" />
+		<Unit filename="parserf.cpp" />
+		<Unit filename="parserf.h" />
+		<Unit filename="parserthreadf.cpp" />
+		<Unit filename="parserthreadf.h" />
+		<Unit filename="projectdependencies.cpp" />
+		<Unit filename="projectdependencies.h" />
+		<Unit filename="resources/fortranprojecttoolbar.xrc" />
+		<Unit filename="resources/settings.xrc" />
+		<Unit filename="resources/workspacebrowserf.xrc" />
+		<Unit filename="tokenf.cpp" />
+		<Unit filename="tokenf.h" />
+		<Unit filename="tokenizerf.cpp" />
+		<Unit filename="tokenizerf.h" />
+		<Unit filename="workspacebrowserbuilder.cpp" />
+		<Unit filename="workspacebrowserbuilder.h" />
+		<Unit filename="workspacebrowserf.cpp" />
+		<Unit filename="workspacebrowserf.h" />
+		<Extensions>
+			<code_completion />
+			<debugger />
+			<envvars />
+			<wxsmith version="1">
+				<gui name="wxWidgets" src="" main="" init_handlers="necessary" language="CPP" />
+			</wxsmith>
+			<DoxyBlocks>
+				<comment_style block="0" line="0" />
+				<doxyfile_project />
+				<doxyfile_build />
+				<doxyfile_warnings />
+				<doxyfile_output />
+				<doxyfile_dot />
+				<general />
+			</DoxyBlocks>
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>

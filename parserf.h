@@ -30,6 +30,7 @@ class ParserF
         bool BatchParse(const wxArrayString& filenames, ArrayOfFortranSourceForm& fileForms);
         bool RemoveFile(const wxString& filename);
         TokensArrayF* GetTokens(){return m_pTokens;};
+        bool FindTypeBoundProcedures(const TokenFlat& interToken, const wxArrayString& searchArr, TokensArrayFlat& resTokenArr);
         bool FindMatchTokenInSameModule(const TokenFlat& procedureToken, const wxString& search, TokensArrayFlat& result, int tokenKindMask, int noChildrenOf);
         size_t FindMatchTokensDeclared(const wxString& search, TokensArrayFlat& result, int tokenKindMask, bool partialMatch=false, int noChildrenOf=0);
         void FindMatchChildrenDeclared(TokensArrayF &m_Children, wxString search, TokensArrayFlat& result, int tokenKindMask, bool partialMatch=false, int noChildrenOf=0);
@@ -42,6 +43,7 @@ class ParserF
         void FindMatchVariablesInModules(const wxString& search, TokensArrayFlat& result, bool partialMatch);
         bool FindMatchTypeComponents(cbEditor* ed, const wxString& line, TokensArrayFlat& result, bool partialMatch, bool& isAfterPercent, bool getAsProcedure=false);
         void FindMatchTokensForToolTip(const wxString& nameUnder, int posEndOfWord, cbEditor* ed, TokensArrayFlat& result, bool& isAfterPercent);
+        void FindGenericTypeBoudComponents(TokenFlat* token, TokensArrayFlat& result);
         void FindMatchTokensForJump(cbEditor* ed, TokensArrayFlat& result);
         bool FindMatchTokensForCodeCompletion(bool useSmartCC, const wxString& nameUnderCursor, cbEditor* ed, TokensArrayFlat& result, bool& isAfterPercent, int& tokKind);
         bool FindWordsBefore(cbEditor* ed, int numberOfWords, wxString &curLine, wxArrayString &firstWords);
@@ -50,11 +52,13 @@ class ParserF
         bool FindTokenRange(TokenFlat& token, wxString& txtRange, wxString& buff, std::vector<int> &lineStarts, bool withDefinition=false, bool readFile=true);
         bool FindTokenRange(TokenFlat& token, wxString& txtRange);
         bool FindInfoLog(TokenFlat& token, bool logComAbove, bool logComBelow, bool logDeclar, bool logComVariab, wxString& msg);
-        bool FindInfoLog(TokenFlat& token, bool logComAbove, bool logComBelow, bool logDeclar, bool logComVariab, wxString& msg, wxString& buff, bool readFile);
+        bool FindInfoLog(TokenFlat& token, bool logComAbove, bool logComBelow, bool logDeclar, bool logComVariab, wxString& msg, bool readFile);
         bool FindInfoLog(TokenFlat& token, bool logComAbove, bool logComBelow, bool logDeclar, bool logComVariab, wxString& msg, wxString& argsNew);
-        bool FindInfoLog(TokenFlat& token, bool logComAbove, bool logComBelow, bool logDeclar, bool logComVariab, wxString& msg, const wxString& argsNew, wxString& buff, bool readFile);
+        bool FindInfoLog(TokenFlat& token, bool logComAbove, bool logComBelow, bool logDeclar, bool logComVariab, wxString& msg, const wxString& argsNew, bool readFile);
         bool FindTooltipForTypeBoundProc(wxString& msg, TokenFlat* token1, TokenFlat* token2);
-        bool FindInfoLogForTypeBoundProc(TokensArrayFlat& tokenPair, bool logComAbove, bool logComBelow, bool logDeclar, bool logComVariab, wxString& msg);
+        bool FindInfoLogForTypeBoundProc(TokensArrayFlat& tokenPair, bool logComAbove, bool logComBelow, bool logDeclar, bool logComVariab, wxString& msg,
+                                         wxString* buff=NULL, std::vector<int>* lineStarts=NULL);
+        bool FindInfoLogForGenericTBProc(TokensArrayFlat& tokens, bool logComAbove, bool logComBelow, bool logDeclar, bool logComVariab, wxString& msg);
         bool GetTokenStr(TokenFlat& token, wxString& msg);
         void FindChildrenOfInterface(TokenFlat* token, TokensArrayFlat& result);
         void GetPossitionOfDummyArgument(const wxString& args, const wxString& arg, int& start, int& end);
@@ -77,6 +81,9 @@ class ParserF
         bool m_ExtDone;
         StringSet m_FortranExtFree;
         StringSet m_FortranExtFixed;
+
+        wxString m_Buff;
+        std::vector<int> m_LineStarts;
 };
 
 #endif // PARSERF_H

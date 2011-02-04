@@ -88,11 +88,16 @@ int idGotoDeclaration = wxNewId();
 int idCodeCompleteTimer = wxNewId();
 int idMenuCodeComplete = wxNewId();
 int idMenuShowCallTip = wxNewId();
+int idMenuGotoDeclaration = wxNewId();
+int idViewSymbolsBrowser = wxNewId();
 
 BEGIN_EVENT_TABLE(FortranProject, cbCodeCompletionPlugin)
+    EVT_UPDATE_UI(idViewSymbolsBrowser, FortranProject::OnUpdateUI)
+    EVT_MENU(idMenuGotoDeclaration, FortranProject::OnGotoDeclaration)
     EVT_MENU(idMenuCodeComplete, FortranProject::OnCodeComplete)
     EVT_MENU(idMenuShowCallTip, FortranProject::OnShowCallTip)
     EVT_MENU(idGotoDeclaration, FortranProject::OnGotoDeclaration)
+    EVT_MENU(idViewSymbolsBrowser, FortranProject::OnViewWorkspaceBrowser)
     EVT_TIMER(idCodeCompleteTimer, FortranProject::OnCodeCompleteTimer)
     EVT_TOOL(XRCID("idFortProjBack"), FortranProject::OnJumpBack)
     EVT_TOOL(XRCID("idFortProjHome"), FortranProject::OnJumpHome)
@@ -172,6 +177,14 @@ void FortranProject::OnRelease(bool appShutDown)
         {
             m_EditMenu->Delete(m_EditMenuSeparator);
         }
+        if (m_SearchMenu)
+        {
+            m_SearchMenu->Delete(idMenuGotoDeclaration);
+        }
+        if (m_ViewMenu)
+        {
+            m_ViewMenu->Delete(idViewSymbolsBrowser);
+        }
     }
 
     // unregister hook
@@ -190,6 +203,19 @@ void FortranProject::OnRelease(bool appShutDown)
 
     RemoveLogWindow(appShutDown);
 } // end of OnRelease
+
+
+void FortranProject::OnUpdateUI(wxUpdateUIEvent& event)
+{
+    if (m_ViewMenu)
+    {
+        bool isVis = IsWindowReallyShown((wxWindow*)m_pNativeParser->GetWorkspaceBrowser());
+        m_ViewMenu->Check(idViewSymbolsBrowser, isVis);
+    }
+
+    event.Skip();
+}
+
 
 void FortranProject::OnAppDoneStartup(CodeBlocksEvent& event)
 {
@@ -243,10 +269,10 @@ void FortranProject::OnProjectClosed(CodeBlocksEvent& event)
 {
     // After this, the Class Browser needs to be updated. It will happen
     // when we receive the next EVT_PROJECT_ACTIVATED event.
-    if (IsAttached() && m_InitDone)
-    {
-        m_pNativeParser->RemoveFromParser(event.GetProject());
-    }
+//    if (IsAttached() && m_InitDone)
+//    {
+//        m_pNativeParser->RemoveFromParser(event.GetProject());
+//    }
     event.Skip();
 }
 
@@ -342,6 +368,41 @@ void FortranProject::BuildMenu(wxMenuBar* menuBar)
     }
     else
         Manager::Get()->GetLogManager()->DebugLog(_T("FortranProject: Could not find Edit menu!"));
+
+    pos = menuBar->FindMenu(_("Sea&rch"));
+    if (pos != wxNOT_FOUND)
+    {
+        m_SearchMenu = menuBar->GetMenu(pos);
+        m_SearchMenu->Append(idMenuGotoDeclaration, _("Jump to declaration\tCtrl-."));
+    }
+    else
+        Manager::Get()->GetLogManager()->DebugLog(_T("FortranProject: Could not find Search menu!"));
+
+    // add the fsymbolsbrowser window in the "View" menu
+    int idx = menuBar->FindMenu(_("&View"));
+    if (idx != wxNOT_FOUND)
+    {
+        m_ViewMenu = menuBar->GetMenu(idx);
+        wxMenuItemList& items = m_ViewMenu->GetMenuItems();
+        bool inserted = false;
+
+        // find the first separator and insert before it
+        for (size_t i = 0; i < items.GetCount(); ++i)
+        {
+            if (items[i]->IsSeparator())
+            {
+                m_ViewMenu->InsertCheckItem(i, idViewSymbolsBrowser, _("FSymbols browser"), _("Toggle displaying the fortran symbols browser"));
+                inserted = true;
+                break;
+            }
+        }
+
+        // not found, just append
+        if (!inserted)
+            m_ViewMenu->AppendCheckItem(idViewSymbolsBrowser, _("FSymbols browser"), _("Toggle displaying the fortran symbols browser"));
+    }
+    else
+        Manager::Get()->GetLogManager()->DebugLog(_T("FortranProject: Could not find View menu!"));
 }
 
 
@@ -526,19 +587,19 @@ void FortranProject::EditorEventHook(cbEditor* editor, wxScintillaEvent& event)
         return;
     }
     // No code completion if CodeCompletion plugin is active
-    cbPlugin* ccplug = Manager::Get()->GetPluginManager()->FindPluginByName(_T("CodeCompletion"));
-    if (ccplug)
-    {
-        if (ccplug->IsAttached())
-        {
-            ConfigManager* cfg = Manager::Get()->GetConfigManager(_T("code_completion"));
-            if (cfg->ReadBool(_T("/use_code_completion"), true))
-            {
-                event.Skip();
-                return;
-            }
-        }
-    }
+//    cbPlugin* ccplug = Manager::Get()->GetPluginManager()->FindPluginByName(_T("CodeCompletion"));
+//    if (ccplug)
+//    {
+//        if (ccplug->IsAttached())
+//        {
+//            ConfigManager* cfg = Manager::Get()->GetConfigManager(_T("code_completion"));
+//            if (cfg->ReadBool(_T("/use_code_completion"), true))
+//            {
+//                event.Skip();
+//                return;
+//            }
+//        }
+//    }
     if (!m_pNativeParser->IsFileFortran(editor->GetShortName()))
     {
         event.Skip();
@@ -654,6 +715,21 @@ void FortranProject::EditorEventHook(cbEditor* editor, wxScintillaEvent& event)
     }
     // allow others to handle this event
     event.Skip();
+}
+
+
+void FortranProject::OnViewWorkspaceBrowser(wxCommandEvent& event)
+{
+    ConfigManager* cfg = Manager::Get()->GetConfigManager(_T("fortran_project"));
+    if (!cfg->ReadBool(_T("/use_symbols_browser"), true))
+    {
+        cbMessageBox(_("The Fortran symbols browser is disabled in FortranProject options.\n"
+                        "Please enable it there first..."), _("Information"), wxICON_INFORMATION);
+        return;
+    }
+    CodeBlocksDockEvent evt(event.IsChecked() ? cbEVT_SHOW_DOCK_WINDOW : cbEVT_HIDE_DOCK_WINDOW);
+    evt.pWindow = (wxWindow*)m_pNativeParser->GetWorkspaceBrowser();
+    Manager::Get()->ProcessEvent(evt);
 }
 
 
@@ -967,7 +1043,10 @@ void FortranProject::ShowCallTip()
     m_pNativeParser->CollectInformationForCallTip(commas, commasPos, lastName, isempt, isAfterPercent, result);
     if (isAfterPercent)
     {
-        m_pNativeParser->GetCallTipsForTypeBoundProc(result, callTipsOneLine);
+        if (result->GetCount() > 0 && result->Item(0)->m_TokenKind == tkProcedure)
+            m_pNativeParser->GetCallTipsForTypeBoundProc(result, callTipsOneLine);
+        else if (result->GetCount() > 0 && result->Item(0)->m_TokenKind == tkInterface)
+            m_pNativeParser->GetCallTipsForGenericTypeBoundProc(result, callTipsOneLine);
     }
     else if (!lastName.IsEmpty())
     {
@@ -1012,7 +1091,7 @@ void FortranProject::ShowCallTip()
         }
     }
     // only highlight current argument if only one calltip (scintilla doesn't support multiple highlighting ranges in calltips)
-    if (count == 1 && (!isAfterPercent || (isAfterPercent && result->GetCount() >= 2)))
+    if (count == 1 && (!isAfterPercent || ( isAfterPercent && result->GetCount() >= 2 && (result->Item(0)->m_TokenKind == tkProcedure) )))
     {
         m_pNativeParser->GetCallTipHighlight(definition, commasPos, start, end);
         if (isAfterPercent)
@@ -1150,6 +1229,21 @@ void FortranProject::OnValueTooltip(CodeBlocksEvent& event)
             pParser->FindTooltipForTypeBoundProc(msg, token, token2);
             type_bound = true;
         }
+        else if (isAfterPercent && token->m_TokenKind == tkInterface)
+        {
+            while (i < result->GetCount())
+            {
+                token = result->Item(i);
+                if (token->m_TokenKind == tkInterface)
+                {
+                    wxString specNames = token->m_PartLast;
+                    specNames.Replace(_T(" "),_T(", "));
+                    msg << _T("generic :: ") << token->m_DisplayName << _T(" => ") << specNames << _T("\n");
+                }
+                i++;
+            }
+            type_bound = true;
+        }
         else
         {
             msg << token->GetTokenKindString() << _T(" ") << token->m_DisplayName << token->m_Args << _T("\n");
@@ -1185,9 +1279,10 @@ void FortranProject::ShowInfoLog(TokensArrayFlat* result, bool isAfterPercent)
 {
     if (!m_LogUseWindow)
         return;
+    if (result->GetCount() == 0)
+        return;
 
     wxString logMsg;
-    wxString fileStr;
     wxString fileNameOld;
 
     if (!isAfterPercent)
@@ -1210,7 +1305,7 @@ void FortranProject::ShowInfoLog(TokensArrayFlat* result, bool isAfterPercent)
 
             if (token->m_TokenKind == tkSubroutine || token->m_TokenKind == tkFunction)
             {
-                if (m_pNativeParser->GetParser()->FindInfoLog(*token,m_LogComAbove,m_LogComBelow,m_LogDeclar,m_LogComVariab,logMsg1,fileStr,readFile))
+                if (m_pNativeParser->GetParser()->FindInfoLog(*token,m_LogComAbove,m_LogComBelow,m_LogDeclar,m_LogComVariab,logMsg1,readFile))
                 {
                     logMsg << logMsg1 << _T("\n\n");
                 }
@@ -1219,6 +1314,8 @@ void FortranProject::ShowInfoLog(TokensArrayFlat* result, bool isAfterPercent)
             {
                 if (m_pNativeParser->GetParser()->GetTokenStr(*token, logMsg1))
                     logMsg << logMsg1 << _T("\n\n");
+
+                fileNameOld.Empty();
             }
         }
         if (!logMsg.IsEmpty())
@@ -1230,16 +1327,18 @@ void FortranProject::ShowInfoLog(TokensArrayFlat* result, bool isAfterPercent)
             WriteToLog(logMsg);
         }
     }
-    else
+    else //isAfterPercent
     {
-        m_pNativeParser->GetParser()->FindInfoLogForTypeBoundProc(*result,m_LogComAbove,m_LogComBelow,m_LogDeclar,m_LogComVariab,logMsg);
+        if (result->Item(0)->m_TokenKind == tkProcedure)
+            m_pNativeParser->GetParser()->FindInfoLogForTypeBoundProc(*result,m_LogComAbove,m_LogComBelow,m_LogDeclar,m_LogComVariab,logMsg);
+        else if (result->Item(0)->m_TokenKind == tkInterface)
+            m_pNativeParser->GetParser()->FindInfoLogForGenericTBProc(*result,m_LogComAbove,m_LogComBelow,m_LogDeclar,m_LogComVariab,logMsg);
         if (!logMsg.IsEmpty())
         {
             WriteToLog(logMsg);
         }
     }
 }
-
 
 
 cbConfigurationPanel* FortranProject::GetConfigurationPanel(wxWindow* parent)

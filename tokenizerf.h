@@ -56,7 +56,7 @@ class Tokenizerf
 		bool SkipWhiteSpace();
 		bool SkipToChar(const wxChar& ch);
 		bool SkipToEOL();
-		bool SkipBlock(const wxChar& ch, bool toLineEnd = false);
+		bool SkipBlock(const wxChar& ch, int maxLines = 0);
 		bool SkipUnwanted(); // skips comments, assignments, preprocessor etc.
 		bool IsEOF(){ return m_TokenIndex >= m_BufferLen; }
 		bool MoveToNextChar();

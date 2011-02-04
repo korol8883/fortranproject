@@ -476,6 +476,22 @@ void ParserThreadF::ParseDeclarationsSecondPart(wxString& token)
                 i++;
             }
         }
+        if (i+1 < lineTok.GetCount() && lineTok.Item(i+1).IsSameAs(_T("=>")))
+        {
+            i += 2;
+            if (i+1 < lineTok.GetCount())
+            {
+                wxString s = lineTok.Item(i+1);
+                if (s.StartsWith(_T("(")) && s.EndsWith(_T(")")))
+                {
+                    i++;
+                }
+            }
+            if(i >= lineTok.GetCount())
+            {
+                i = lineTok.GetCount() - 1;
+            }
+        }
         wxString comStr;
         int comInd = linesArr.Item(i).Find('!');
         if (comInd != wxNOT_FOUND)
@@ -746,7 +762,8 @@ void ParserThreadF::ParseTypeBoundProcedures()
             break;
         unsigned int lineNum = m_Tokens.GetLineNumber();
         wxArrayString curLineArr = m_Tokens.GetTokensToEOL();
-        if (curLineArr.Count() > 0 && firstTokenLw.IsSameAs(_T("procedure")) &&
+        bool isGen = firstTokenLw.IsSameAs(_T("generic"));
+        if (curLineArr.Count() > 0 && (firstTokenLw.IsSameAs(_T("procedure")) || isGen) &&
             !curLineArr.Item(0).StartsWith(_T("(")) ) // not interface-name
         {
             bool pass = true;
@@ -786,23 +803,52 @@ void ParserThreadF::ParseTypeBoundProcedures()
             }
             int countArr = curLineArr.GetCount();
             int ic=startList;
-            while (ic < countArr)
+            if (!isGen)
             {
-                wxString bindName = curLineArr.Item(ic);
-                wxString procName;
-                if (ic+2 < countArr)
+                while (ic < countArr)
                 {
+                    wxString bindName = curLineArr.Item(ic);
+                    wxString procName;
+                    if (ic+2 < countArr)
+                    {
+                        if (curLineArr.Item(ic+1).IsSameAs(_T("=>")))
+                        {
+                            procName = curLineArr.Item(ic+2);
+                            ic += 2;
+                        }
+                    }
+                    ic++;
+                    TokenF* token = DoAddToken(tkProcedure, bindName.Lower(), wxEmptyString, lineNum);
+                    token->m_DisplayName = bindName;
+                    token->m_Pass = pass;
+                    token->m_Args = passArg;
+                    token->m_PartLast = procName.Lower();
+                    token->AddLineEnd(m_Tokens.GetLineNumber());
+                }
+            }
+            else //isGen
+            {
+                while (ic < countArr-2)
+                {
+                    wxString curNamLw = curLineArr.Item(ic).Lower();
+                    if (curNamLw.IsSameAs(_T("operator")) || curNamLw.IsSameAs(_T("assignment")))
+                        break;
                     if (curLineArr.Item(ic+1).IsSameAs(_T("=>")))
                     {
-                        procName = curLineArr.Item(ic+2);
+                        wxString bindName = curLineArr.Item(ic);
+                        TokenF* token = DoAddToken(tkInterface, bindName.Lower(), wxEmptyString, lineNum);
+                        token->m_DisplayName = bindName;
                         ic += 2;
+                        wxString specNames;
+                        for (;ic < countArr; ic++)
+                        {
+                            specNames << curLineArr.Item(ic) << _T(" ");
+                        }
+                        token->m_PartLast = specNames.Trim();
+                        token->AddLineEnd(m_Tokens.GetLineNumber());
                     }
+                    ic++;
                 }
-                ic++;
-                TokenF* token = DoAddToken(tkProcedure, bindName, wxEmptyString, lineNum);
-                token->m_Pass = pass;
-                token->m_Args = passArg;
-                token->m_PartLast = procName.Lower();
             }
         }
         else if ( ( firstTokenLw.IsSameAs(_T("end"))) ||

@@ -35,7 +35,6 @@
 				<Linker>
 					<Add library="codeblocks" />
 					<Add library="wxmsw28u" />
-					<Add library="wxscintilla" />
 					<Add directory="$(#cb)\devel" />
 					<Add directory="$(#wx.lib)\gcc_dll" />
 				</Linker>

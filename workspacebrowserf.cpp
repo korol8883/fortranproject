@@ -77,8 +77,8 @@ WorkspaceBrowserF::WorkspaceBrowserF(wxWindow* parent, NativeParserF* np, Parser
 {
     ConfigManager* cfg = Manager::Get()->GetConfigManager(_T("fortran_project"));
 
-    m_BrowserOptions.visibleBottomTree = cfg->ReadBool(_("/visible_bottom_tree"), true);
-    m_BrowserOptions.sortAlphabetically = cfg->ReadBool(_("/browser_sort_alphabetically"), true);
+    m_BrowserOptions.visibleBottomTree = cfg->ReadBool(_T("/visible_bottom_tree"), true);
+    m_BrowserOptions.sortAlphabetically = cfg->ReadBool(_T("/browser_sort_alphabetically"), true);
 
 	wxXmlResource::Get()->LoadPanel(this, parent, _T("pnlWBF"));
     m_Search = XRCCTRL(*this, "cmbSearch", wxComboBox);

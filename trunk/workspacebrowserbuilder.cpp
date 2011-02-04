@@ -77,6 +77,9 @@ WorkspaceBrowserBuilder::WorkspaceBrowserBuilder(ParserF* parser, wxTreeCtrl* tr
     bmp = cbLoadBitmap(prefix2 + _T("interface_subroutine.png"), wxBITMAP_TYPE_PNG);
     m_pImlist->Add(bmp);
     m_ImgNr["interface_subroutine"] = 15;
+    bmp = cbLoadBitmap(prefix2 + _T("procedure.png"), wxBITMAP_TYPE_PNG);
+    m_pImlist->Add(bmp);
+    m_ImgNr["procedure"] = 16;
     m_ImgNr["none"] = -1;
 
     m_pParser = parser;
@@ -368,7 +371,8 @@ bool WorkspaceBrowserBuilder::AddChildrenNodes(wxTreeCtrl* tree, wxTreeItemId pa
 
     TokensArrayF* pTokens = &parToken->m_Children;
 
-    int childKM = tkFunction | tkProgram | tkSubroutine | tkPreprocessor | tkInterface | tkInterfaceExplicit | tkBlockData | tkType | tkVariable;
+    int childKM = tkFunction | tkProgram | tkSubroutine | tkPreprocessor | tkInterface | tkInterfaceExplicit | tkBlockData |
+                    tkType | tkVariable | tkProcedure;
     for (size_t i=0; i< pTokens->GetCount(); ++i)
     {
         TokenF* token = pTokens->Item(i);
@@ -582,7 +586,7 @@ void WorkspaceBrowserBuilder::ExpandTopNode(wxTreeItemId node)
             case sfToken:
             {
                 TokenF* pToken = data->m_pToken;
-                AddChildrenNodes(m_pTreeTop, node, pToken, tkFunction | tkSubroutine | tkInterface | tkType | tkVariable);
+                AddChildrenNodes(m_pTreeTop, node, pToken, tkFunction | tkSubroutine | tkInterface | tkType | tkVariable | tkProcedure);
                 break;
             }
             default: break;
@@ -747,6 +751,8 @@ int WorkspaceBrowserBuilder::GetTokenKindImageIdx(TokenF* token)
         case tkInterfaceFunction: return m_ImgNr["interface_function"];
 
         case tkInterfaceSubroutine: return m_ImgNr["interface_subroutine"];
+
+        case tkProcedure: return m_ImgNr["procedure"];
 
         default: return m_ImgNr["none"];
     }

@@ -85,6 +85,11 @@ void CCSmartFilter::GetTokenKind(wxArrayString& words, int& kindFilter, bool& al
         kindFilter = tkOther;
         allowVariables = true;
     }
+    else if (woCount > 1 && wordLw.IsSameAs(')') && words.Item(woCount-1).Lower().IsSameAs(_T("if")))
+    {
+        kindFilter = tkOther;
+        allowVariables = true;
+    }
     else
     {
         kindFilter = tkOther;

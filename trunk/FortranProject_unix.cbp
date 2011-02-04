@@ -13,13 +13,13 @@
 				<Option host_application="codeblocks" />
 				<Compiler>
 					<Add option="`wx-config --cflags`" />
-					<Add directory="../../CBtrunk/cbsvn2010-11-10/trunk/src/include" />
-					<Add directory="../../CBtrunk/cbsvn2010-11-10/trunk/src/sdk/wxscintilla/include" />
+					<Add directory="$(#cb)/include" />
+					<Add directory="$(#cb)/sdk/wxscintilla/include" />
 				</Compiler>
 				<Linker>
 					<Add option="`wx-config --libs`" />
 					<Add library="libcodeblocks.a" />
-					<Add directory="../../CBtrunk/trunk/src/devel" />
+					<Add directory="$(#cb)/devel" />
 				</Linker>
 				<ExtraCommands>
 					<Add after="zip -j9 FortranProject.zip manifest.xml resources/workspacebrowserf.xrc resources/settings.xrc resources/fortranprojecttoolbar.xrc" />

@@ -45,9 +45,9 @@ NativeParserF::~NativeParserF()
 void NativeParserF::CreateWorkspaceBrowser()
 {
     ConfigManager* cfg = Manager::Get()->GetConfigManager(_T("fortran_project"));
-    m_WorkspaceBrowserIsFloating = cfg->ReadBool(_("/as_floating_window"), false);
+    m_WorkspaceBrowserIsFloating = cfg->ReadBool(_T("/as_floating_window"), false);
 
-    if (cfg->ReadBool(_("/use_symbols_browser"), true))
+    if (cfg->ReadBool(_T("/use_symbols_browser"), true))
     {
         if (!m_pWorkspaceBrowser)
         {
@@ -71,7 +71,7 @@ void NativeParserF::CreateWorkspaceBrowser()
                 evt.floatingSize.Set(200, 250);
                 evt.minimumSize.Set(150, 150);
                 evt.shown = true;
-                evt.hideable = false;
+                evt.hideable = true;
                 Manager::Get()->ProcessEvent(evt);
             }
             m_pWorkspaceBrowser->UpdateSash();
@@ -435,9 +435,25 @@ void NativeParserF::CollectInformationForCallTip(int& commasAll, int& commasUnti
             if (resultTmp->GetCount() > 0)
                 result->Add( new TokenFlat(resultTmp->Item(0)) );
         }
+        else if (token->m_TokenKind == tkInterface)
+        {
+            m_Parser.FindGenericTypeBoudComponents(token, *result);
+            for (size_t i=1; i<resultTemp->GetCount(); i++)
+            {
+                if (resultTemp->Item(i)->m_TokenKind == tkInterface)
+                {
+                    result->Add( new TokenFlat(resultTemp->Item(i)));
+                    m_Parser.FindGenericTypeBoudComponents(resultTemp->Item(i), *result);
+                }
+            }
+        }
+        else
+        {
+        }
     }
 
 }
+
 
 void NativeParserF::CountCommasInEditor(int& commasAll, int& commasUntilPos, wxString& lastName, bool& isempty, wxString& lineText)
 {
@@ -535,44 +551,70 @@ void NativeParserF::GetCallTips(const wxString& name, wxArrayString& callTips, T
     }
 }
 
+void NativeParserF::GetCallTipsForGenericTypeBoundProc(TokensArrayFlat* result, wxArrayString& callTips)
+{
+    if (result->GetCount() >= 3 && result->Item(0)->m_TokenKind == tkInterface)
+    {
+        int tokKind = tkFunction | tkSubroutine;
+        for (size_t i=1; i<result->GetCount()-1; i+=2)
+        {
+            if (result->Item(i)->m_TokenKind == tkInterface)
+                i++;
+            if (i+1 >= result->GetCount())
+                return;
+            if (result->Item(i)->m_TokenKind != tkProcedure || !(result->Item(i+1)->m_TokenKind & tokKind))
+                return;
+
+            TokensArrayFlatClass tokensTmpCl;
+            TokensArrayFlat* tokensTmp = tokensTmpCl.GetTokens();
+            tokensTmp->Add(new TokenFlat(result->Item(i)));
+            tokensTmp->Add(new TokenFlat(result->Item(i+1)));
+            GetCallTipsForTypeBoundProc(tokensTmp, callTips);
+        }
+    }
+}
+
 void NativeParserF::GetCallTipsForTypeBoundProc(TokensArrayFlat* result, wxArrayString& callTips)
 {
-    if (result->GetCount() != 2)
-        return;
-    int tokKind = tkFunction | tkSubroutine;
-    if (result->Item(0)->m_TokenKind != tkProcedure || !(result->Item(1)->m_TokenKind & tokKind))
-        return;
-
-    if (result->Item(0)->m_Pass)
+    if (result->GetCount() > 0 && result->Item(0)->m_TokenKind == tkProcedure)
     {
-        wxString pass_arg = result->Item(0)->m_Args;
-        wxString args = result->Item(1)->m_Args;
-        int start = 0;
-        int end = 0;
-        if (!pass_arg.IsEmpty())
-            m_Parser.GetPossitionOfDummyArgument(args, pass_arg, start, end);
+        if (result->GetCount() != 2)
+            return;
+        int tokKind = tkFunction | tkSubroutine;
+        if (!(result->Item(1)->m_TokenKind & tokKind))
+            return;
+
+        if (result->Item(0)->m_Pass)
+        {
+            wxString pass_arg = result->Item(0)->m_Args;
+            wxString args = result->Item(1)->m_Args;
+            int start = 0;
+            int end = 0;
+            if (!pass_arg.IsEmpty())
+                m_Parser.GetPossitionOfDummyArgument(args, pass_arg, start, end);
+            else
+                GetCallTipHighlight(args, 0, start, end);
+            if (end <= start)
+                return; // was not found?
+
+            wxString fpart = args.Mid(0,start);
+            int compos = fpart.Find(',',true);
+            if (compos != wxNOT_FOUND)
+                fpart = fpart.Mid(0,compos+1);
+
+            wxString spart = args.Mid(start);
+            compos = spart.Find(',');
+            if (compos != wxNOT_FOUND)
+                spart = spart.Mid(compos+1).Trim(false);
+            else
+                spart = args.Mid(end).Trim(false);
+
+            callTips.Add(fpart.Append(spart));
+        }
         else
-            GetCallTipHighlight(args, 0, start, end);
-        if (end <= start)
-            return; // was not found?
-
-        wxString fpart = args.Mid(0,start);
-        int compos = fpart.Find(',',true);
-        if (compos != wxNOT_FOUND)
-            fpart = fpart.Mid(0,compos+1);
-
-        wxString spart = args.Mid(start);
-        compos = spart.Find(',');
-        if (compos != wxNOT_FOUND)
-            spart = spart.Mid(compos+1).Trim(false);
-        else
-            spart = args.Mid(end).Trim(false);
-
-        callTips.Add(fpart.Append(spart));
-    }
-    else
-    {
-        callTips.Add(result->Item(1)->m_Args);
+        {
+            callTips.Add(result->Item(1)->m_Args);
+        }
     }
 }
 

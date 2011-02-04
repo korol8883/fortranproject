@@ -304,7 +304,7 @@ bool Tokenizerf::SkipToEOL()
 	return true;
 }
 
-bool Tokenizerf::SkipBlock(const wxChar& ch, bool toLineEnd)
+bool Tokenizerf::SkipBlock(const wxChar& ch, int maxLines)
 {
 	// skip blocks () [] {} <>
 	wxChar match;
@@ -318,6 +318,7 @@ bool Tokenizerf::SkipBlock(const wxChar& ch, bool toLineEnd)
 	}
 
 	MoveToNextChar();
+	int n_lines = 1;
 	int count = 1; // counter for nested blocks (xxx())
 	while (!IsEOF())
 	{
@@ -340,8 +341,12 @@ bool Tokenizerf::SkipBlock(const wxChar& ch, bool toLineEnd)
 			--count;
         else if (CurrentChar() == '&')
             SkipToEOL();
-        else if(toLineEnd && CurrentChar() == '\n')
-            count = 0;
+        else if (maxLines > 0 && CurrentChar() == '\n')
+        {
+            n_lines++;
+            if (n_lines > maxLines)
+                count = 0;
+        }
 
         MoveToNextChar();
 		if (count == 0)
@@ -396,7 +401,12 @@ bool Tokenizerf::SkipUnwanted()
 		{
 		    if (NextChar() != '>')
 		    {
+		        MoveToNextChar();
+		        if (!SkipWhiteSpace())
+                    return false;
                 // skip assignments
+                if (CurrentChar() == '[' || CurrentChar() == '(')
+                    break;
                 if (!SkipToOneOfChars(",;", true))
                     return false;
                 if (!SkipWhiteSpace())
@@ -628,31 +638,86 @@ wxString Tokenizerf::DoGetToken()
 	}
 	else if (CurrentChar() == '(')
 	{
-		// skip blocks () []
-		if (!SkipBlock(CurrentChar(), true))
-			return wxEmptyString;
-		wxString tmp = m_Buffer.Mid(start, m_TokenIndex - start);
-		// skip fortran comments
-		for (unsigned int i = 0; i < tmp.Length() - 1; ++i)
-		{
-            if (tmp.GetChar(i) == '!')
+		// skip block ()
+        wxString tmp;
+        if (m_SourceForm == fsfFree)
+        {
+            if (!SkipBlock(CurrentChar(),1))
+                return wxEmptyString;
+            tmp = m_Buffer.Mid(start, m_TokenIndex - start);
+
+            // skip fortran comments
+            for (unsigned int i = 0; i < tmp.Length() - 1; ++i)
             {
-            	// replace comment line with spaces
-            	tmp.SetChar(i,' ');
-            	for(++i; i < tmp.Length() - 1; ++i)
-            	{
-            	    if (tmp.GetChar(i) == '\n')
-            	    {
-            	        tmp.SetChar(i,' ');
-                        break;
-            	    }
-                    else
+                if (tmp.GetChar(i) == '!')
+                {
+                    // replace comment line with spaces
+                    tmp.SetChar(i,' ');
+                    for(++i; i < tmp.Length() - 1; ++i)
                     {
+                        if (tmp.GetChar(i) == '\n')
+                        {
+                            tmp.SetChar(i,' ');
+                            break;
+                        }
+                        else
+                        {
+                            tmp.SetChar(i,' ');
+                        }
+                    }
+                }
+            }
+        }
+        else
+        {
+            // fsfFixed
+            if (!SkipBlock(CurrentChar(), 20))
+                return wxEmptyString;
+            tmp = m_Buffer.Mid(start, m_TokenIndex - start);
+
+            // skip fixed-form fortran comments
+            int col = -1;
+            for (unsigned int i = 0; i < tmp.Length() - 1; ++i)
+            {
+                if (col !=  -1)
+                {
+                    col++;
+                    if (col == 6 && tmp.GetChar(i) != ' ' && tmp.GetChar(i) != '0')
+                    {
+                        //this line is continuation line
                         tmp.SetChar(i,' ');
                     }
-            	}
+                    else if (col == 6)
+                    {
+                        // something is wrong
+                        return wxEmptyString;
+                    }
+                }
+                if ( (tmp.GetChar(i) == '!') ||
+                     (col == 1 && (tmp.GetChar(i) == 'c' || tmp.GetChar(i) == 'C' || tmp.GetChar(i) == '*')) )
+                {
+                    // replace comment line with spaces
+                    tmp.SetChar(i,' ');
+                    for(++i; i < tmp.Length() - 1; ++i)
+                    {
+                        if (tmp.GetChar(i) == '\n')
+                        {
+                            col = 0;
+                            tmp.SetChar(i,' ');
+                            break;
+                        }
+                        else
+                        {
+                            tmp.SetChar(i,' ');
+                        }
+                    }
+                }
+                else if (tmp.GetChar(i) == '\n')
+                {
+                    col = 0;
+                }
             }
-		}
+        }
 		tmp.Replace(_T("\t"), _T(" ")); // replace tabs with spaces
 		tmp.Replace(_T("\n"), _T(" ")); // replace LF with spaces
 		tmp.Replace(_T("\r"), _T(" ")); // replace CR with spaces

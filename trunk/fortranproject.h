@@ -37,8 +37,10 @@ class FortranProject : public cbCodeCompletionPlugin
         virtual void OnAttach();
         virtual void OnRelease(bool appShutDown);
 
+        void OnUpdateUI(wxUpdateUIEvent& event);
         void BuildMenu(wxMenuBar* menuBar);
         virtual void BuildModuleMenu(const ModuleType type, wxMenu* menu, const FileTreeData* data = 0);
+        void OnViewWorkspaceBrowser(wxCommandEvent& event);
         virtual bool BuildToolBar(wxToolBar* toolBar);
         virtual wxArrayString GetCallTips();
         virtual int CodeComplete();
@@ -96,6 +98,8 @@ class FortranProject : public cbCodeCompletionPlugin
         cbEditor*                          m_pCodeCompletionLastEditor;
         wxMenu*                            m_EditMenu;
         wxMenuItem*                        m_EditMenuSeparator;
+        wxMenu*                            m_SearchMenu;
+        wxMenu*                            m_ViewMenu;
 
         wxToolBar*                         m_pToolbar;
 

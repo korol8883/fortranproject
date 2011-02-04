@@ -92,6 +92,55 @@ bool ParserF::Done()
     return m_Done;
 }
 
+bool ParserF::FindTypeBoundProcedures(const TokenFlat& interToken, const wxArrayString& searchArr, TokensArrayFlat& resTokenArr)
+{
+    wxCriticalSectionLocker locker(s_CritSect);
+    bool foundType = false;
+
+    for (size_t i=0; i<m_pTokens->GetCount(); i++)
+    {
+        if (m_pTokens->Item(i)->m_Filename == interToken.m_Filename)
+        {
+            // find module
+            TokenF* module;
+            TokensArrayF* fileChildren = &m_pTokens->Item(i)->m_Children;
+            for (size_t j=0; j<fileChildren->GetCount(); j++)
+            {
+                if (fileChildren->Item(j)->m_TokenKind == tkModule)
+                {
+                    module = fileChildren->Item(j);
+                    for (size_t k=0; k < module->m_Children.GetCount(); k++)
+                    {
+                        if (interToken.m_ParentName.IsSameAs(module->m_Children.Item(k)->m_Name) &&
+                             interToken.m_ParentTokenKind == module->m_Children.Item(k)->m_TokenKind)
+                        {
+                            // type was found
+                            TokenF* typeTok = module->m_Children.Item(k);
+                            for (size_t m=0; m < typeTok->m_Children.GetCount(); m++)
+                            {
+                                for (size_t l=0; l < searchArr.GetCount(); l++)
+                                {
+                                    if (typeTok->m_Children.Item(m)->m_TokenKind == tkProcedure &&
+                                        typeTok->m_Children.Item(m)->m_Name.IsSameAs(searchArr.Item(l)) )
+                                    {
+                                        resTokenArr.Add(new TokenFlat(typeTok->m_Children.Item(m)));
+                                    }
+                                }
+                            }
+                            foundType = true;
+                            break;
+                        }
+                    }
+                    if (foundType)
+                        break;
+                }
+            }
+            break;
+        }
+    }
+    return foundType;
+}
+
 bool ParserF::FindMatchTokenInSameModule(const TokenFlat& procedureToken, const wxString& search, TokensArrayFlat& result, int tokenKindMask, int noChildrenOf)
 {
     wxCriticalSectionLocker locker(s_CritSect);
@@ -111,7 +160,7 @@ bool ParserF::FindMatchTokenInSameModule(const TokenFlat& procedureToken, const 
                     module = fileChildren->Item(j);
                     for (size_t k=0; k < module->m_Children.GetCount(); k++)
                     {
-                        if (procedureToken.m_ParentName == module->m_Children.Item(k)->m_Name &&
+                        if (procedureToken.m_ParentName.IsSameAs(module->m_Children.Item(k)->m_Name) &&
                              procedureToken.m_ParentTokenKind == module->m_Children.Item(k)->m_TokenKind)
                         {
                             foundModule = true;
@@ -411,6 +460,10 @@ bool ParserF::FindMatchTypeComponents(cbEditor* ed, const wxString& lineCur, Tok
                             tokProc->m_TokenKind = resultTmp->Item(0)->m_TokenKind;
                     }
                     result.Add(tokProc);
+                }
+                else if (tokenCh->m_TokenKind == tkInterface)
+                {
+                    result.Add(new TokenFlat(tokenCh));
                 }
             }
         }
@@ -864,6 +917,18 @@ void ParserF::FindMatchTokensForToolTip(const wxString& nameUnder, int posEndOfW
             if (resultTmp->GetCount() > 0)
                 result.Add( new TokenFlat(resultTmp->Item(0)) );
         }
+        else if (token->m_TokenKind == tkInterface)
+        {
+            FindGenericTypeBoudComponents(token, result);
+            for (size_t i=1; i<resultTemp->GetCount(); i++)
+            {
+                if (resultTemp->Item(i)->m_TokenKind == tkInterface)
+                {
+                    result.Add( new TokenFlat(resultTemp->Item(i)));
+                    FindGenericTypeBoudComponents(resultTemp->Item(i), result);
+                }
+            }
+        }
     }
 
     if (!isAfterPercent)
@@ -874,6 +939,48 @@ void ParserF::FindMatchTokensForToolTip(const wxString& nameUnder, int posEndOfW
         FindMatchVariablesInModules(nameUnder, result, false);
     }
 }
+
+void ParserF::FindGenericTypeBoudComponents(TokenFlat* token, TokensArrayFlat& result)
+{
+    if (token->m_TokenKind != tkInterface)
+        return;
+
+    if (token->m_PartLast.IsEmpty())
+        return;
+
+    wxArrayString specNames;
+    wxStringTokenizer tkz(token->m_PartLast, _T(" \t\r\n"), wxTOKEN_STRTOK);
+    while ( tkz.HasMoreTokens() )
+    {
+        specNames.Add(tkz.GetNextToken().Lower());
+    }
+    TokensArrayFlatClass procTokenArrTmp;
+    TokensArrayFlat* procTokenArr = procTokenArrTmp.GetTokens();
+    if (!FindTypeBoundProcedures(token, specNames, *procTokenArr))
+        return;
+    int kindMask = tkFunction | tkSubroutine;
+    int noInChildren = tkInterface | tkFunction | tkSubroutine;
+    for (size_t i=0; i<procTokenArr->Count(); i++)
+    {
+        wxString tokName;
+        if (!procTokenArr->Item(i)->m_PartLast.IsEmpty())
+            tokName = procTokenArr->Item(i)->m_PartLast;
+        else
+            tokName = procTokenArr->Item(i)->m_Name;
+
+        TokensArrayFlatClass tokensTmp;
+        TokensArrayFlat* resultTmp = tokensTmp.GetTokens();
+        bool found = FindMatchTokenInSameModule(procTokenArr->Item(i), tokName, *resultTmp, kindMask, noInChildren);
+        if (!found)
+            FindMatchTokensDeclared(tokName, *resultTmp, kindMask, false, noInChildren);
+        if (resultTmp->GetCount() > 0)
+        {
+            result.Add( new TokenFlat(procTokenArr->Item(i)) );
+            result.Add( new TokenFlat(resultTmp->Item(0)) );
+        }
+    }
+}
+
 
 void ParserF::FindMatchTokensForJump(cbEditor* ed, TokensArrayFlat& result)
 {
@@ -933,6 +1040,30 @@ bool ParserF::FindMatchTokensForCodeCompletion(bool useSmartCC, const wxString& 
         {
             FindMatchVariablesInModules(nameUnderCursor, result, true);
             FindMatchDeclarationsInCurrentScope(nameUnderCursor, ed, result, true);
+        }
+        else if (tokKind & tkSubroutine)
+        {
+            if (firstWords.GetCount() > 0 && firstWords.Item(0).Lower().IsSameAs(_T("call")))
+            {
+                TokensArrayFlatClass tokensTmp;
+                TokensArrayFlat* resTmp = tokensTmp.GetTokens();
+
+                FindMatchVariablesInModules(nameUnderCursor, *resTmp, true);
+                FindMatchDeclarationsInCurrentScope(nameUnderCursor, ed, *resTmp, true);
+
+                for (size_t i=0; i<resTmp->Count(); i++)
+                {
+                    TokenF* tok = resTmp->Item(i);
+                    if ( tok->m_TokenKind == tkVariable )
+                    {
+                        wxString tDefLow = tok->m_TypeDefinition.Lower();
+                        if ( tDefLow.StartsWith(_T("type")) || tDefLow.StartsWith(_T("class")) )
+                        {
+                            result.Add(new TokenFlat(tok));
+                        }
+                    }
+                }
+            }
         }
     }
     return true;
@@ -1255,9 +1386,12 @@ bool ParserF::FindTokenRange(TokenFlat& token, wxString& txtRange, wxString& buf
 
     if (readFile)
     {
+        lineStarts.clear();
+        buff.Empty();
         wxFile file(token.m_Filename);
         if (!ReadFileToString(file,buff))
             return false;
+        lineStarts.push_back(0);
     }
     else
     {
@@ -1272,7 +1406,6 @@ bool ParserF::FindTokenRange(TokenFlat& token, wxString& txtRange, wxString& buf
     if (!withDefinition)
         lStart += token.m_DefinitionLength;
 
-    lineStarts.push_back(0);
 
     bool startFound = false;
     bool endFound = false;
@@ -1287,12 +1420,15 @@ bool ParserF::FindTokenRange(TokenFlat& token, wxString& txtRange, wxString& buf
         {
             pos_end = i;
             endFound = true;
+            if (!readFile)
+                break;
         }
 
         if (buff.GetChar(i) == '\n')
         {
             line++;
-            lineStarts.push_back(i+1);
+            if (readFile)
+                lineStarts.push_back(i+1);
         }
     }
     if (!startFound)
@@ -1309,33 +1445,30 @@ bool ParserF::FindTokenRange(TokenFlat& token, wxString& txtRange, wxString& buf
 bool ParserF::FindInfoLog(TokenFlat& token, bool logComAbove, bool logComBelow, bool logDeclar, bool logComVariab, wxString& msg)
 {
     wxString argsNew = wxEmptyString;
-    wxString buff = wxEmptyString;
     bool readFile = true;
-    return FindInfoLog(token, logComAbove, logComBelow, logDeclar, logComVariab, msg, argsNew, buff, readFile);
+    return FindInfoLog(token, logComAbove, logComBelow, logDeclar, logComVariab, msg, argsNew, readFile);
 }
 
 bool ParserF::FindInfoLog(TokenFlat& token, bool logComAbove, bool logComBelow, bool logDeclar, bool logComVariab, wxString& msg,
-                          wxString& buff, bool readFile)
+                          bool readFile)
 {
     wxString argsNew = wxEmptyString;
-    return FindInfoLog(token, logComAbove, logComBelow, logDeclar, logComVariab, msg, argsNew, buff, readFile);
+    return FindInfoLog(token, logComAbove, logComBelow, logDeclar, logComVariab, msg, argsNew, readFile);
 }
 
 bool ParserF::FindInfoLog(TokenFlat& token, bool logComAbove, bool logComBelow, bool logDeclar, bool logComVariab, wxString& msg,
                           wxString& argsNew)
 {
-    wxString buff = wxEmptyString;
     bool readFile = true;
-    return FindInfoLog(token, logComAbove, logComBelow, logDeclar, logComVariab, msg, argsNew, buff, readFile);
+    return FindInfoLog(token, logComAbove, logComBelow, logDeclar, logComVariab, msg, argsNew, readFile);
 }
 
 
 bool ParserF::FindInfoLog(TokenFlat& token, bool logComAbove, bool logComBelow, bool logDeclar, bool logComVariab, wxString& msg,
-                          const wxString& argsNew, wxString& buff, bool readFile)
+                          const wxString& argsNew, bool readFile)
 {
     wxString txtRange;
-    std::vector<int> lineStarts;
-    if (!FindTokenRange(token, txtRange, buff, lineStarts, false, readFile))
+    if (!FindTokenRange(token, txtRange, m_Buff, m_LineStarts, false, readFile))
         return false;
 
     FortranSourceForm fsForm;
@@ -1352,7 +1485,7 @@ bool ParserF::FindInfoLog(TokenFlat& token, bool logComAbove, bool logComBelow, 
         wxArrayString comAbove;
         for (int i=token.m_LineStart-1; i>0; i--)
         {
-            wxString str1 = buff.Mid(lineStarts[i-1], lineStarts[i]-lineStarts[i-1]).Trim(false);
+            wxString str1 = m_Buff.Mid(m_LineStarts[i-1], m_LineStarts[i]-m_LineStarts[i-1]).Trim(false);
             if (str1.StartsWith(_T("!")))
             {
                 comAbove.Add(str1);
@@ -1403,7 +1536,7 @@ bool ParserF::FindInfoLog(TokenFlat& token, bool logComAbove, bool logComBelow, 
         unsigned int lStart = token.m_LineStart + token.m_DefinitionLength;
         for (unsigned int i=lStart; i<token.m_LineEnd; i++)
         {
-            wxString str1 = buff.Mid(lineStarts[i-1], lineStarts[i]-lineStarts[i-1]).Trim(false);
+            wxString str1 = m_Buff.Mid(m_LineStarts[i-1], m_LineStarts[i]-m_LineStarts[i-1]).Trim(false);
             if (str1.StartsWith(_T("!")))
             {
                 msg << _T("    ") << str1;
@@ -1585,80 +1718,148 @@ bool ParserF::FindTooltipForTypeBoundProc(wxString& msg, TokenFlat* token1, Toke
     return true;
 }
 
-bool ParserF::FindInfoLogForTypeBoundProc(TokensArrayFlat& tokenPair, bool logComAbove, bool logComBelow, bool logDeclar, bool logComVariab, wxString& msg)
+bool ParserF::FindInfoLogForTypeBoundProc(TokensArrayFlat& tokenPair, bool logComAbove, bool logComBelow, bool logDeclar, bool logComVariab, wxString& msg,
+                                          wxString* buff, std::vector<int>* lineStarts)
 {
     if (tokenPair.GetCount() == 0)
     {
         return false;
     }
+
+    TokenFlat* token1 = tokenPair.Item(0);
+    if (token1->m_TokenKind != tkProcedure)
+        return false;
+    wxString txtRange;
+    if (!buff)
+    {
+        buff= new wxString();
+        lineStarts = new std::vector<int>;
+        if (!FindTokenRange(*token1, txtRange, *buff, *lineStarts, true))
+            return false;
+        delete buff;
+        delete lineStarts;
+    }
     else
     {
-        TokenFlat* token1 = tokenPair.Item(0);
-        if (token1->m_TokenKind != tkProcedure)
+        if (!FindTokenRange(*token1, txtRange, *buff, *lineStarts, true, false))
             return false;
-        wxString txtRange;
-        wxString buff;
-        std::vector<int> lineStarts;
-        if (!FindTokenRange(*token1, txtRange, buff, lineStarts, true))
-            return false;
-        int ic = txtRange.Find(_T("::"));
-        if (ic == wxNOT_FOUND)
+    }
+    int ic = txtRange.Find(_T("::"));
+    if (ic == wxNOT_FOUND)
+    {
+        msg << _T("procedure ") << token1->m_DisplayName;
+        if (!token1->m_Args.IsEmpty())
         {
-            msg << _T("procedure ") << token1->m_DisplayName;
-            if (!token1->m_Args.IsEmpty())
-            {
-                msg << _T("(") << token1->m_Args << _T(")");
-            }
+            msg << _T("(") << token1->m_Args << _T(")");
         }
-        else
-        {
-            msg << txtRange.Mid(0,ic+2).Trim(false) << _T(" ") << token1->m_DisplayName;
-        }
-        if (!token1->m_PartLast.IsEmpty())
-        {
-            msg << _T(" => ") << token1->m_PartLast;
-        }
-        msg << _T("\n!File: ") << token1->m_Filename.AfterLast(wxFILE_SEP_PATH) << _T(":") << token1->m_LineStart << _T("\n");
+    }
+    else
+    {
+        msg << txtRange.Mid(0,ic+2).Trim(false) << _T(" ") << token1->m_DisplayName;
+    }
+    if (!token1->m_PartLast.IsEmpty())
+    {
+        msg << _T(" => ") << token1->m_PartLast;
+    }
+    msg << _T("\n!File: ") << token1->m_Filename.AfterLast(wxFILE_SEP_PATH) << _T(":") << token1->m_LineStart << _T("\n");
 
-        if (tokenPair.GetCount() > 1)
+    if (tokenPair.GetCount() > 1)
+    {
+        TokenFlat* token = tokenPair.Item(1);
+        if (token->m_TokenKind == tkSubroutine || token->m_TokenKind == tkFunction)
         {
-            TokenFlat* token = tokenPair.Item(1);
-            if (token->m_TokenKind == tkSubroutine || token->m_TokenKind == tkFunction)
+            wxString pass_arg = token1->m_Args;
+            int start = 0;
+            int end = 0;
+            if (token1->m_Pass && !pass_arg.IsEmpty())
             {
-                wxString pass_arg = token1->m_Args;
-                int start = 0;
-                int end = 0;
-                if (token1->m_Pass && !pass_arg.IsEmpty())
+                GetPossitionOfDummyArgument(token->m_Args, pass_arg, start, end);
+            }
+            else if (token1->m_Pass)
+            {
+                GetCallTipHighlight(token->m_Args, 0, start, end);
+            }
+            if (end > start)
+            {
+                wxString argNew;
+                argNew << token->m_Args.Mid(0,start) << _T("[");
+                wxString secPart = token->m_Args.Mid(start);
+                int icom = secPart.Find(_T(","));
+                if (icom != wxNOT_FOUND)
                 {
-                    GetPossitionOfDummyArgument(token->m_Args, pass_arg, start, end);
-                }
-                else if (token1->m_Pass)
-                {
-                    GetCallTipHighlight(token->m_Args, 0, start, end);
-                }
-                if (end > start)
-                {
-                    wxString argNew;
-                    argNew << token->m_Args.Mid(0,start) << _T("[");
-                    wxString secPart = token->m_Args.Mid(start);
-                    int icom = secPart.Find(_T(","));
-                    if (icom != wxNOT_FOUND)
-                    {
-                        argNew << secPart.Mid(0,icom+1) << _T("]") << secPart.Mid(icom+1);
-                    }
-                    else
-                    {
-                        argNew << token->m_Args.Mid(start,end-start) << _T("]") << token->m_Args.Mid(end);
-                    }
-                    FindInfoLog(*token, logComAbove, logComBelow, logDeclar, logComVariab, msg, argNew);
+                    argNew << secPart.Mid(0,icom+1) << _T("]") << secPart.Mid(icom+1);
                 }
                 else
                 {
-                    FindInfoLog(*token, logComAbove, logComBelow, logDeclar, logComVariab, msg);
+                    argNew << token->m_Args.Mid(start,end-start) << _T("]") << token->m_Args.Mid(end);
                 }
+                FindInfoLog(*token, logComAbove, logComBelow, logDeclar, logComVariab, msg, argNew);
+            }
+            else
+            {
+                FindInfoLog(*token, logComAbove, logComBelow, logDeclar, logComVariab, msg);
             }
         }
     }
+    return true;
+}
+
+bool ParserF::FindInfoLogForGenericTBProc(TokensArrayFlat& tokens, bool logComAbove, bool logComBelow, bool logDeclar, bool logComVariab, wxString& msg)
+{
+    if (tokens.GetCount() == 0 || tokens.Item(0)->m_TokenKind != tkInterface)
+    {
+        return false;
+    }
+
+    wxString buff;
+    std::vector<int> lineStarts;
+    size_t iInt = 0;
+    wxString filName;
+    wxString msgProc;
+
+    while ( iInt < tokens.GetCount() )
+    {
+        TokenFlat* token = tokens.Item(iInt);
+        if (token->m_TokenKind != tkInterface)
+            break;
+        wxString tokRan;
+        if (iInt == 0 || !filName.IsSameAs(token->m_Filename))
+        {
+            if (!FindTokenRange(*token, tokRan, buff, lineStarts, true))
+                return false;
+            filName = token->m_Filename;
+        }
+        else
+        {
+            if (!FindTokenRange(*token, tokRan, buff, lineStarts, true, false))
+                return false;
+        }
+        msg.Append(_T("\n"));
+        msg.Append( tokRan.Trim().Trim(false) );
+
+        if (token->m_ParentTokenKind == tkType)
+        {
+            msg << _("\n!Type: ") << token->m_ParentDisplayName << _(". File: ");
+        }
+        msg << token->m_Filename.AfterLast(wxFILE_SEP_PATH) << _T(":") << token->m_LineStart;
+
+        size_t i = iInt + 1;
+        while ( i < tokens.GetCount()-1 )
+        {
+            if ( tokens.Item(i)->m_TokenKind == tkInterface )
+                break;
+            msgProc << _T("\n!---------------------\n");
+            TokensArrayFlatClass tokensTmpCl;
+            TokensArrayFlat* tokensTmp = tokensTmpCl.GetTokens();
+            tokensTmp->Add(new TokenFlat(tokens.Item(i)));
+            tokensTmp->Add(new TokenFlat(tokens.Item(i+1)));
+            FindInfoLogForTypeBoundProc(*tokensTmp, logComAbove, logComBelow, logDeclar, logComVariab, msgProc, &buff, &lineStarts);
+            i += 2;
+        }
+        iInt = i;
+    }
+    msg.Trim(false).Append(msgProc);
+
     return true;
 }
 

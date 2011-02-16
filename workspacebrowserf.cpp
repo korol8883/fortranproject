@@ -467,9 +467,13 @@ void WorkspaceBrowserF::BuildTree()
 
 void WorkspaceBrowserF::OnTreeItemSelected(wxTreeEvent& event)
 {
+    if (Manager::isappShuttingDown())
+        return;
+
     if (m_pBrowserBuilder)
     {
-        m_pBrowserBuilder->SelectNode(event.GetItem());
+        if (!m_pBrowserBuilder->SelectNode(event.GetItem()))
+            return;
     }
     event.Allow();
 
@@ -532,5 +536,11 @@ void WorkspaceBrowserF::RereadOptions()
         m_BrowserOptions.sortAlphabetically = cfg->ReadBool(_("/browser_sort_alphabetically"), true);
         UpdateView();
     }
+}
+
+void WorkspaceBrowserF::DeleteAllItems()
+{
+    m_TreeTop->DeleteAllItems();
+    m_TreeBottom->DeleteAllItems();
 }
 

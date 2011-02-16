@@ -32,6 +32,7 @@ class WorkspaceBrowserF : public wxPanel
         int GetTokenKindImageIdx(TokenF* token);
         void MarkSymbol(wxString filename, int line);
         void RereadOptions();
+        void DeleteAllItems();
 
     private:
         friend class myTextCtrl;

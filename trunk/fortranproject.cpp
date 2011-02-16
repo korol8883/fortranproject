@@ -133,6 +133,8 @@ void FortranProject::OnAttach()
 {
     m_EditMenu = 0;
     m_EditMenuSeparator = 0;
+    m_SearchMenu = 0;
+    m_ViewMenu = 0;
 
     m_pNativeParser = new NativeParserF(this);
     m_pNativeParser->CreateWorkspaceBrowser();
@@ -169,6 +171,24 @@ void FortranProject::OnAttach()
 
 void FortranProject::OnRelease(bool appShutDown)
 {
+    // unregister hook
+    // 'true' will delete the functor too
+    EditorHooks::UnregisterHook(m_EditorHookId, true);
+
+    // remove registered event sinks
+    Manager::Get()->RemoveAllEventSinksFor(this);
+
+    if (m_pNativeParser)
+    {
+        delete m_pNativeParser;
+    }
+    if (m_pKeywordsParser)
+    {
+        delete m_pKeywordsParser;
+    }
+
+    RemoveLogWindow(appShutDown);
+
     if (m_EditMenu)
     {
         m_EditMenu->Delete(idMenuCodeComplete);
@@ -186,22 +206,6 @@ void FortranProject::OnRelease(bool appShutDown)
             m_ViewMenu->Delete(idViewSymbolsBrowser);
         }
     }
-
-    // unregister hook
-    // 'true' will delete the functor too
-    EditorHooks::UnregisterHook(m_EditorHookId, true);
-
-    if (m_pNativeParser)
-    {
-        delete m_pNativeParser;
-    }
-
-    if (m_pKeywordsParser)
-    {
-        delete m_pKeywordsParser;
-    }
-
-    RemoveLogWindow(appShutDown);
 } // end of OnRelease
 
 
@@ -241,7 +245,7 @@ void FortranProject::OnWorkspaceChanged(CodeBlocksEvent& event)
     // the workspace has been changed, and it's not sent if the application is
     // shutting down. So it's the ideal time to parse files and update your
     // widgets.
-    if (IsAttached() && m_InitDone)
+    if (IsAttached() && m_InitDone && !Manager::IsAppShuttingDown())
     {
         m_InitDone = false;
         // Parse the projects

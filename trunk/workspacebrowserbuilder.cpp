@@ -437,11 +437,11 @@ int WorkspaceBrowserBuilder::AddInterfaceNode(wxTreeCtrl* tree, wxTreeItemId par
     return count;
 }
 
-void WorkspaceBrowserBuilder::SelectNode(wxTreeItemId node)
+bool WorkspaceBrowserBuilder::SelectNode(wxTreeItemId node)
 {
     // m_pTreeTop node was selected
     if (Manager::IsAppShuttingDown() || (!(node.IsOk())) || m_AtWork)
-        return;
+        return false;
 
     m_pTreeBottom->Freeze();
     wxTreeItemId root = m_pTreeBottom->GetRootItem();
@@ -483,6 +483,7 @@ void WorkspaceBrowserBuilder::SelectNode(wxTreeItemId node)
         }
     }
     m_pTreeBottom->Thaw();
+    return true;
 }
 
 wxTreeItemId WorkspaceBrowserBuilder::AddNodeIfNotThere(wxTreeCtrl* tree, wxTreeItemId parent, const wxString& name, int imgIndex, TreeDataF* data, bool sorted)
@@ -765,7 +766,7 @@ wxImageList* WorkspaceBrowserBuilder::GetImageList()
 
 void WorkspaceBrowserBuilder::MarkSymbol(const wxString& filename, int line)
 {
-    if (Manager::IsAppShuttingDown())
+    if (Manager::IsAppShuttingDown() || m_AtWork)
         return;
 
     bool found = false;

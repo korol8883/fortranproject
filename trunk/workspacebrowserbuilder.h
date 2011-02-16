@@ -62,7 +62,7 @@ class WorkspaceBrowserBuilder
         void ExpandTopNode(wxTreeItemId node);
         void CollapsTopNode(wxTreeItemId node);
         void SelectItem(TokenF* item);
-        void SelectNode(wxTreeItemId node);
+        bool SelectNode(wxTreeItemId node);
         void DeleteTopRootChildren();
         wxImageList* GetImageList();
 		int GetTokenKindImageIdx(TokenF* token);

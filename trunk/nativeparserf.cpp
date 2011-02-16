@@ -207,7 +207,7 @@ void NativeParserF::ReparseFile(const wxString& filename)
 
 void NativeParserF::ReparseProject(cbProject* project)
 {
-    if (project)
+    if (project && !Manager::IsAppShuttingDown())
     {
         for (int i = 0; i < project->GetFilesCount(); ++i)
         {
@@ -218,6 +218,10 @@ void NativeParserF::ReparseProject(cbProject* project)
 
 void NativeParserF::ForceReparseWorkspace()
 {
+    if (Manager::IsAppShuttingDown())
+        return;
+
+    m_pWorkspaceBrowser->DeleteAllItems();
     m_Parser.Clear();
 
     ProjectsArray* projects = Manager::Get()->GetProjectManager()->GetProjects();

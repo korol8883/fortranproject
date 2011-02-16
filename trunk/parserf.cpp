@@ -638,28 +638,14 @@ void ParserF::FindMatchDeclarationsInCurrentScope(const wxString& search, cbEdit
     thread.ParseDeclarations();
 
     //Add results
-    if(partialMatch)
-    {
         for (size_t i=0; i<parsResult->GetCount(); i++)
         {
-            if (parsResult->Item(i)->m_Name.StartsWith(searchLw))
+        if ((partialMatch && parsResult->Item(i)->m_Name.StartsWith(searchLw)) ||
+            (!partialMatch && parsResult->Item(i)->m_Name.IsSameAs(searchLw)))
             {
                 parsResult->Item(i)->m_Filename = filename;
-                parsResult->Item(i)->m_LineStart += lineStart;
+            parsResult->Item(i)->m_LineStart += lineStart - 1;
                 result.Add(new TokenFlat(parsResult->Item(i)));
-            }
-        }
-    }
-    else
-    {
-        for (size_t i=0; i<parsResult->GetCount(); i++)
-        {
-            if (parsResult->Item(i)->m_Name.IsSameAs(searchLw))
-            {
-                parsResult->Item(i)->m_Filename = filename;
-                parsResult->Item(i)->m_LineStart += lineStart;
-                result.Add(new TokenFlat(parsResult->Item(i)));
-            }
         }
     }
     return;

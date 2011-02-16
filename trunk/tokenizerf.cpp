@@ -120,6 +120,7 @@ bool Tokenizerf::InitFromBuffer(const wxString& buffer, FortranSourceForm source
 	m_IsOK = true;
 	m_Filename.Clear();
 	m_SourceForm = sourceForm;
+	AdjustLineNumber();
 	return true;
 }
 

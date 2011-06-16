@@ -261,6 +261,7 @@ void NativeParserF::OnEditorActivated(EditorBase* editor)
 
 void NativeParserF::UpdateWorkspaceFilesDependency()
 {
+    ClearWSDependency();
     ProjectsArray* projects = Manager::Get()->GetProjectManager()->GetProjects();
 
     for (size_t i = 0; i < projects->GetCount(); ++i)
@@ -305,8 +306,8 @@ void NativeParserF::UpdateProjectFilesDependency(cbProject* project)
         }
         if (pos->second->HasInfiniteDependences())
         {
-            Manager::Get()->GetLogManager()->Log( _T("Warning. FortranProject plugin:\n     'It seems you have infinite reference loop in Fortran files. Check your USE or INCLUDE statements.'") );
-            cbMessageBox(_("It seems you have an infinite reference loop in Fortran files. Check your USE or INCLUDE statements."), _("Warning"));
+            Manager::Get()->GetLogManager()->Log( _T("Warning. FortranProject plugin:\n     'It seems you have a circular dependency in Fortran files. Check your USE or INCLUDE statements.'") );
+            cbMessageBox(_("It seems you have a circular dependency in Fortran files. Check your USE or INCLUDE statements."), _("Warning"));
         }
     }
 }
@@ -354,7 +355,7 @@ int NativeParserF::GetTokenKindImageIdx(TokenF* token)
 }
 
 // count commas in lineText (nesting parentheses)
-int NativeParserF::CountCommas(const wxString& lineText, int start)
+int NativeParserF::CountCommas(const wxString& lineText, int start, bool nesting)
 {
     int commas = 0;
     int nest = 0;
@@ -364,9 +365,9 @@ int NativeParserF::CountCommas(const wxString& lineText, int start)
         start++;
         if (c == '\0')
             break;
-        else if (c == '(')
+        else if (nesting && (c == '(' || c == '['))
             ++nest;
-        else if (c == ')')
+        else if (nesting && (c == ')' || c == ']'))
             --nest;
         else if (c == ',' && nest == 0)
             ++commas;
@@ -415,7 +416,7 @@ void NativeParserF::CollectInformationForCallTip(int& commasAll, int& commasUnti
         return;
     TokensArrayFlatClass tokensTemp;
     TokensArrayFlat* resultTemp = tokensTemp.GetTokens();
-    if (!m_Parser.FindMatchTypeComponents(ed, lineText, *resultTemp, false, isAfterPercent, true))
+    if (!m_Parser.FindMatchTypeComponents(ed, lineText, *resultTemp, false, false, isAfterPercent, true))
         return;
     if (resultTemp->GetCount() > 0)
     {
@@ -482,25 +483,69 @@ void NativeParserF::CountCommasInEditor(int& commasAll, int& commasUntilPos, wxS
     if (int(lineText.Len()) < end)
         return; // we are in comments
     //joun lines before if we are in continuation line
-    int line2 = line - 1;
-    while (line2 > 0)
+    FortranSourceForm fsForm;
+    IsFileFortran(ed->GetShortName(), fsForm);
+
+    if (fsForm == fsfFree)
     {
-        wxString lineTextPast = ed->GetControl()->GetLine(line2).BeforeFirst('!');
-        lineTextPast = lineTextPast.Trim();
-        if (!lineTextPast.IsEmpty())
+        int line2 = line - 1;
+        while (line2 > 0)
         {
-            int idx = lineTextPast.Find('&');
-            if (idx == wxNOT_FOUND)
+            wxString lineTextPast = control->GetLine(line2).BeforeFirst('!');
+            lineTextPast = lineTextPast.Trim();
+            if (!lineTextPast.IsEmpty())
             {
-                break;
+                int idx = lineTextPast.Find('&');
+                if (idx == wxNOT_FOUND)
+                {
+                    break;
+                }
+                else
+                {
+                    lineText = lineTextPast.BeforeFirst('&') + lineText;
+                    end += idx;
+                }
             }
-            else
+            line2--;
+        }
+    }
+    else //fsfFixed
+    {
+        if (lineText.Len() >= 6)
+        {
+            wxChar contS = lineText.GetChar(5);
+            if (contS != ' ' && contS != '0')
             {
-                lineText = lineTextPast.BeforeLast('&') + lineText;
-                end += idx;
+                int line2 = line - 1;
+                while (line2 > 0)
+                {
+                    wxString lineTextPast = control->GetLine(line2).BeforeFirst('!');
+                    lineTextPast = lineTextPast.Trim();
+                    if (!lineTextPast.IsEmpty())
+                    {
+                        lineText = lineTextPast + lineText;
+                        end += lineTextPast.Len();
+                        if (lineTextPast.Len() >= 6)
+                        {
+                            wxChar contS2 = lineTextPast.GetChar(5);
+                            if (contS2 == ' ' || contS2 == '0')
+                            {
+                                break;
+                            }
+                        }
+                        else
+                        {
+                            break;
+                        }
+                    }
+                    line2--;
+                }
             }
         }
-        line2--;
+        else
+        {
+            return;
+        }
     }
 
     wxString lineTextUntilPos = lineText.Mid(0,end);
@@ -533,11 +578,23 @@ void NativeParserF::CountCommasInEditor(int& commasAll, int& commasUntilPos, wxS
     lastName = GetLastName(lineText);
 }
 
-void NativeParserF::GetCallTips(const wxString& name, wxArrayString& callTips, TokensArrayFlat* result)
+void NativeParserF::GetCallTips(const wxString& name, bool onlyUseAssoc, bool onlyPublicNames, wxArrayString& callTips, TokensArrayFlat* result)
 {
     int tokKind = tkFunction | tkSubroutine | tkInterface;
     int resCountOld = result->GetCount();
-    int resCount = m_Parser.FindMatchTokensDeclared(name, *result, tokKind, false);
+    if (onlyUseAssoc)
+    {
+        cbEditor* ed =  Manager::Get()->GetEditorManager()->GetBuiltinActiveEditor();
+        if (!ed)
+            return;
+        m_Parser.FindUseAssociatedTokens(onlyPublicNames, ed, name, false, *result, tokKind, false);
+        m_Parser.FindMatchTokensDeclared(name, *result, tokKind, false, tkInterface | tkModule); // take global procedures only
+    }
+    else
+    {
+        m_Parser.FindMatchTokensDeclared(name, *result, tokKind, false);
+    }
+    int resCount = result->GetCount();
 
     for (int i=resCountOld; i<resCount; ++i)
     {

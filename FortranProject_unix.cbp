@@ -13,6 +13,8 @@
 				<Option host_application="codeblocks" />
 				<Compiler>
 					<Add option="`wx-config --cflags`" />
+					<Add option="-Ulinux" />
+					<Add option="-Uunix" />
 					<Add directory="$(#cb)/include" />
 					<Add directory="$(#cb)/sdk/wxscintilla/include" />
 				</Compiler>
@@ -20,6 +22,7 @@
 					<Add option="`wx-config --libs`" />
 					<Add library="libcodeblocks.a" />
 					<Add directory="$(#cb)/devel" />
+					<Add directory="/home/darius/Programavimas/CodeBlocks/CBFortran_v0.6.1/CBFortran_bin_v0.6.1/CodeBlocks_Fortran_v0.6.1a_Linux32_all" />
 				</Linker>
 				<ExtraCommands>
 					<Add after="zip -j9 FortranProject.zip manifest.xml resources/workspacebrowserf.xrc resources/settings.xrc resources/fortranprojecttoolbar.xrc" />
@@ -51,7 +54,10 @@
 		<Unit filename="jumptracker.h" />
 		<Unit filename="keywordsparserf.cpp" />
 		<Unit filename="keywordsparserf.h" />
+		<Unit filename="lineaddress.h" />
 		<Unit filename="manifest.xml" />
+		<Unit filename="moduletokenf.cpp" />
+		<Unit filename="moduletokenf.h" />
 		<Unit filename="nativeparserf.cpp" />
 		<Unit filename="nativeparserf.h" />
 		<Unit filename="parserf.cpp" />
@@ -67,6 +73,8 @@
 		<Unit filename="tokenf.h" />
 		<Unit filename="tokenizerf.cpp" />
 		<Unit filename="tokenizerf.h" />
+		<Unit filename="usetokenf.cpp" />
+		<Unit filename="usetokenf.h" />
 		<Unit filename="workspacebrowserbuilder.cpp" />
 		<Unit filename="workspacebrowserbuilder.h" />
 		<Unit filename="workspacebrowserf.cpp" />

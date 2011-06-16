@@ -38,7 +38,21 @@
 											<object class="wxCheckBox" name="chkSmartCodeCompletion">
 												<label>Use smart code-completion (makes CC list shorter)</label>
 											</object>
-											<flag>wxALL|wxEXPAND|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL</flag>
+											<flag>wxTOP|wxLEFT|wxRIGHT|wxEXPAND|wxALIGN_LEFT|wxALIGN_TOP</flag>
+											<border>8</border>
+										</object>
+										<object class="sizeritem">
+											<object class="wxCheckBox" name="chkOnlyUseAssociated">
+												<label>Show only use associated entities</label>
+											</object>
+											<flag>wxTOP|wxLEFT|wxRIGHT|wxEXPAND|wxALIGN_LEFT|wxALIGN_TOP</flag>
+											<border>8</border>
+										</object>
+										<object class="sizeritem">
+											<object class="wxCheckBox" name="chkShowHiddenEntities">
+												<label>Show hidden entities</label>
+											</object>
+											<flag>wxTOP|wxLEFT|wxRIGHT|wxEXPAND|wxALIGN_LEFT|wxALIGN_TOP</flag>
 											<border>8</border>
 										</object>
 										<object class="sizeritem">

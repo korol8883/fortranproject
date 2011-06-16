@@ -5,8 +5,8 @@
  */
 
 #include "parserthreadf.h"
+#include "usetokenf.h"
 #include <set>
-
 
 ParserThreadF::ParserThreadF(const wxString& bufferOrFilename,
 							 TokensArrayF* tokens,
@@ -79,13 +79,13 @@ bool ParserThreadF::Parse()
         {
             HandleUse();
         }
-        else if (tok_low.Matches(_T("module")))
+        else if (tok_low.Matches(_T("module")) && !nex_low.Matches(_T("procedure")))
         {
-            HandleModProg(tkModule);
+            HandleModule();
         }
         else if (tok_low.Matches(_T("program")))
         {
-            HandleModProg(tkProgram);
+            HandleFunction(tkProgram);
         }
         else if (tok_low.Matches(_T("function")))
         {
@@ -114,6 +114,10 @@ bool ParserThreadF::Parse()
         else if (tok_low.Matches(_T("include")))
         {
             HandleInclude();
+        }
+        else if (tok_low.Matches(_T("interface")))
+        {
+        	HandleInterface();
         }
         else if (tok_low.Matches(_T("end")))
         {
@@ -174,43 +178,151 @@ void ParserThreadF::HandleUse()
 {
     wxString modName;
     wxArrayString lineTok = m_Tokens.GetTokensToEOL();
+    ModuleNature modNature = mnNonIntrinsic;
+    int ltCount = lineTok.GetCount();
     int idx = lineTok.Index(_T("::"));
     if (idx != wxNOT_FOUND)
     {
-        if (idx+1 < int(lineTok.GetCount()))
+        if (idx > 0)
         {
-            modName = lineTok.Item(idx+1);
+            if (lineTok.Item(idx-1).Lower().IsSameAs(_T("intrinsic")))
+            {
+                modNature = mnIntrinsic;
+            }
         }
-        else
+        idx++;
+    }
+    else
+    {
+        idx = 0;
+    }
+    if (ltCount > idx)
+    {
+        modName = lineTok.Item(idx);
+    }
+    else
+    {
+        return; //something wrong
+    }
+    UseTokenF* pUseTok = DoAddUseToken(modName);
+    pUseTok->SetModuleNature(modNature);
+
+    idx++;
+    if (ltCount <= idx)
+    {
+        return; // no more on the line
+    }
+    if (lineTok.Item(idx).Lower().IsSameAs(_T("only")))
+    {
+        pUseTok->SetOnly(true);
+        idx++;
+        while (true)
         {
-            //something wrong
-            return;
+            idx++;
+            if (ltCount <= idx)
+                break;
+            wxString localName = lineTok.Item(idx);
+            wxString externalName;
+
+            if (localName.Lower().IsSameAs(_T("operator")))
+            {
+                idx += 4; // operator (.st.) => operator (.kt.)
+                continue;
+            }
+            if (ltCount > idx+1 && lineTok.Item(idx+1).IsSameAs(_T("=>")))
+            {
+                //it is rename
+                if (ltCount > idx+2)
+                {
+                    idx += 2;
+                    externalName = lineTok.Item(idx);
+                }
+                else
+                {
+                    break; // '=>' on end of line
+                }
+            }
+            pUseTok->AddToNamesList(localName, externalName);
         }
     }
     else
     {
-        if (lineTok.GetCount() > 0)
+        pUseTok->SetOnly(false);
+        // rename-list
+        while (true)
         {
-            modName = lineTok.Item(0);
-        }
-        else
-        {
-            //something wrong
-            return;
+            if (lineTok.Item(idx).Lower().IsSameAs(_T("operator")))
+            {
+                idx += 5; // operator (.st.) => operator (.kt.)
+            }
+            if (ltCount > idx+1 && lineTok.Item(idx+1).IsSameAs(_T("=>")))
+            {
+                wxString localName = lineTok.Item(idx);
+                wxString externalName;
+                if (ltCount > idx+2)
+                {
+                    idx += 2;
+                    externalName = lineTok.Item(idx);
+                }
+                else
+                {
+                    break; // '=>' on end of line
+                }
+                pUseTok->AddToNamesList(localName, externalName);
+                idx++;
+                if (ltCount <= idx)
+                    break;
+            }
+            else
+            {
+                break;
+            }
         }
     }
-    DoAddToken(tkUse, modName);
 }
 
-void ParserThreadF::HandleModProg(TokenKindF kind)
+UseTokenF* ParserThreadF::DoAddUseToken(const wxString& modName)
 {
+    UseTokenF* newToken = new UseTokenF();
+	newToken->m_Name = modName.Lower();
+
+	newToken->m_TokenKind = tkUse;
+	newToken->m_pParent = m_pLastParent;
+	newToken->m_Filename = m_Tokens.GetFilename();
+	newToken->m_DisplayName = modName;
+	newToken->m_TypeDefinition = wxEmptyString;
+
+	newToken->m_LineStart = m_Tokens.GetLineNumber();
+	newToken->m_DefinitionLength = 1;
+
+    if (m_pLastParent)
+        m_pLastParent->AddChild(newToken);
+    else
+        m_pTokens->Add(newToken);
+
+	return newToken;
+}
+
+void ParserThreadF::HandleModule()
+{
+    TokenKindF kind = tkModule;
     TokenF* old_parent = m_pLastParent;
 
+    int countAccessList = 0;
     wxString token = m_Tokens.GetTokenSameLine();
+    TokenAccessKind taDefKind = taPublic;
+    ModuleTokenF* modToken;
     if (token.IsEmpty())
-        m_pLastParent = DoAddToken(kind, _T("unnamed"));
+        modToken = DoAddModuleToken(_T("unnamed"));
     else
-        m_pLastParent = DoAddToken(kind, token);
+        modToken = DoAddModuleToken(token);
+    m_pLastParent = modToken;
+    wxArrayString privateNameList;
+    wxArrayString publicNameList;
+    wxArrayString protectedNameList;
+
+    TokensArrayF typeTokens;
+    TokensArrayF decklTokens;
 
     while (1)
     {
@@ -228,15 +340,21 @@ void ParserThreadF::HandleModProg(TokenKindF kind)
         }
         else if (tok_low.Matches(_T("type")) && !nex_low(0,1).Matches(_T("(")))
         {
-            HandleType();
+            bool needDefault=true;
+            TokenF* tokTmp = 0;
+            HandleType(needDefault, tokTmp);
+            if (needDefault && tokTmp)
+            {
+                typeTokens.Add(tokTmp);
+            }
         }
         else if (tok_low.Matches(_T("subroutine")))
         {
-            HandleFunction(tkSubroutine);
+            HandleFunction(tkSubroutine, taDefKind);
         }
         else if (tok_low.Matches(_T("function")))
         {
-            HandleFunction(tkFunction);
+            HandleFunction(tkFunction, taDefKind);
         }
         else if (tok_low.Matches(_T("use")))
         {
@@ -244,33 +362,150 @@ void ParserThreadF::HandleModProg(TokenKindF kind)
         }
         else if (tok_low.Matches(_T("interface")))
         {
-        	HandleInterface();
+        	HandleInterface(taDefKind);
         }
         else if (tok_low.Matches(_T("include")))
         {
             HandleInclude();
         }
+        else if (tok_low.Matches(_T("private")))
+        {
+            bool changeDefault;
+            HandleAccessList(taPrivate, changeDefault, countAccessList, privateNameList);
+            if (changeDefault)
+            {
+                modToken->SetDefaultPublic(false);
+                taDefKind = taPrivate;
+            }
+        }
+        else if (tok_low.Matches(_T("public")))
+        {
+            bool changeDefault;
+            HandleAccessList(taPublic, changeDefault, countAccessList, publicNameList);
+            if (changeDefault)
+            {
+                modToken->SetDefaultPublic(true);
+                taDefKind = taPublic;
+            }
+        }
+        else if (tok_low.Matches(_T("protected")))
+        {
+            bool tmpB;
+            HandleAccessList(taProtected, tmpB, countAccessList, protectedNameList);
+        }
         else if (kind == tkModule)
         {
-            CheckParseOneDeclaration(token, tok_low, next, nex_low);
+            bool needDefault=true;
+            TokensArrayF tokTmpArr;
+            CheckParseOneDeclaration(token, tok_low, next, nex_low, needDefault, tokTmpArr);
+            if (needDefault)
+            {
+                for (size_t i=0; i<tokTmpArr.Count(); i++)
+                {
+                    decklTokens.Add(tokTmpArr.Item(i));
+                }
+            }
         }
     }
-    m_pLastParent->AddLineEnd(m_Tokens.GetLineNumber());
+    modToken->AddLineEnd(m_Tokens.GetLineNumber());
     m_pLastParent = old_parent;
+
+    for (size_t i=0; i<typeTokens.GetCount(); i++)
+    {
+        typeTokens.Item(i)->m_TokenAccess = taDefKind;
+    }
+
+    for (size_t i=0; i<decklTokens.GetCount(); i++)
+    {
+        decklTokens.Item(i)->m_TokenAccess = taDefKind;
+    }
+
+wxString eilute;
+
+    for (size_t i=0; i<publicNameList.GetCount(); i++)
+    {
+        modToken->AddToPublicList(publicNameList.Item(i));
+
+eilute << publicNameList.Item(i) << _T(" & ");
+
+    }
+    for (size_t i=0; i<privateNameList.GetCount(); i++)
+    {
+        modToken->AddToPrivateList(privateNameList.Item(i));
+    }
+
+    TokensArrayF* toks = &modToken->m_Children;
+    if (toks)
+    {
+        for (size_t i=0; i<toks->GetCount(); i++)
+        {
+            ChangeTokenAccess(modToken, toks->Item(i));
+
+            if (protectedNameList.Index(toks->Item(i)->m_Name) != wxNOT_FOUND)
+            {
+                toks->Item(i)->m_TokenAccess = taProtected;
+            }
+            else if (toks->Item(i)->m_TokenKind == tkInterfaceExplicit)
+            {
+                TokensArrayF* chs = &toks->Item(i)->m_Children;
+                if (chs)
+                {
+                    for (size_t j=0; j<chs->GetCount(); j++)
+                    {
+                        ChangeTokenAccess(modToken, chs->Item(j));
+                    }
+                }
+            }
+        }
+    }
+
+}
+
+ModuleTokenF* ParserThreadF::DoAddModuleToken(const wxString& modName)
+{
+    ModuleTokenF* newToken = new ModuleTokenF();
+	newToken->m_Name = modName.Lower();
+
+	newToken->m_TokenKind = tkModule;
+	newToken->m_pParent = m_pLastParent;
+	newToken->m_Filename = m_Tokens.GetFilename();
+	newToken->m_DisplayName = modName;
+	newToken->m_TypeDefinition = wxEmptyString;
+
+	newToken->m_LineStart = m_Tokens.GetLineNumber();
+	newToken->m_DefinitionLength = 1;
+
+    if (m_pLastParent)
+        m_pLastParent->AddChild(newToken);
+    else
+        m_pTokens->Add(newToken);
+
+	return newToken;
 }
 
 void ParserThreadF::HandleType()
 {
+    bool needDefault;
+    TokenF* newToken = 0;
+    HandleType(needDefault, newToken);
+}
+
+void ParserThreadF::HandleType(bool& needDefault, TokenF* &newToken)
+{
+    needDefault = true;
+    TokenAccessKind taKind = taPublic;
     wxString typeName;
     wxString exTypeName;
     wxArrayString lineTok = m_Tokens.GetTokensToEOL();
+    wxArrayString lineTokLw;
+    MakeArrayStringLower(lineTok, lineTokLw);
     int idx = lineTok.Index(_T("::"));
     if (idx != wxNOT_FOUND)
     {
         if (idx+1 < int(lineTok.GetCount()))
         {
             typeName = lineTok.Item(idx+1);
-            int idex = lineTok.Index(_("extends"),false);
+            int idex = lineTokLw.Index(_T("extends"),false);
             if (idex != wxNOT_FOUND)
             {
                 if (idex <= idx-2)
@@ -282,6 +517,22 @@ void ParserThreadF::HandleType()
                     {
                         exTypeName = ex.Mid(idx_a+1,idx_b-idx_a-1).Trim().Trim(false);
                     }
+                }
+            }
+
+            idex = lineTokLw.Index(_T("private"));
+            if (idex != wxNOT_FOUND && idex < idx)
+            {
+                taKind = taPrivate;
+                needDefault = false;
+            }
+            else
+            {
+                idex = lineTokLw.Index(_T("public"));
+                if (idex != wxNOT_FOUND && idex < idx)
+                {
+                    taKind = taPublic;
+                    needDefault = false;
                 }
             }
         }
@@ -306,16 +557,20 @@ void ParserThreadF::HandleType()
     TokenF* old_parent = m_pLastParent;
     m_pLastParent = DoAddToken(tkType, typeName);
     m_pLastParent->m_ExtendsType = exTypeName;
+    m_pLastParent->m_TokenAccess = taKind;
 
     ParseDeclarations(true, true);
+
     if (m_LastTokenName.IsSameAs(_T("contains")))
         ParseTypeBoundProcedures();
 
     m_pLastParent->AddLineEnd(m_Tokens.GetLineNumber());
+    newToken = m_pLastParent;
     m_pLastParent = old_parent;
 }
 
-void ParserThreadF::CheckParseOneDeclaration(wxString& token, wxString& tok_low, wxString& next, wxString& next_low)
+void ParserThreadF::CheckParseOneDeclaration(wxString& token, wxString& tok_low, wxString& next, wxString& next_low,
+                                             bool& needDefault, TokensArrayF& newTokenArr)
 {
     if ( tok_low.IsSameAs(_T("integer")) || tok_low.IsSameAs(_T("real"))
             || tok_low.IsSameAs(_T("doubleprecision")) || tok_low.IsSameAs(_T("character"))
@@ -330,7 +585,7 @@ void ParserThreadF::CheckParseOneDeclaration(wxString& token, wxString& tok_low,
                 bool found = ParseDeclarationsFirstPart(token, next);
                 if (found)
                 {
-                    ParseDeclarationsSecondPart(token);
+                    ParseDeclarationsSecondPart(token, needDefault, newTokenArr);
                 }
             }
             else
@@ -343,6 +598,8 @@ void ParserThreadF::CheckParseOneDeclaration(wxString& token, wxString& tok_low,
 
 void ParserThreadF::ParseDeclarations(bool breakAtEnd, bool breakAtContains)
 {
+    TokenAccessKind taDefKind = taPublic;
+    TokensArrayF tokArr;
 	while (1)
 	{
 		wxString token = m_Tokens.GetToken();
@@ -356,6 +613,10 @@ void ParserThreadF::ParseDeclarations(bool breakAtEnd, bool breakAtContains)
         {
             HandleInclude();
         }
+        else if (m_LastTokenName.IsSameAs(_T("interface")))
+        {
+        	HandleInterface(taDefKind);
+        }
         else if (IsEnd(m_LastTokenName, next.Lower()) && breakAtEnd)
         {
             m_Tokens.SkipToOneOfChars(";", true);
@@ -366,13 +627,48 @@ void ParserThreadF::ParseDeclarations(bool breakAtEnd, bool breakAtContains)
             m_Tokens.SkipToOneOfChars(";", true);
             break;
         }
+        else if (m_LastTokenName.IsSameAs(_T("private")))
+        {
+            bool changeDefault;
+            int cal=0;
+            wxArrayString pnList;
+            HandleAccessList(taPrivate, changeDefault, cal, pnList);
+            if (changeDefault)
+            {
+                taDefKind = taPrivate;
+            }
+        }
+        else if (m_LastTokenName.IsSameAs(_T("public")))
+        {
+            bool changeDefault;
+            int cal=0;
+            wxArrayString pnList;
+            HandleAccessList(taPublic, changeDefault, cal, pnList);
+            if (changeDefault)
+            {
+                taDefKind = taPublic;
+            }
+        }
 
         bool found = ParseDeclarationsFirstPart(token, next);
         if (found)
         {
-            ParseDeclarationsSecondPart(token);
+            bool nDef=true;
+            TokensArrayF tokArrTmp;
+            ParseDeclarationsSecondPart(token, nDef, tokArrTmp);
+            if (nDef)
+            {
+                for (size_t i=0; i<tokArrTmp.Count(); i++)
+                {
+                    tokArr.Add(tokArrTmp.Item(i));
+                }
+            }
         }
 	}
+	for (size_t i=0; i<tokArr.Count(); i++)
+    {
+        tokArr.Item(i)->m_TokenAccess = taDefKind;
+    }
 	return;
 }
 
@@ -439,33 +735,63 @@ bool ParserThreadF::ParseDeclarationsFirstPart(wxString& token, wxString& next)
 }
 
 
-void ParserThreadF::ParseDeclarationsSecondPart(wxString& token)
+void ParserThreadF::ParseDeclarationsSecondPart(wxString& token, bool& needDefault, TokensArrayF& newTokenArr)
 {
+    needDefault = true;
+    TokenAccessKind taKind = taPublic;
     wxString defT = token;
     wxArrayString linesArr;
+    m_Tokens.SetDetailedParsing(true);
     wxArrayString lineTok = m_Tokens.GetTokensToEOL(&linesArr);
+    m_Tokens.SetDetailedParsing(false);
     int idx = lineTok.Index(_T("::"));
     if (idx != wxNOT_FOUND)
     {
         for (int i=0; i<idx; i++)
         {
+            if (lineTok.Item(i).IsSameAs(_T(",")))
+                continue;
+
             if (!lineTok.Item(i).StartsWith(_T("(")))
             {
                 defT.Append(_T(", "));
             }
             defT.Append(lineTok.Item(i));
+
+            wxString tokLw = lineTok.Item(i).Lower();
+            if (tokLw.IsSameAs(_T("private")))
+            {
+                taKind = taPrivate;
+                needDefault = false;
+            }
+            else if (tokLw.IsSameAs(_T("protected")))
+            {
+                taKind = taProtected;
+                needDefault = false;
+            }
+            else if (tokLw.IsSameAs(_T("public")))
+            {
+                taKind = taPublic;
+                needDefault = false;
+            }
         }
     }
     else
     {
         idx = -1;
     }
+
     wxArrayString varNames;
     wxArrayString varArgs;
     wxArrayString varComs;
     for (size_t i=idx+1; i<lineTok.GetCount(); )
     {
         wxString var1= lineTok.Item(i);
+        if (var1.IsSameAs(_T(",")))
+        {
+            i++;
+            continue;
+        }
         wxString arg1;
         if (i+1 < lineTok.GetCount())
         {
@@ -476,17 +802,22 @@ void ParserThreadF::ParseDeclarationsSecondPart(wxString& token)
                 i++;
             }
         }
-        if (i+1 < lineTok.GetCount() && lineTok.Item(i+1).IsSameAs(_T("=>")))
+        if (i+1 < lineTok.GetCount() && (lineTok.Item(i+1).IsSameAs(_T("=>")) || lineTok.Item(i+1).IsSameAs(_T("="))) )
         {
             i += 2;
-            if (i+1 < lineTok.GetCount())
+            for (;i<lineTok.GetCount();i++)
             {
-                wxString s = lineTok.Item(i+1);
-                if (s.StartsWith(_T("(")) && s.EndsWith(_T(")")))
-                {
-                    i++;
-                }
+                if (lineTok.Item(i).IsSameAs(_T(",")))
+                    break;
             }
+//            if (i+1 < lineTok.GetCount())
+//            {
+//                wxString s = lineTok.Item(i+1);
+//                if (s.StartsWith(_T("(")) && s.EndsWith(_T(")")))
+//                {
+//                    i++;
+//                }
+//            }
             if(i >= lineTok.GetCount())
             {
                 i = lineTok.GetCount() - 1;
@@ -496,7 +827,7 @@ void ParserThreadF::ParseDeclarationsSecondPart(wxString& token)
         int comInd = linesArr.Item(i).Find('!');
         if (comInd != wxNOT_FOUND)
         {
-            comStr = linesArr.Item(i).Mid(comInd);
+            comStr = linesArr.Item(i).Mid(comInd).Trim();
         }
         varNames.Add(var1);
         varArgs.Add(arg1);
@@ -507,15 +838,21 @@ void ParserThreadF::ParseDeclarationsSecondPart(wxString& token)
     {
         TokenF* tok = DoAddToken(tkVariable, varNames[i], varArgs[i], defT);
         tok->m_PartLast = varComs.Item(i);
+        tok->m_TokenAccess = taKind;
+        newTokenArr.Add(tok);
     }
 	return;
 }
 
 
-void ParserThreadF::HandleFunction(TokenKindF kind)
+void ParserThreadF::HandleFunction(TokenKindF kind, TokenAccessKind taKind)
 {
     wxString token;
     token = m_Tokens.GetTokenSameFortranLine();
+
+    if (token.IsEmpty() && kind == tkProgram)
+        token = _T("unnamed");
+
     unsigned int defStartLine = m_Tokens.GetLineNumber();
     TokenF* old_parent = m_pLastParent;
     wxString args = m_Tokens.PeekTokenSameFortranLine();
@@ -525,6 +862,7 @@ void ParserThreadF::HandleFunction(TokenKindF kind)
     else
         args = m_Tokens.GetTokenSameFortranLine();
     m_pLastParent = DoAddToken(kind, token, args, defStartLine);
+    m_pLastParent->m_TokenAccess = taKind;
 
     if (kind == tkFunction)
     {
@@ -559,7 +897,7 @@ void ParserThreadF::HandleFunction(TokenKindF kind)
     m_pLastParent = old_parent;
 }
 
-void ParserThreadF::HandleInterface()
+void ParserThreadF::HandleInterface(TokenAccessKind taKind)
 {
     TokenF* old_parent = m_pLastParent;
     unsigned int defStartLine = m_Tokens.GetLineNumber();
@@ -647,8 +985,21 @@ void ParserThreadF::HandleInterface()
     }
 
     m_pLastParent = DoAddToken(tokKin, name, wxEmptyString, defStartLine);
+    m_pLastParent->m_TokenAccess = taKind;
 
     GoThroughBody();
+
+    if (tokKin == tkInterfaceExplicit)
+    {
+        TokensArrayF* toks = &m_pLastParent->m_Children;
+        if (toks)
+        {
+            for (size_t i=0; i<toks->GetCount(); i++)
+            {
+                toks->Item(i)->m_TokenAccess = taKind;
+            }
+        }
+    }
 
     m_pLastParent->AddLineEnd(m_Tokens.GetLineNumber());
     m_pLastParent = old_parent;
@@ -695,6 +1046,49 @@ void ParserThreadF::HandleInclude()
     }
 }
 
+void ParserThreadF::HandleAccessList(TokenAccessKind taKind, bool& changeDefault, int& countAccess, wxArrayString& nameList)
+{
+    changeDefault = false;
+    wxString curLine = m_Tokens.GetLineFortran().Lower().Trim(false);
+    int ipp;
+    if (taKind == taPrivate)
+        ipp = curLine.Find(_T("private"));
+    else if (taKind == taPublic)
+        ipp = curLine.Find(_T("public"));
+    else if (taKind == taProtected)
+        ipp = curLine.Find(_T("protected"));
+
+    if (ipp == wxNOT_FOUND)
+        return; // something is wrong
+    else if (ipp != 0)
+        return; // here private (public) is used as an atribute.
+
+    unsigned int defStartLine = m_Tokens.GetLineNumber();
+    wxArrayString curLineArr = m_Tokens.GetTokensToEOL();
+    if (curLineArr.GetCount() == 0)
+    {
+        changeDefault = true;
+        return;
+    }
+    countAccess++;
+    wxString name;
+    name = _T("AccessList");
+    if (countAccess > 1)
+        name << _T(" ") << countAccess;
+
+    TokenF* token = DoAddToken(tkAccessList, name, wxEmptyString, defStartLine);
+    token->AddLineEnd(m_Tokens.GetLineNumber());
+    token->m_TokenAccess = taKind;
+
+    size_t i=0;
+    if (curLineArr.Item(0).IsSameAs(_T("::")))
+        i=1;
+    for (; i<curLineArr.GetCount(); i++)
+    {
+        nameList.Add(curLineArr.Item(i).Lower());
+    }
+}
+
 void ParserThreadF::GoThroughBody()
 {
     while (1)
@@ -703,6 +1097,12 @@ void ParserThreadF::GoThroughBody()
     	if (token.IsEmpty())
             break;
         wxString tok_low = token.Lower();
+
+        if (tok_low.Matches(_T("::")))
+        {
+            m_Tokens.SkipToOneOfChars(";", true);
+            continue;
+        }
 
         wxString next = m_Tokens.PeekToken();
         wxString nex_low = next.Lower();
@@ -755,16 +1155,18 @@ void ParserThreadF::HandleProcedureList()
 
 void ParserThreadF::ParseTypeBoundProcedures()
 {
+    TokenAccessKind defAccKind = taPublic;
     while (1)
     {
+        TokenAccessKind tokAccK = defAccKind;
         wxString firstTokenLw = m_Tokens.GetToken().Lower();
         if (firstTokenLw.IsEmpty())
             break;
         unsigned int lineNum = m_Tokens.GetLineNumber();
         wxArrayString curLineArr = m_Tokens.GetTokensToEOL();
         bool isGen = firstTokenLw.IsSameAs(_T("generic"));
-        if (curLineArr.Count() > 0 && (firstTokenLw.IsSameAs(_T("procedure")) || isGen) &&
-            !curLineArr.Item(0).StartsWith(_T("(")) ) // not interface-name
+        if (curLineArr.Count() > 0 && (firstTokenLw.IsSameAs(_T("procedure")) || isGen) ) // &&
+            // !curLineArr.Item(0).StartsWith(_T("(")) ) // not interface-name
         {
             bool pass = true;
             wxString passArg;
@@ -793,6 +1195,14 @@ void ParserThreadF::ParseTypeBoundProcedures()
                             }
                         }
                         break;
+                    }
+                    else if (tok.IsSameAs(_T("private")))
+                    {
+                        tokAccK = taPrivate;
+                    }
+                    else if (tok.IsSameAs(_T("public")))
+                    {
+                        tokAccK = taPublic;
                     }
                 }
                 startList = idx + 1;
@@ -824,6 +1234,7 @@ void ParserThreadF::ParseTypeBoundProcedures()
                     token->m_Args = passArg;
                     token->m_PartLast = procName.Lower();
                     token->AddLineEnd(m_Tokens.GetLineNumber());
+                    token->m_TokenAccess = tokAccK;
                 }
             }
             else //isGen
@@ -846,6 +1257,7 @@ void ParserThreadF::ParseTypeBoundProcedures()
                         }
                         token->m_PartLast = specNames.Trim();
                         token->AddLineEnd(m_Tokens.GetLineNumber());
+                        token->m_TokenAccess = tokAccK;
                     }
                     ic++;
                 }
@@ -857,6 +1269,10 @@ void ParserThreadF::ParseTypeBoundProcedures()
         {
             m_Tokens.SkipToOneOfChars(";", true);
             break;
+        }
+        else if ( firstTokenLw.IsSameAs(_T("private")) && curLineArr.Count() == 0 )
+        {
+            defAccKind = taPrivate;
         }
     }
 }
@@ -878,3 +1294,23 @@ bool ParserThreadF::IsEnd(wxString tok_low, wxString nex_low)
     return isend;
 }
 
+void ParserThreadF::MakeArrayStringLower(wxArrayString &arr, wxArrayString &arrLw)
+{
+    for(size_t i=0; i<arr.Count(); i++)
+    {
+        arrLw.Add(arr.Item(i).Lower());
+    }
+}
+
+void ParserThreadF::ChangeTokenAccess(ModuleTokenF* modToken, TokenF* token)
+{
+    if (modToken->HasNameInPrivateList(token->m_Name))
+    {
+        token->m_TokenAccess = taPrivate;
+    }
+    else if (modToken->HasNameInPublicList(token->m_Name))
+    {
+        if (token->m_TokenAccess != taProtected)
+            token->m_TokenAccess = taPublic;
+    }
+}

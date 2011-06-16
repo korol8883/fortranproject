@@ -27,6 +27,8 @@
 					<Add option="-DCB_PRECOMP" />
 					<Add option="-DWX_PRECOMP" />
 					<Add option="-DwxUSE_UNICODE" />
+					<Add option="-DWXMAKINGDLL_PROPGRID" />
+					<Add option="-DwxPG_USE_WXMODULE=0" />
 					<Add directory="$(#cb)\include" />
 					<Add directory="$(#cb)\include\wxscintilla\include" />
 					<Add directory="$(#wx.include)" />
@@ -73,6 +75,8 @@
 		<Unit filename="keywordsparserf.h" />
 		<Unit filename="lineaddress.h" />
 		<Unit filename="manifest.xml" />
+		<Unit filename="moduletokenf.cpp" />
+		<Unit filename="moduletokenf.h" />
 		<Unit filename="nativeparserf.cpp" />
 		<Unit filename="nativeparserf.h" />
 		<Unit filename="parserf.cpp" />
@@ -88,6 +92,8 @@
 		<Unit filename="tokenf.h" />
 		<Unit filename="tokenizerf.cpp" />
 		<Unit filename="tokenizerf.h" />
+		<Unit filename="usetokenf.cpp" />
+		<Unit filename="usetokenf.h" />
 		<Unit filename="workspacebrowserbuilder.cpp" />
 		<Unit filename="workspacebrowserbuilder.h" />
 		<Unit filename="workspacebrowserf.cpp" />
@@ -99,6 +105,15 @@
 			<wxsmith version="1">
 				<gui name="wxWidgets" src="" main="" init_handlers="necessary" language="CPP" />
 			</wxsmith>
+			<DoxyBlocks>
+				<comment_style block="0" line="0" />
+				<doxyfile_project />
+				<doxyfile_build />
+				<doxyfile_warnings />
+				<doxyfile_output />
+				<doxyfile_dot />
+				<general />
+			</DoxyBlocks>
 		</Extensions>
 	</Project>
 </CodeBlocks_project_file>

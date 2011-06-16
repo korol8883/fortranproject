@@ -10,18 +10,17 @@
 #include "tokenf.h"
 #include <wx/string.h>
 
-void CCSmartFilter::GetTokenKind(wxArrayString& words, int& kindFilter, bool& allowVariables)
+void CCSmartFilter::GetTokenKind(wxArrayString& words, int& kindFilter, bool& allowVariables, kindOfCCList& kindCC)
 {
+    kindCC = kccOther;
     allowVariables = false;
     wxString wordLw;
+    wxString wordLastLw;
     int woCount = words.GetCount();
     if (woCount > 0)
     {
         wordLw = words.Item(0).Lower();
-    }
-    else
-    {
-        wordLw = wxEmptyString;
+        wordLastLw = words.Item(woCount-1).Lower();
     }
     if (woCount > 1)
     {
@@ -45,6 +44,31 @@ void CCSmartFilter::GetTokenKind(wxArrayString& words, int& kindFilter, bool& al
     {
         kindFilter = tkSubroutine | tkFunction | tkInterface;
     }
+    else if (wordLw.IsSameAs(_T("use")) || wordLw.IsSameAs(_T("module")))
+    {
+        kindFilter = tkModule;
+    }
+    else if (woCount > 1 && wordLastLw.IsSameAs(_T("use")))
+    {
+        if (woCount > 2 && wordLw.IsSameAs(_T(":")) && words.Item(1).IsSameAs(_T(":")))
+        {
+            kindFilter = tkModule;
+        }
+        else
+        {
+            kindFilter = tkVariable | tkSubroutine | tkFunction | tkInterface | tkOther;
+            allowVariables = true;
+            kindCC = kccUseAssocTokens;
+        }
+    }
+    else if (wordLastLw.IsSameAs(_T("private")) ||
+             wordLastLw.IsSameAs(_T("public")) ||
+             wordLastLw.IsSameAs(_T("protected")) )
+    {
+        kindFilter = tkVariable | tkSubroutine | tkFunction | tkInterface | tkType | tkOther;
+        allowVariables = true;
+        kindCC = kccAccessList;
+    }
     else if (wordLw.IsSameAs('=') || wordLw.IsSameAs('+') || wordLw.IsSameAs('-') || wordLw.IsSameAs('*') ||
              wordLw.IsSameAs('/') || wordLw.IsSameAs('>') || wordLw.IsSameAs('<') || wordLw.IsSameAs('.'))
     {
@@ -55,10 +79,6 @@ void CCSmartFilter::GetTokenKind(wxArrayString& words, int& kindFilter, bool& al
     {
         kindFilter = tkFunction | tkInterface | tkOther;
         allowVariables = true;
-    }
-    else if (wordLw.IsSameAs(_T("use")) || wordLw.IsSameAs(_T("module")))
-    {
-        kindFilter = tkModule;
     }
     else if ( wordLw.IsSameAs(_T("subroutine")) || wordLw.IsSameAs(_T("function")) || wordLw.IsSameAs(_T("interface"))
              || wordLw.IsSameAs(_T("procedure")) )

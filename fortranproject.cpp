@@ -18,12 +18,12 @@
 #include <cbstyledtextctrl.h>
 #include <wx/filename.h>
 #include <wx/tokenzr.h>
+#include <vector>
 
 #include "editor_hooks.h"
 #include "cbeditor.h"
 
 #include <wx/event.h>
-
 
 // this auto-registers the plugin
 namespace
@@ -313,6 +313,7 @@ void FortranProject::OnReparseActiveEditor(CodeBlocksEvent& event)
         EditorBase* ed = event.GetEditor();
         if (!ed)
             return;
+
         m_pNativeParser->ReparseFile(ed->GetFilename());
         m_pNativeParser->UpdateWorkspaceBrowser();
     }
@@ -480,7 +481,7 @@ void FortranProject::OnGotoDeclaration(wxCommandEvent& event)
     TokensArrayFlatClass tokensTmp;
     TokensArrayFlat* result = tokensTmp.GetTokens();
 
-    pParser->FindMatchTokensForJump(ed, *result);
+    pParser->FindMatchTokensForJump(ed, m_LogOnlyUseAssoc, m_LogOnlyPublicNames, m_MaxMatch, *result);
     size_t count = result->GetCount();
 
     TokenFlat* pToken = 0;
@@ -493,19 +494,39 @@ void FortranProject::OnGotoDeclaration(wxCommandEvent& event)
     else if (count > 1)
     {
         wxArrayString selections;
+        std::vector<int> idxItems;
         for (size_t i=0; i<count; ++i)
         {
             wxFileName fn = wxFileName(result->Item(i)->m_Filename);
             wxString inf;
-            inf = result->Item(i)->m_DisplayName + _T(" :: ") + result->Item(i)->GetTokenKindString();
+            if (result->Item(i)->m_TokenKind == tkUse && !result->Item(i)->m_Rename.IsEmpty())
+            {
+                inf = _T("use :: ") + result->Item(i)->m_DisplayName + _T(", ") + result->Item(i)->m_Rename;
+            }
+            else
+            {
+                inf = result->Item(i)->m_DisplayName + _T(" :: ") + result->Item(i)->GetTokenKindString();
+            }
             inf += _T(" : ") + fn.GetFullName() + _T(" : ");
             inf += wxString::Format(_T("%d"), result->Item(i)->m_LineStart);
-            selections.Add(inf);
+
+            if (selections.Index(inf) == wxNOT_FOUND)
+            {
+                selections.Add(inf);
+                idxItems.push_back(i);
+            }
         }
-        int sel = wxGetSingleChoiceIndex(_("Please make a selection:"), _("Multiple matches"), selections);
-        if (sel == -1)
-            return;
-        pToken = result->Item(sel);
+        if (selections.Count() > 1)
+        {
+            int sel = wxGetSingleChoiceIndex(_("Please make a selection:"), _("Multiple matches"), selections);
+            if (sel == -1)
+                return;
+            pToken = result->Item(idxItems[sel]);
+        }
+        else
+        {
+            pToken = result->Item(0);
+        }
     }
 
     if (pToken)
@@ -542,13 +563,6 @@ void FortranProject::OnGotoDeclaration(wxCommandEvent& event)
     {
         cbMessageBox(wxString::Format(_("Not found: %s"), NameUnderCursor.c_str()), _("Warning"), wxICON_WARNING);
     }
-
-    for (size_t i=0; i<result->GetCount(); i++)
-    {
-        result->Item(i)->Clear();
-        delete result->Item(i);
-    }
-    result->Clear();
 
 } // end of OnGotoDeclaration
 
@@ -856,11 +870,10 @@ int FortranProject::CodeComplete()
     bool isAfterPercent;
     int tokenKind;
 
-    if (!pParser->FindMatchTokensForCodeCompletion(m_UseSmartCC, NameUnderCursor, ed, *result, isAfterPercent, tokenKind))
+    if (!pParser->FindMatchTokensForCodeCompletion(m_UseSmartCC, m_LogOnlyUseAssoc, m_LogOnlyPublicNames, m_MaxMatch, NameUnderCursor, ed, *result, isAfterPercent, tokenKind))
         return -1;
 
-    size_t max_match = cfg->ReadInt(_T("/max_matches"), 16384);
-    if (result->size() <= max_match)
+    if (result->size() <= m_MaxMatch)
     {
         wxImageList* ilist = m_pNativeParser->GetImageList();
         if (!ilist)
@@ -1054,7 +1067,7 @@ void FortranProject::ShowCallTip()
     }
     else if (!lastName.IsEmpty())
     {
-        m_pNativeParser->GetCallTips(lastName, callTipsOneLine, result);
+        m_pNativeParser->GetCallTips(lastName, m_LogOnlyUseAssoc, m_LogOnlyPublicNames, callTipsOneLine, result);
         m_pKeywordsParser->GetCallTips(lastName, callTipsOneLine, result);
     }
     wxArrayString callTips;
@@ -1077,7 +1090,7 @@ void FortranProject::ShowCallTip()
         if (unique_tips.find(callTips[i]) == unique_tips.end())  // unique
         {
             if (!callTips[i].IsEmpty() && // non-empty
-            commas <= m_pNativeParser->CountCommas(callTips[i], 1) && // commas satisfied
+            commas <= m_pNativeParser->CountCommas(callTips[i], 1, false) && // commas satisfied
             empOk)
             {
                 unique_tips.insert(callTips[i]);
@@ -1190,7 +1203,7 @@ void FortranProject::OnValueTooltip(CodeBlocksEvent& event)
     TokensArrayFlat* result = tokensTmp.GetTokens();
 
     bool isAfterPercent = false;
-    pParser->FindMatchTokensForToolTip(nameUnder, endOfWord, ed, *result, isAfterPercent);
+    pParser->FindMatchTokensForToolTip(nameUnder, endOfWord, ed, m_LogOnlyUseAssoc, m_LogOnlyPublicNames, *result, isAfterPercent);
 
     if (result->size() > 32 || result->size() == 0)
         return;
@@ -1200,6 +1213,10 @@ void FortranProject::OnValueTooltip(CodeBlocksEvent& event)
     for (size_t i=0; i<result->GetCount(); ++i)
     {
         TokenFlat* token = result->Item(i);
+        if (!token->m_Rename.IsEmpty())
+        {
+            msg << token->m_Rename << _T(" => ") << token->m_DisplayName << _T("\n");
+        }
         if (token->m_TokenKind == tkVariable)
         {
             msg << token->m_TypeDefinition << _T(" :: ") << token->m_DisplayName << token->m_Args << _T("\n");
@@ -1307,6 +1324,11 @@ void FortranProject::ShowInfoLog(TokensArrayFlat* result, bool isAfterPercent)
                 fileNameOld = token->m_Filename;
             }
 
+            if (!token->m_Rename.IsEmpty())
+            {
+                logMsg << token->m_Rename << _T(" => ") << token->m_DisplayName << _T("\n");
+            }
+
             if (token->m_TokenKind == tkSubroutine || token->m_TokenKind == tkFunction)
             {
                 if (m_pNativeParser->GetParser()->FindInfoLog(*token,m_LogComAbove,m_LogComBelow,m_LogDeclar,m_LogComVariab,logMsg1,readFile))
@@ -1370,7 +1392,11 @@ void FortranProject::RereadOptions()
     m_LexerKeywordsToInclude[7] = cfg->ReadBool(_T("/lexer_keywords_set8"), false);
     m_LexerKeywordsToInclude[8] = cfg->ReadBool(_T("/lexer_keywords_set9"), false);
 
+    m_MaxMatch = cfg->ReadInt(_T("/max_matches"), 1000);
+
     m_UseSmartCC = cfg->ReadBool(_T("/use_smart_code_completion"), true);
+    m_LogOnlyUseAssoc = cfg->ReadBool(_T("/only_use_associated"), true);
+    m_LogOnlyPublicNames = !cfg->ReadBool(_T("/show_hidden_entities"), false);
 
     m_LogUseWindow = cfg->ReadBool(_T("/use_log_window"), true);
     m_LogComAbove = cfg->ReadBool(_T("/include_comments_above"), true);

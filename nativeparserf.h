@@ -48,10 +48,10 @@ class NativeParserF : public wxEvtHandler
         void UpdateWorkspaceBrowser();
         wxImageList* GetImageList();
         int GetTokenKindImageIdx(TokenF* token);
-        void GetCallTips(const wxString& name, wxArrayString& callTips, TokensArrayFlat* result);
+        void GetCallTips(const wxString& name, bool onlyUseAssoc, bool onlyPublicNames, wxArrayString& callTips, TokensArrayFlat* result);
         void GetCallTipsForGenericTypeBoundProc(TokensArrayFlat* result, wxArrayString& callTips);
         void GetCallTipsForTypeBoundProc(TokensArrayFlat* result, wxArrayString& callTips);
-        int CountCommas(const wxString& lineText, int start);
+        int CountCommas(const wxString& lineText, int start, bool nesting=true);
         void CollectInformationForCallTip(int& commasAll, int& commasUntilPos, wxString& lastName, bool& isempty, bool& isAfterPercent, TokensArrayFlat* result);
         void CountCommasInEditor(int& commasAll, int& commasUntilPos, wxString& lastName, bool& isempty, wxString& lineText);
         void GetCallTipHighlight(const wxString& calltip, int commasWas, int& start, int& end);

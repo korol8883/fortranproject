@@ -69,7 +69,8 @@ Tokenizerf::Tokenizerf(const wxString& filename, FortranSourceForm sourceForm)
 	m_WasPeeked(false),
 	m_IsOK(false),
     m_SourceForm(sourceForm),
-    m_PeekedToken()
+    m_PeekedToken(),
+    m_DetailedParsing(false)
 {
 	if (!m_Filename.IsEmpty())
 		Init(m_Filename, m_SourceForm);
@@ -340,7 +341,7 @@ bool Tokenizerf::SkipBlock(const wxChar& ch, int maxLines)
 			++count;
 		else if (CurrentChar() == match)
 			--count;
-        else if (CurrentChar() == '&')
+        else if (CurrentChar() == '&' && m_SourceForm == fsfFree)
             SkipToEOL();
         else if (maxLines > 0 && CurrentChar() == '\n')
         {
@@ -361,8 +362,8 @@ bool Tokenizerf::SkipBlock(const wxChar& ch, int maxLines)
 bool Tokenizerf::SkipUnwanted()
 {
 	while (CurrentChar() == '#' ||
-           CurrentChar() == '=' ||
-           CurrentChar() == '[' ||
+           (CurrentChar() == '=' && !m_DetailedParsing) ||
+           //CurrentChar() == '[' ||
            CurrentChar() == '?' ||
            CurrentChar() == '!' ||
            ((CurrentChar() == 'c' || CurrentChar() == 'C' || CurrentChar() == '*') && m_Column == 1 && m_SourceForm == fsfFixed))
@@ -389,14 +390,14 @@ bool Tokenizerf::SkipUnwanted()
                 return false;
 		}
 
-		while (CurrentChar() == '[')
-		{
-			// array subscripts
-			// skip them for now...
-			SkipBlock('[');
-			if (!SkipWhiteSpace())
-				return false;
-		}
+//		while (CurrentChar() == '[')
+//		{
+//			// array subscripts
+//			// skip them for now...
+//			SkipBlock('[');
+//			if (!SkipWhiteSpace())
+//				return false;
+//		}
 
 		while (CurrentChar() == '=')
 		{
@@ -408,7 +409,7 @@ bool Tokenizerf::SkipUnwanted()
                 // skip assignments
                 if (CurrentChar() == '[' || CurrentChar() == '(')
                     break;
-                if (!SkipToOneOfChars(",;", true))
+                if (!SkipToOneOfChars(";", true))
                     return false;
                 if (!SkipWhiteSpace())
                     return false;
@@ -637,13 +638,14 @@ wxString Tokenizerf::DoGetToken()
         MoveToNextChar();
         m_Str = _T("=>");
 	}
-	else if (CurrentChar() == '(')
+	else if (CurrentChar() == '(' || CurrentChar() == '[')
 	{
 		// skip block ()
+        wxChar chBlock = CurrentChar();
         wxString tmp;
         if (m_SourceForm == fsfFree)
         {
-            if (!SkipBlock(CurrentChar(),1))
+            if (!SkipBlock(chBlock,1))
                 return wxEmptyString;
             tmp = m_Buffer.Mid(start, m_TokenIndex - start);
 
@@ -672,7 +674,7 @@ wxString Tokenizerf::DoGetToken()
         else
         {
             // fsfFixed
-            if (!SkipBlock(CurrentChar(), 20))
+            if (!SkipBlock(chBlock, 20))
                 return wxEmptyString;
             tmp = m_Buffer.Mid(start, m_TokenIndex - start);
 
@@ -730,10 +732,20 @@ wxString Tokenizerf::DoGetToken()
 				continue; // skip excessive spaces
 			m_Str << tmp.GetChar(i);
 		}
-		m_Str << _T(')'); // add closing parenthesis (see "i < tmp.Length() - 1" in previous "for")
-		m_Str.Replace(_T("  "), _T(" ")); // replace two-spaces with single-space (introduced if it skipped comments or assignments)
-		m_Str.Replace(_T("( "), _T("("));
-		m_Str.Replace(_T(" )"), _T(")"));
+		if (chBlock == '(')
+        {
+            m_Str << _T(')'); // add closing parenthesis (see "i < tmp.Length() - 1" in previous "for")
+            m_Str.Replace(_T("  "), _T(" ")); // replace two-spaces with single-space (introduced if it skipped comments or assignments)
+            m_Str.Replace(_T("( "), _T("("));
+            m_Str.Replace(_T(" )"), _T(")"));
+        }
+        else
+        {
+            m_Str << _T(']'); // add closing parenthesis (see "i < tmp.Length() - 1" in previous "for")
+            m_Str.Replace(_T("  "), _T(" ")); // replace two-spaces with single-space (introduced if it skipped comments or assignments)
+            m_Str.Replace(_T("[ "), _T("["));
+            m_Str.Replace(_T(" ]"), _T("]"));
+        }
 	}
 	else
 	{
@@ -769,7 +781,7 @@ wxArrayString Tokenizerf::GetTokensToEOL(wxArrayString* arrStrLines)
 	    {
 	        break;
 	    }
-	    else if (!tok.IsSameAs(_T("&")) && !tok.IsSameAs(_T(",")))
+	    else if (!tok.IsSameAs(_T("&")) && ((!m_DetailedParsing && !tok.IsSameAs(_T(","))) || m_DetailedParsing) )
 	    {
             arrStr.Add(tok);
             if (arrStrLines)
@@ -940,4 +952,9 @@ unsigned int Tokenizerf::GetLineEndIndex(unsigned int indexInLine)
         endIndex = m_Buffer.Len() - 1;
 
     return endIndex;
+}
+
+void Tokenizerf::SetDetailedParsing(bool detPars)
+{
+    m_DetailedParsing = detPars;
 }

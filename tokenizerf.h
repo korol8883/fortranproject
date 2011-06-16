@@ -48,6 +48,7 @@ class Tokenizerf
 		wxString GetLineFortran();
 		unsigned int GetLineStartIndex(unsigned int indexInLine);
 		unsigned int GetLineEndIndex(unsigned int indexInLine);
+		void SetDetailedParsing(bool detPars);
 	protected:
 		void BaseInit();
 		wxString DoGetToken();
@@ -88,6 +89,7 @@ class Tokenizerf
 		bool m_IsOK;
 		FortranSourceForm m_SourceForm;
 		wxString m_PeekedToken;
+		bool m_DetailedParsing;
 };
 
 #endif // FTOKINIZER_H

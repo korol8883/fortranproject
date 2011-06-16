@@ -3,7 +3,7 @@
     <SdkVersion major="1" minor="11"  release="12" />
     <Plugin name="FortranProject">
         <Value title="FortranProject" />
-        <Value version="0.6.1" />
+        <Value version="0.7_rc1" />
         <Value description="This plugin provides a symbol browser and code-completion for Fortran files." />
         <Value author="Darius Markauskas" />
         <Value authorEmail="darmar.lt@gmail.com" />

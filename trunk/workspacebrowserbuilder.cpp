@@ -80,6 +80,44 @@ WorkspaceBrowserBuilder::WorkspaceBrowserBuilder(ParserF* parser, wxTreeCtrl* tr
     bmp = cbLoadBitmap(prefix2 + _T("procedure.png"), wxBITMAP_TYPE_PNG);
     m_pImlist->Add(bmp);
     m_ImgNr["procedure"] = 16;
+
+    bmp = cbLoadBitmap(prefix2 + _T("subroutine_private.png"), wxBITMAP_TYPE_PNG);
+    m_pImlist->Add(bmp);
+    m_ImgNr["subroutine_private"] = 17;
+    bmp = cbLoadBitmap(prefix2 + _T("function_private.png"), wxBITMAP_TYPE_PNG);
+    m_pImlist->Add(bmp);
+    m_ImgNr["function_private"] = 18;
+    bmp = cbLoadBitmap(prefix2 + _T("var_private.png"), wxBITMAP_TYPE_PNG);
+    m_pImlist->Add(bmp);
+    m_ImgNr["variable_private"] = 19;
+    bmp = cbLoadBitmap(prefix2 + _T("var_protected.png"), wxBITMAP_TYPE_PNG);
+    m_pImlist->Add(bmp);
+    m_ImgNr["variable_protected"] = 20;
+    bmp = cbLoadBitmap(prefix2 + _T("typedef_private.png"), wxBITMAP_TYPE_PNG);
+    m_pImlist->Add(bmp);
+    m_ImgNr["type_private"] = 21;
+    bmp = cbLoadBitmap(prefix2 + _T("interface_private.png"), wxBITMAP_TYPE_PNG);
+    m_pImlist->Add(bmp);
+    m_ImgNr["interface_private"] = 22;
+    bmp = cbLoadBitmap(prefix2 + _T("access_list_private.png"), wxBITMAP_TYPE_PNG);
+    m_pImlist->Add(bmp);
+    m_ImgNr["access_list_private"] = 23;
+    bmp = cbLoadBitmap(prefix2 + _T("access_list_public.png"), wxBITMAP_TYPE_PNG);
+    m_pImlist->Add(bmp);
+    m_ImgNr["access_list_public"] = 24;
+    bmp = cbLoadBitmap(prefix2 + _T("access_list_protected.png"), wxBITMAP_TYPE_PNG);
+    m_pImlist->Add(bmp);
+    m_ImgNr["access_list_protected"] = 25;
+    bmp = cbLoadBitmap(prefix2 + _T("procedure_private.png"), wxBITMAP_TYPE_PNG);
+    m_pImlist->Add(bmp);
+    m_ImgNr["procedure_private"] = 26;
+    bmp = cbLoadBitmap(prefix2 + _T("interface_function_private.png"), wxBITMAP_TYPE_PNG);
+    m_pImlist->Add(bmp);
+    m_ImgNr["interface_function_private"] = 27;
+    bmp = cbLoadBitmap(prefix2 + _T("interface_subroutine_private.png"), wxBITMAP_TYPE_PNG);
+    m_pImlist->Add(bmp);
+    m_ImgNr["interface_subroutine_private"] = 28;
+
     m_ImgNr["none"] = -1;
 
     m_pParser = parser;
@@ -372,7 +410,7 @@ bool WorkspaceBrowserBuilder::AddChildrenNodes(wxTreeCtrl* tree, wxTreeItemId pa
     TokensArrayF* pTokens = &parToken->m_Children;
 
     int childKM = tkFunction | tkProgram | tkSubroutine | tkPreprocessor | tkInterface | tkInterfaceExplicit | tkBlockData |
-                    tkType | tkVariable | tkProcedure;
+                    tkType | tkVariable | tkProcedure | tkAccessList;
     for (size_t i=0; i< pTokens->GetCount(); ++i)
     {
         TokenF* token = pTokens->Item(i);
@@ -423,14 +461,32 @@ int WorkspaceBrowserBuilder::AddInterfaceNode(wxTreeCtrl* tree, wxTreeItemId par
     else
     {
         TokensArrayF* pTokens = &parToken->m_Children;
-        int childKM = tkFunction | tkSubroutine;
-        for (size_t i=0; i< pTokens->GetCount(); ++i)
+        if (pTokens)
         {
-            TokenF* token = pTokens->Item(i);
-            if (token->m_TokenKind & childKM)
+            int childKM = tkFunction | tkSubroutine;
+            int imageIdx;
+            for (size_t i=0; i< pTokens->GetCount(); ++i)
             {
-                AddNodeIfNotThere(tree, parent, token->m_DisplayName, GetTokenKindImageIdx(parToken), new TreeDataF(sfToken, token), sorted);
-                count++;
+                TokenF* token = pTokens->Item(i);
+                if (token->m_TokenKind & childKM)
+                {
+                    if (token->m_TokenKind == tkFunction)
+                    {
+                        if (token->m_TokenAccess == taPublic)
+                            imageIdx = m_ImgNr["interface_function"];
+                        else
+                            imageIdx = m_ImgNr["interface_function_private"];
+                    }
+                    else
+                    {
+                        if (token->m_TokenAccess == taPublic)
+                            imageIdx = m_ImgNr["interface_subroutine"];
+                        else
+                            imageIdx = m_ImgNr["interface_subroutine_private"];
+                    }
+                    AddNodeIfNotThere(tree, parent, token->m_DisplayName, imageIdx, new TreeDataF(sfToken, token), sorted);
+                    count++;
+                }
             }
         }
     }
@@ -471,7 +527,7 @@ bool WorkspaceBrowserBuilder::SelectNode(wxTreeItemId node)
 
                 TokenF* pToken = data->m_pToken;
                 AddChildrenNodes(m_pTreeBottom, rootFuncs, pToken, tkFunction | tkSubroutine);
-                AddChildrenNodes(m_pTreeBottom, rootOthers, pToken, tkType | tkInterface | tkInterfaceExplicit);
+                AddChildrenNodes(m_pTreeBottom, rootOthers, pToken, tkType | tkInterface | tkInterfaceExplicit | tkAccessList | tkVariable);
 
                 m_pTreeBottom->Expand(rootFuncs);
                 m_pTreeBottom->Expand(rootOthers);
@@ -499,12 +555,15 @@ wxTreeItemId WorkspaceBrowserBuilder::AddNodeIfNotThere(wxTreeCtrl* tree, wxTree
         wxString itemText = tree->GetItemText(existing);
         if (itemText.IsSameAs(name))
         {
-            tree->SetItemImage(existing, imgIndex, wxTreeItemIcon_Normal);
-            tree->SetItemImage(existing, imgIndex, wxTreeItemIcon_Selected);
-            delete tree->GetItemData(existing); // make Valgrind happy
-            tree->SetItemData(existing, data);
+            if (tree->GetItemImage(existing) == imgIndex)
+            {
+                tree->SetItemImage(existing, imgIndex, wxTreeItemIcon_Normal);
+                tree->SetItemImage(existing, imgIndex, wxTreeItemIcon_Selected);
+                delete tree->GetItemData(existing); // make Valgrind happy
+                tree->SetItemData(existing, data);
 
-            return existing;
+                return existing;
+            }
         }
 
         if (sorted)
@@ -521,7 +580,7 @@ wxTreeItemId WorkspaceBrowserBuilder::AddNodeIfNotThere(wxTreeCtrl* tree, wxTree
                     insert_after = existing;
                 }
                 // then everything else, alphabetically
-                else if (name.CompareTo(itemText, wxString::ignoreCase) >= 0)
+                else if (name.CmpNoCase(itemText) >= 0)
                 {
                     insert_after = existing;
                 }
@@ -587,7 +646,8 @@ void WorkspaceBrowserBuilder::ExpandTopNode(wxTreeItemId node)
             case sfToken:
             {
                 TokenF* pToken = data->m_pToken;
-                AddChildrenNodes(m_pTreeTop, node, pToken, tkFunction | tkSubroutine | tkInterface | tkType | tkVariable | tkProcedure);
+                AddChildrenNodes(m_pTreeTop, node, pToken, tkFunction | tkSubroutine | tkInterface | tkType | tkVariable |
+                                 tkProcedure | tkAccessList | tkInterfaceExplicit);
                 break;
             }
             default: break;
@@ -729,17 +789,43 @@ int WorkspaceBrowserBuilder::GetTokenKindImageIdx(TokenF* token)
 
         case tkModule: return m_ImgNr["module"];
 
-        case tkSubroutine: return m_ImgNr["subroutine"];
-
-        case tkFunction: return m_ImgNr["function"];
-
+        case tkSubroutine:
+            {
+                if (token->m_TokenAccess == taPrivate)
+                    return m_ImgNr["subroutine_private"];
+                else
+                    return m_ImgNr["subroutine"];
+            }
+        case tkFunction:
+            {
+                if (token->m_TokenAccess == taPrivate)
+                    return m_ImgNr["function_private"];
+                else
+                    return m_ImgNr["function"];
+            }
         case tkProgram: return m_ImgNr["program"];
 
-        case tkType: return m_ImgNr["type"];
-
-        case tkInterface: return m_ImgNr["interface"];
-
-        case tkInterfaceExplicit: return m_ImgNr["interface"];
+        case tkType:
+            {
+                if (token->m_TokenAccess == taPrivate)
+                    return m_ImgNr["type_private"];
+                else
+                    return m_ImgNr["type"];
+            }
+        case tkInterface:
+            {
+                if (token->m_TokenAccess == taPrivate)
+                    return m_ImgNr["interface_private"];
+                else
+                    return m_ImgNr["interface"];
+            }
+        case tkInterfaceExplicit:
+            {
+                if (token->m_TokenAccess == taPrivate)
+                    return m_ImgNr["interface_private"];
+                else
+                    return m_ImgNr["interface"];
+            }
 
         case tkCommonblock: return m_ImgNr["none"];
 
@@ -747,13 +833,37 @@ int WorkspaceBrowserBuilder::GetTokenKindImageIdx(TokenF* token)
 
         case tkFile: return m_ImgNr["none"];
 
-        case tkVariable: return m_ImgNr["variable"];
+        case tkVariable:
+            {
+                if (token->m_TokenAccess == taPrivate)
+                    return m_ImgNr["variable_private"];
+                else if (token->m_TokenAccess == taProtected)
+                    return m_ImgNr["variable_protected"];
+                else
+                    return m_ImgNr["variable"];
+            }
 
         case tkInterfaceFunction: return m_ImgNr["interface_function"];
 
         case tkInterfaceSubroutine: return m_ImgNr["interface_subroutine"];
 
-        case tkProcedure: return m_ImgNr["procedure"];
+        case tkProcedure:
+            {
+                if (token->m_TokenAccess == taPrivate)
+                    return m_ImgNr["procedure_private"];
+                else
+                    return m_ImgNr["procedure"];
+            }
+
+        case tkAccessList:
+            {
+                if (token->m_TokenAccess == taPrivate)
+                    return m_ImgNr["access_list_private"];
+                else if (token->m_TokenAccess == taProtected)
+                    return m_ImgNr["access_list_protected"];
+                else
+                    return m_ImgNr["access_list_public"];
+            }
 
         default: return m_ImgNr["none"];
     }

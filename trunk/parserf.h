@@ -33,7 +33,7 @@ class ParserF
         bool FindTypeBoundProcedures(const TokenFlat& interToken, const wxArrayString& searchArr, TokensArrayFlat& resTokenArr);
         bool FindMatchTokenInSameModule(const TokenFlat& procedureToken, const wxString& search, TokensArrayFlat& result, int tokenKindMask, int noChildrenOf);
         size_t FindMatchTokensDeclared(const wxString& search, TokensArrayFlat& result, int tokenKindMask, bool partialMatch=false, int noChildrenOf=0);
-        void FindMatchChildrenDeclared(TokensArrayF &m_Children, wxString search, TokensArrayFlat& result, int tokenKindMask, bool partialMatch=false, int noChildrenOf=0);
+        void FindMatchChildrenDeclared(TokensArrayF &m_Children, wxString search, TokensArrayFlat& result, int tokenKindMask, bool partialMatch=false, int noChildrenOf=0, bool onlyPublicNames=false);
         size_t FindMatchTokens(wxString filename, wxString search, TokensArrayF& result);
         void Clear();
         void ObtainUsedDeclaredModules(const wxString& fileName, StringSet* fileUseModules, StringSet* fileDeclaredModules, StringSet* fileIncludes);
@@ -41,11 +41,11 @@ class ParserF
         bool IsFileFortran(const wxString& filename, FortranSourceForm& fsForm);
         void FindMatchDeclarationsInCurrentScope(const wxString& search, cbEditor* ed, TokensArrayFlat& result, bool partialMatch, int endPos=-1);
         void FindMatchVariablesInModules(const wxString& search, TokensArrayFlat& result, bool partialMatch);
-        bool FindMatchTypeComponents(cbEditor* ed, const wxString& line, TokensArrayFlat& result, bool partialMatch, bool& isAfterPercent, bool getAsProcedure=false);
-        void FindMatchTokensForToolTip(const wxString& nameUnder, int posEndOfWord, cbEditor* ed, TokensArrayFlat& result, bool& isAfterPercent);
+        bool FindMatchTypeComponents(cbEditor* ed, const wxString& line, TokensArrayFlat& result, bool partialMatch, bool onlyPublicNames, bool& isAfterPercent, bool getAsProcedure=false);
+        void FindMatchTokensForToolTip(const wxString& nameUnder, int posEndOfWord, cbEditor* ed, bool onlyUseAssoc, bool onlyPublicNames, TokensArrayFlat& result, bool& isAfterPercent);
         void FindGenericTypeBoudComponents(TokenFlat* token, TokensArrayFlat& result);
-        void FindMatchTokensForJump(cbEditor* ed, TokensArrayFlat& result);
-        bool FindMatchTokensForCodeCompletion(bool useSmartCC, const wxString& nameUnderCursor, cbEditor* ed, TokensArrayFlat& result, bool& isAfterPercent, int& tokKind);
+        void FindMatchTokensForJump(cbEditor* ed, bool onlyUseAssoc, bool onlyPublicNames, size_t maxMatch, TokensArrayFlat& result);
+        bool FindMatchTokensForCodeCompletion(bool useSmartCC, bool onlyUseAssoc, bool onlyPublicNames, size_t maxMatch, const wxString& nameUnderCursor, cbEditor* ed, TokensArrayFlat& result, bool& isAfterPercent, int& tokKind);
         bool FindWordsBefore(cbEditor* ed, int numberOfWords, wxString &curLine, wxArrayString &firstWords);
         void RereadOptions();
         bool FindTokenDeclaration(TokenFlat& token, const wxString& argName, wxString& argDecl, wxString& argDescription);
@@ -63,6 +63,7 @@ class ParserF
         void FindChildrenOfInterface(TokenFlat* token, TokensArrayFlat& result);
         void GetPossitionOfDummyArgument(const wxString& args, const wxString& arg, int& start, int& end);
         void GetCallTipHighlight(const wxString& calltip, int commasWas, int& start, int& end);
+        void FindUseAssociatedTokens(bool onlyPublicNames, cbEditor* ed, const wxString& search, bool partialMatch, TokensArrayFlat& result, int tokenKindMask, bool changeDisplayName, TokensArrayFlat* useWithRenameTok=NULL);
     protected:
     private:
         void FindMatchChildren(TokensArrayF &m_Children, wxString search, TokensArrayF& result, bool exact=false);
@@ -70,12 +71,21 @@ class ParserF
         void FindChildrenOfToken(TokensArrayF &children, const wxString &nameToken, TokensArrayF& result,  int tokenKindMask, bool partialMatch);
         size_t GetFileIndex(const wxString& filename);
         TokensArrayF* FindFileTokens(const wxString& filename);
+        TokenF* FindModuleToken(const wxString& moduleName);
         void ObtainUDModulesToken(TokenF* token, StringSet* fileUseModules, StringSet* fileDeclaredModules, StringSet* fileIncludes);
-        bool FindLineScope(unsigned int line, int& lineStart, int tokenKindMask, TokensArrayF& children);
+        bool FindLineScope(unsigned int line, int& lineStart, int tokenKindMask, TokensArrayF& children, TokenF* &pToken);
+        void FindLineScopeLN(cbEditor* ed, int& lineStart, TokenFlat* &token, int endPos);
         bool CutBlocks(const wxChar& ch, wxString& line);
         bool GetTypeOfComponent(const wxString& nameType, const wxString& nameComponent, wxString& nameTypeComponent);
         bool GetTypeOfChild(TokenF* pT, const wxString& nameComponent, wxString& nameTypeComponent);
         TokenF* GetType(const wxString& nameType);
+        void FindUseAssociatedTokens(TokenF* useToken, const wxString& searchLw, TokensArrayFlat& result, int tokenKindMask, bool partialMatch, bool changeDisplayName, bool onlyPublicNames, TokensArrayFlat* useWithRenameTok=NULL);
+        void FindMatchTokensInModuleAndUse(const wxString &modName, const wxString& searchLw, TokensArrayFlat& result, int tokenKindMask, int noChildrenOf, bool partialMatch, bool onlyPublicNames, bool changeDisplayName, TokensArrayFlat* useWithRenameTok);
+        void FindAddress(cbEditor* ed, wxArrayString& address);
+        void FindTokensForUse(const wxString& search, wxArrayString& firstWords, TokensArrayFlat& result, int& tokKind, bool onlyPublicNames);
+        void AddUniqueResult(TokensArrayFlat& result, TokenF* token);
+        void AddUniqueResult(TokensArrayFlat& result, TokenFlat* token);
+
         TokensArrayF* m_pTokens;
         bool m_Done;
         bool m_ExtDone;
@@ -84,6 +94,10 @@ class ParserF
 
         wxString m_Buff;
         std::vector<int> m_LineStarts;
+
+        int recursiveDeep;
+        size_t maxResultCount;
+        bool reachedResultCountLimit;
 };
 
 #endif // PARSERF_H

@@ -24,7 +24,7 @@ function list_of_other_fortran_keywords()
                 elseif, elsewhere, encoding, end, endassociate, endblockdata, enddo, &
                 endfile, endforall, endfunction, endif, endinterface, endmodule, endprogram, &
                 endselect, endsubroutine, endtype, endwhere, entry, eor, equivalence, &
-                err, errmsg, exist, exit, external, file, flush, fmt, forall, form, format, &
+                err, errmsg, exist, exit, external, final, file, flush, fmt, forall, form, format, &
                 formatted, function, go, goto, id, if, implicit, in, include, inout, &
                 integer, inquire, intent, interface, intrinsic, iomsg, iolength, &
                 iostat, kind, len, logical, module, named, namelist, nextrec, nml, &
@@ -167,7 +167,7 @@ logical function ALLOCATED(ARRAY)
     ! The return value is a scalar LOGICAL with the default logical kind type parameter.
     ! If ARRAY is allocated, ALLOCATED(ARRAY) is .TRUE.; otherwise, it returns .FALSE.
     ! Standard: Fortran 95 and later.
-    type(any_allocatable_array) :: ARRAY 
+    type(any_allocatable_array) :: ARRAY
 end function
 
 real function ANINT(A [, KIND])
@@ -391,8 +391,8 @@ real function BESSEL_Y0(X)
     ! X  -The type shall be REAL, and it shall be scalar.
     ! Return value:
     ! The return value is a scalar of type REAL. It has the same kind as X.
-	! Standard: Fortran 2008 and later.
-	real :: X
+    ! Standard: Fortran 2008 and later.
+    real :: X
 end function
 
 real function BESSEL_Y1(X)
@@ -401,8 +401,8 @@ real function BESSEL_Y1(X)
     ! X  -The type shall be REAL, and it shall be scalar.
     ! Return value:
     ! The return value is a scalar of type REAL. It has the same kind as X.
-	! Standard: Fortran 2008 and later.
-	real :: X
+    ! Standard: Fortran 2008 and later.
+    real :: X
 end function
 
 real function BESSEL_YN(N, X)
@@ -459,7 +459,9 @@ subroutine C_F_POINTER(CPTR, FPTR[, SHAPE])
     ! SHAPE -(Optional) Rank-one array of type INTEGER with INTENT(IN). It shall be present if and only
     !         if fptr is an array. The size must be equal to the rank of fptr.
     ! Standard: Fortran 2003 and later
-    type(c_ptr) :: CPTR
+    type(c_ptr), intent(in) :: CPTR
+    type(Fortran pointer), intent(out) :: FPTR
+    integer, dimension(:), optional, intent(in) :: SHAPE
 end subroutine
 
 subroutine C_F_PROCPOINTER(cptr, fptr)
@@ -473,18 +475,18 @@ function C_FUNLOC(x)
     ! Determines the C address of the argument
     ! Arguments:
     ! x   -Interoperable function or pointer to such function.
-	! Return value:
+    ! Return value:
     ! The return value is of type C_FUNPTR and contains the C address of the argument.
     ! Standard: Fortran 2003 and later
 end function
 
 c_ptr function C_LOC(X)
     ! Determines the C address of the argument
-	! Arguments:
+    ! Arguments:
     ! X  -Associated scalar pointer or interoperable scalar or allocated allocatable variable with TARGET attribute.
     ! Return value:
     ! The return value is of type C_PTR and contains the C address of the argument.
-	! Standard: Fortran 2003 and later
+    ! Standard: Fortran 2003 and later
 end function
 
 function C_SIZEOF(X)
@@ -498,6 +500,8 @@ function C_SIZEOF(X)
     ! with POINTER or ALLOCATABLE components, the return value doesn't account for the sizes of the data pointed
     ! to by these components.
     ! Standard: Fortran 2008
+    type(any_type, rank or shape) :: X
+    integer(C_SIZE_T) :: C_SIZEOF
 end function
 
 complex function CABS(A)
@@ -510,14 +514,14 @@ end function
 
 integer function CEILING(A [, KIND])
     ! Returns the least integer greater than or equal to A
-	! Arguments:
+    ! Arguments:
     ! A  -The type shall be REAL.
     ! KIND  -(Optional) An INTEGER initialization expression indicating the kind parameter of the result.
     ! Return value:
     ! The return value is of type INTEGER(KIND) if KIND is present and a default-kind INTEGER otherwise.
-	! Standard: Fortran 95 and later
-	real :: A
-    integer :: KIND
+    ! Standard: Fortran 95 and later
+    real :: A
+    integer, optional :: KIND
 end function
 
 CHARACTER(1) function CHAR(I [, KIND])
@@ -528,7 +532,8 @@ CHARACTER(1) function CHAR(I [, KIND])
     ! Return value:
     ! The return value is of type CHARACTER(1)
     ! Standard: Fortran 77 and later
-    integer :: I, KIND
+    integer :: I
+    integer, optional :: KIND
 end function
 
 complex function CMPLX(X [, Y [, KIND]])
@@ -545,86 +550,88 @@ complex function CMPLX(X [, Y [, KIND]])
 	! Standard: Fortran 77 and later
     integer, real, complex :: X
     integer, real :: Y
-    integer :: KIND
+    integer, optional :: KIND
 end function
 
 integer function COMMAND_ARGUMENT_COUNT()
     ! Returns the number of arguments passed on the command line when the containing program was invoked
-    ! Standard: Fortran 2003 and later
     ! Return value:
     ! The return value is an INTEGER of default kind.
+    ! Standard: Fortran 2003 and later
 end function
 
 function CONJG(Z)
     ! Returns the conjugate of Z. If Z is (x, y) then the result is (x, -y)
-    ! Standard: Fortran 77 and later
     ! Arguments:
     ! Z -The type shall be COMPLEX.
     ! Return value:
     ! The return value is of type COMPLEX.
+    ! Standard: Fortran 77 and later
+    complex :: Z, CONJG
 end function
 
 function COS(X)
     ! Computes the cosine of X.
-    ! Standard: Fortran 77 and later
     ! Arguments:
     ! X  -The type shall be REAL or COMPLEX.
     ! Return value:
     ! The return value is of the same type and kind as X. The real part of the result is in radians.
     ! If X is of the type REAL, the return value lies in the range -1 <= cos(x) <= 1.
+    ! Standard: Fortran 77 and later
+    real, complex :: X, COS
 end function
 
 function CCOS(X)
     ! This is specific name of COS function.
     ! Computes the cosine of X.
-    ! Standard: Fortran 77 and later
     ! Arguments:
     ! X  -The type shall be COMPLEX.
     ! Return value:
     ! The return value is of the same type and kind as X. The real part of the result is in radians.
     ! If X is of the type REAL, the return value lies in the range -1 <= cos(x) <= 1.
+    ! Standard: Fortran 77 and later
     COMPLEX :: CCOS, X
 end function
 
 function DCOS(X)
     ! This is specific name of COS function.
     ! Computes the cosine of X.
-    ! Standard: Fortran 77 and later
     ! Arguments:
     ! X  -The type shall be Doubleprecision.
     ! Return value:
     ! The return value is of the same type and kind as X. The real part of the result is in radians.
     ! If X is of the type REAL, the return value lies in the range -1 <= cos(x) <= 1.
+    ! Standard: Fortran 77 and later
     doubleprecision :: DCOS, X
 end function
 
 function COSH(X)
     ! Computes the hyperbolic cosine of X.
-    ! Standard: Fortran 77 and later, for a complex argument Fortran 2008 or later
     ! Arguments:
     ! X  -The type shall be REAL or COMPLEX.
     ! Return value:
     ! The return value has same type and kind as X. If X is complex, the imaginary part of the result
     ! is in radians. If X is REAL, the return value has a lower bound of one, cosh(x) >= 1.
+    ! Standard: Fortran 77 and later, for a complex argument Fortran 2008 or later
+    real, complex :: X, COSH
 end function
 
 function DCOSH(X)
     ! This is specific name of COSH function.
     ! Computes the hyperbolic cosine of X.
-    ! Standard: Fortran 77 and later.
     ! Arguments:
     ! X  -The type shall be DOUBLE PRECISION.
     ! Return value:
     ! The return value has same type and kind as X. If X is complex, the imaginary part of the result
     ! is in radians. If X is REAL, the return value has a lower bound of one, cosh(x) >= 1.
-    double precision :: DCOSH, X
+    ! Standard: Fortran 77 and later.
+    doubleprecision :: DCOSH, X
 end function
 
 function COUNT(MASK [, DIM, KIND])
     ! Counts the number of .TRUE. elements in a logical MASK, or, if the DIM argument is supplied,
     ! counts the number of elements along each row of the array in the DIM direction. If the array
     ! has zero size, or all of the elements of MASK are .FALSE., then the result is 0.
-    ! Standard: Fortran 95 and later, with KIND argument Fortran 2003 and later
     ! Arguments:
     ! MASK  -The type shall be LOGICAL.
     ! DIM   -(Optional) The type shall be INTEGER.
@@ -633,6 +640,9 @@ function COUNT(MASK [, DIM, KIND])
     ! The return value is of type INTEGER and of kind KIND. If KIND is absent, the return value is
     ! of default integer kind. If DIM is present, the result is an array with a rank one less than
     ! the rank of ARRAY, and a size corresponding to the shape of ARRAY with the DIM dimension removed.
+    ! Standard: Fortran 95 and later, with KIND argument Fortran 2003 and later
+    logical :: MASK(:[,...])
+    integer, optional :: DIM, KIND
 end function
 
 subroutine CPU_TIME(TIME)
@@ -643,9 +653,9 @@ subroutine CPU_TIME(TIME)
     ! Note that TIME may contain a system dependent, arbitrary offset and may not start with 0.0.
     ! For CPU_TIME, the absolute value is meaningless, only differences between subsequent calls
     ! to this subroutine, as shown in the example below, should be used.
-    ! Standard: Fortran 95 and later
     ! Arguments:
     ! TIME  -The type shall be REAL with INTENT(OUT).
+    ! Standard: Fortran 95 and later
     real, intent(out) :: TIME
 end subroutine
 
@@ -655,13 +665,16 @@ function CSHIFT(ARRAY, SHIFT [, DIM])
     ! rank of ARRAY. If the rank of ARRAY is one, then all elements of ARRAY are shifted by SHIFT places.
     ! If rank is greater than one, then all complete rank one sections of ARRAY along the given dimension
     ! are shifted. Elements shifted out one end of each rank one section are shifted back in the other end.
-    ! Standard: Fortran 95 and later
     ! Arguments:
     ! ARRAY  -Shall be an array of any type.
     ! SHIFT  -The type shall be INTEGER.
     ! DIM    -The type shall be INTEGER.
     ! Return value:
     ! Returns an array of same type and rank as the ARRAY argument.
+    ! Standard: Fortran 95 and later
+    type(any_type) :: ARRAY(:[,...])
+    integer :: SHIFT
+    integer, optional :: DIM
 end function
 
 function DABS(A)
@@ -686,12 +699,12 @@ subroutine DATE_AND_TIME([DATE, TIME, ZONE, VALUES])
     !   VALUE(6): 	The minutes of the hour
     !   VALUE(7): 	The seconds of the minute
     !   VALUE(8): 	The milliseconds of the second
-    ! Standard: Fortran 95 and later
     ! Arguments:
     ! DATE  -(Optional) The type shall be CHARACTER(LEN=8) or larger, and of default kind.
     ! TIME  -(Optional) The type shall be CHARACTER(LEN=10) or larger, and of default kind.
     ! ZONE  -(Optional) The type shall be CHARACTER(LEN=5) or larger, and of default kind.
     ! VALUES    -(Optional) The type shall be INTEGER(8).
+    ! Standard: Fortran 95 and later
     character(len=8 or larger), optional :: DATE
     character(len=10 or larger), optional :: TIME
     character(len=5 or larger), optional :: ZONE
@@ -700,57 +713,60 @@ end subroutine
 
 function DBLE(A)
     ! Converts A to double precision real type.
-    ! Standard: Fortran 77 and later
     ! Arguments:
     ! A     -The type shall be INTEGER, REAL, or COMPLEX.
     ! Return value:
     ! The return value is of type double precision real.
+    ! Standard: Fortran 77 and later
+    integer, real, complex :: A
+    doubleprecision :: DBLE
 end function
 
 function DIGITS(X)
     ! Returns the number of significant binary digits of the internal model representation of X.
     ! For example, on a system using a 32-bit floating point representation, a default real number
     ! would likely return 24.
-    ! Standard: Fortran 95 and later
     ! Arguments:
     ! X     -The type may be INTEGER or REAL.
     ! Return value:
     ! The return value is of type INTEGER.
-	integer :: DIGITS
-	integer or real :: X
+    ! Standard: Fortran 95 and later
+    integer :: DIGITS
+    integer, real :: X
 end function
 
 function DIM(X,Y)
     ! Returns the difference X-Y if the result is positive; otherwise returns zero.
-	! Standard: Fortran 77 and later
     ! Arguments:
     ! X     -The type shall be INTEGER or REAL
     ! Y     -The type shall be the same type and kind as X.
     ! Return value:
     ! The return value is of type INTEGER or REAL.
+    ! Standard: Fortran 77 and later
+    integer, real :: X, Y, DIM
 end function
 
 function IDIM(X,Y)
     ! This is specific name of DIM function.
     ! Returns the difference X-Y if the result is positive; otherwise returns zero.
-	! Standard: Fortran 77 and later
     ! Arguments:
     ! X     -The type shall be INTEGER.
     ! Y     -The type shall be the same type and kind as X.
     ! Return value:
     ! The return value is of type INTEGER.
+    ! Standard: Fortran 77 and later
     integer :: IDIM, X, Y
 end function
 
 function DDIM(X,Y)
     ! This is specific name of DIM function.
     ! Returns the difference X-Y if the result is positive; otherwise returns zero.
-	! Standard: Fortran 77 and later
     ! Arguments:
     ! X     -The type shall be DOUBLE PRECISION.
     ! Y     -The type shall be the same type and kind as X.
     ! Return value:
     ! The return value is of type DOUBLE PRECISION.
+    ! Standard: Fortran 77 and later
     DOUBLE PRECISION :: DDIM, X, Y
 end function
 
@@ -760,7 +776,6 @@ function DOT_PRODUCT(VECTOR_A, VECTOR_B)
     ! and of equal size. If the vectors are INTEGER or REAL, the result is SUM(VECTOR_A*VECTOR_B).
     ! If the vectors are COMPLEX, the result is SUM(CONJG(VECTOR_A)*VECTOR_B). If the vectors
     ! are LOGICAL, the result is ANY(VECTOR_A .AND. VECTOR_B).
-    ! Standard: Fortran 95 and later
     ! Arguments:
     ! VECTOR_A  -The type shall be numeric or LOGICAL, rank 1.
     ! VECTOR_B  -The type shall be numeric if VECTOR_A is of numeric type or LOGICAL if VECTOR_A
@@ -768,160 +783,180 @@ function DOT_PRODUCT(VECTOR_A, VECTOR_B)
     ! Return value:
     ! If the arguments are numeric, the return value is a scalar of numeric type, INTEGER, REAL,
     ! or COMPLEX. If the arguments are LOGICAL, the return value is .TRUE. or .FALSE..
+    ! Standard: Fortran 95 and later
+    type(any_numerical_or_logical) :: VECTOR_A(:), VECTOR_B(:)
+    type(same_as_argument) :: DOT_PRODUCT
 end function
 
 function DPROD(X,Y)
     ! Returns the product X*Y.
-    ! Standard: Fortran 77 and later
     ! Arguments:
     ! X     -The type shall be REAL.
     ! Y     -The type shall be REAL.
     ! Return value:
     ! The return value is of type REAL(8).
+    ! Standard: Fortran 77 and later
     real(8) :: DPROD
     real    :: X, Y
 end function
 
 function EOSHIFT(ARRAY, SHIFT [, BOUNDARY, DIM])
-	! Performs an end-off shift on elements of ARRAY along the dimension of DIM. If DIM is omitted it is
-	! taken to be 1. DIM is a scalar of type INTEGER in the range of 1 \leq DIM \leq n) where n is the
-	! rank of ARRAY. If the rank of ARRAY is one, then all elements of ARRAY are shifted by SHIFT places.
-	! If rank is greater than one, then all complete rank one sections of ARRAY along the given dimension
-	! are shifted. Elements shifted out one end of each rank one section are dropped. If BOUNDARY is present
-	! then the corresponding value of from BOUNDARY is copied back in the other end. If BOUNDARY is not
-	! present then the following are copied in depending on the type of ARRAY.
+    ! Performs an end-off shift on elements of ARRAY along the dimension of DIM. If DIM is omitted it is
+    ! taken to be 1. DIM is a scalar of type INTEGER in the range of 1 \leq DIM \leq n) where n is the
+    ! rank of ARRAY. If the rank of ARRAY is one, then all elements of ARRAY are shifted by SHIFT places.
+    ! If rank is greater than one, then all complete rank one sections of ARRAY along the given dimension
+    ! are shifted. Elements shifted out one end of each rank one section are dropped. If BOUNDARY is present
+    ! then the corresponding value of from BOUNDARY is copied back in the other end. If BOUNDARY is not
+    ! present then the following are copied in depending on the type of ARRAY.
     ! "Array Type"  "Boundary Value"
     !  Numeric       0 of the type and kind of ARRAY.
     !  Logical       .FALSE..
     !  Character(len) len blanks.
-    ! Standard: Fortran 95 and later
     ! Arguments:
-    !   ARRAY 	May be any type, not scalar.
-    !   SHIFT 	The type shall be INTEGER.
-    !   BOUNDARY 	Same type as ARRAY.
-    !   DIM 	The type shall be INTEGER.
+    !   ARRAY     May be any type, not scalar.
+    !   SHIFT     The type shall be INTEGER.
+    !   BOUNDARY   Same type as ARRAY.
+    !   DIM       The type shall be INTEGER.
     ! Return value:
     ! Returns an array of same type and rank as the ARRAY argument.
+    ! Standard: Fortran 95 and later
+    type(any_type) :: ARRAY(:[,...])
+    integer :: SHIFT
+    type(same_as_ARRAY), optional :: BOUNDARY[(:[,...])]
+    type(same_as_ARRAY) :: EOSHIFT(:[,...])
 end function
 
 function EPSILON(X)
 	! Returns the smallest number E of the same kind as X such that 1 + E > 1.
-    ! Standard: Fortran 95 and later
     ! Arguments:
     ! X     -The type shall be REAL.
     ! Return value:
     ! The return value is of same type as the argument.
+    ! Standard: Fortran 95 and later
+    real :: X, EPSILON
 end function
 
 function ERF(X)
     ! Computes the error function of X.
-    ! Standard: Fortran 2008 and later
     ! Arguments:
     ! X     -The type shall be REAL.
     ! Return value:
     ! The return value is of type REAL, of the same kind as X and lies in the range -1 <= erf(x) <= 1 .
+    ! Standard: Fortran 2008 and later
+    real :: X, ERF
 end function
 
 function ERFC(X)
 	! Computes the complementary error function of X.
-    ! Standard: Fortran 2008 and later
     ! Arguments:
     ! X     -The type shall be REAL.
     ! Return value:
     ! The return value is of type REAL and of the same kind as X. It lies in the range 0 <= erfc(x) <= 2 .
+    ! Standard: Fortran 2008 and later
+    real :: X, ERFC
 end function
 
 function ERFC_SCALED(X)
     ! Computes the exponentially-scaled complementary error function of X.
-    ! Standard: Fortran 2008 and later
     ! Arguments:
     ! X     -The type shall be REAL.
     ! Return value:
     ! The return value is of type REAL and of the same kind as X.
+    ! Standard: Fortran 2008 and later
+    real :: X, ERFC_SCALED
 end function
 
 function EXP(X)
 	! Computes the base e exponential of X.
-    ! Standard: Fortran 77 and later
     ! Arguments:
     ! X     -The type shall be REAL or COMPLEX.
     ! Return value:
     ! The return value has same type and kind as X.
+    ! Standard: Fortran 77 and later
+    real, complex :: X, EXP
 end function
 
 function CEXP(X)
     ! This is specific name of EXP function.
 	! Computes the base e exponential of X.
-    ! Standard: Fortran 77 and later
     ! Arguments:
     ! X     -The type shall be COMPLEX.
     ! Return value:
     ! The return value has same type and kind as X.
+    ! Standard: Fortran 77 and later
     COMPLEX :: CEXP, X
 end function
 
 function DEXP(X)
     ! This is specific name of EXP function.
 	! Computes the base e exponential of X.
-    ! Standard: Fortran 77 and later
     ! Arguments:
     ! X     -The type shall be DOUBLE PRECISION.
     ! Return value:
     ! The return value has same type and kind as X.
+    ! Standard: Fortran 77 and later
     DOUBLE PRECISION :: DEXP, X
 end function
 
 function EXPONENT(X)
     ! Returns the value of the exponent part of X. If X is zero the value returned is zero.
-    ! Standard: Fortran 95 and later
     ! Arguments:
     ! X     -The type shall be REAL.
     ! Return value:
     ! The return value is of type default INTEGER.
+    ! Standard: Fortran 95 and later
+    real :: X
+    integer :: EXPONENT
 end function
 
 function FLOAT(A)
 	! Converts the integer A to a default real value.
-	! Standard: Fortran 77 and later
     ! Arguments:
     ! A   -The type shall be INTEGER.
     ! Return value:
     ! The return value is of type default REAL.
+	! Standard: Fortran 77 and later
+    integer :: A
+    real :: FLOAT
 end function
 
 function FLOOR(A [, KIND])
 	! Returns the greatest integer less than or equal to X.
-    ! Standard: Fortran 95 and later
     ! Arguments:
     ! A      -The type shall be REAL.
     ! KIND   -(Optional) An INTEGER initialization expression indicating the kind parameter of the result.
     ! Return value:
     ! The return value is of type INTEGER(KIND) if KIND is present and of default-kind INTEGER otherwise.
+    ! Standard: Fortran 95 and later
+    real :: A
+    integer, optional :: KIND
+    integer(KIND) :: FLOOR
 end function
 
 function FRACTION(X)
     ! Returns the fractional part of the model representation of X.
-    ! Standard: Fortran 95 and later
     ! Arguments:
     ! X    -The type of the argument shall be a REAL.
     ! Return value:
     ! The return value is of the same type and kind as the argument. The fractional part of the model
     ! representation of X is returned; it is X * RADIX(X)**(-EXPONENT(X)).
+    ! Standard: Fortran 95 and later
+    real :: X, FRACTION
 end function
 
 function GAMMA(X)
 	! Computes Gamma of X. For positive, integer values of X the Gamma function simplifies to the factorial
 	! function \Gamma(x)=(x-1)!.
-    ! Standard: Fortran 2008 and later
     ! Arguments:
     ! X   -Shall be of type REAL and neither zero nor a negative integer.
     ! Return value:
     ! The return value is of type REAL of the same kind as X.
+    ! Standard: Fortran 2008 and later
+    real :: X, GAMMA
 end function
 
 subroutine GET_COMMAND([COMMAND, LENGTH, STATUS])
     ! Retrieve the entire command line that was used to invoke the program.
-    ! Standard: Fortran 2003 and later
     ! Arguments:
     ! COMMAND     -(Optional) shall be of type CHARACTER and of default kind.
     ! LENGTH      -(Optional) Shall be of type INTEGER and of default kind.
@@ -932,6 +967,7 @@ subroutine GET_COMMAND([COMMAND, LENGTH, STATUS])
     ! If LENGTH is present, it is assigned the length of the command line.
     ! If STATUS is present, it is assigned 0 upon success of the command, -1 if COMMAND is too short
     ! to store the command line, or a positive value in case of an error.
+    ! Standard: Fortran 2003 and later
 	character(len=*), optional :: COMMAND
 	integer, optional          :: LENGTH
 	integer, optional          :: STATUS
@@ -939,7 +975,6 @@ end subroutine
 
 subroutine GET_COMMAND_ARGUMENT(NUMBER[, VALUE, LENGTH, STATUS])
 	! Retrieve the NUMBER-th argument that was passed on the command line when the containing program was invoked.
-    ! Standard: Fortran 2003 and later
     ! Arguments:
     ! NUMBER 	Shall be a scalar of type INTEGER and of default kind, NUMBER >= 0
     ! VALUE 	(Optional) Shall be a scalar of type CHARACTER and of default kind.
@@ -953,15 +988,15 @@ subroutine GET_COMMAND_ARGUMENT(NUMBER[, VALUE, LENGTH, STATUS])
     ! The LENGTH argument contains the length of the NUMBER-th command line argument.
     ! If the argument retrieval fails, STATUS is a positive number; if VALUE contains a truncated
     ! command line argument, STATUS is -1; and otherwise the STATUS is zero.
+    ! Standard: Fortran 2003 and later
     integer :: NUMBER
     character(len=*), optional :: VALUE
     integer, optional :: LENGTH
     integer, optional :: STATUS
 end subroutine
 
-subroutine GET_ENVIRONMENT_VARIABLE(NAME[, VALUE, LENGTH, STATUS, TRIM_NAME)
+subroutine GET_ENVIRONMENT_VARIABLE(NAME[, VALUE, LENGTH, STATUS, TRIM_NAME])
 	! Get the VALUE of the environmental variable NAME.
-    ! Standard: Fortran 2003 and later
     ! Arguments:
     ! NAME  -Shall be a scalar of type CHARACTER and of default kind.
     ! VALUE -Shall be a scalar of type CHARACTER and of default kind.
@@ -976,6 +1011,7 @@ subroutine GET_ENVIRONMENT_VARIABLE(NAME[, VALUE, LENGTH, STATUS, TRIM_NAME)
     ! and 2 if the processor does not support environment variables; in all other cases STATUS is zero.
     ! If TRIM_NAME is present with the value .FALSE., the trailing blanks in NAME are significant; otherwise
     ! they are not part of the environment variable name.
+    ! Standard: Fortran 2003 and later
     character(len=*) :: NAME
     character(len=*), optional :: VALUE
     integer, optional :: LENGTH
@@ -985,21 +1021,23 @@ end subroutine
 
 function HUGE(X)
     ! Returns the largest number that is not an infinity in the model of the type of X.
-    ! Standard: Fortran 95 and later
     ! Arguments:
     ! X   -Shall be of type REAL or INTEGER.
     ! Return value:
     ! The return value is of the same type and kind as X
+    ! Standard: Fortran 95 and later
+    real, integer :: X, HUGE
 end function
 
 function HYPOT(X, Y)
     ! HYPOT(X,Y) is the Euclidean distance function. It is equal to sqrt(X^2 + Y^2), without undue underflow or overflow.
-	! Standard: Fortran 2008 and later
     ! Arguments:
     ! X   -The type shall be REAL.
     ! Y   -The type and kind type parameter shall be the same as X.
     ! Return value:
     ! The return value has the same type and kind type parameter as X.
+	! Standard: Fortran 2008 and later
+    real :: X, Y, HYPOT
 end function
 
 function IABS(A)
@@ -1012,32 +1050,36 @@ end function
 
 function IACHAR(C [, KIND])
 	! Returns the code for the ASCII character in the first character position of C.
-    ! Standard: Fortran 95 and later, with KIND argument Fortran 2003 and later
     ! Arguments:
     ! C    -Shall be a scalar CHARACTER, with INTENT(IN)
     ! KIND  -(Optional) An INTEGER initialization expression indicating the kind parameter of the result.
     ! Return value:
     ! The return value is of type INTEGER and of kind KIND. If KIND is absent, the return value is of default integer kind.
+    ! Standard: Fortran 95 and later, with KIND argument Fortran 2003 and later
+    character, intent(in) :: C
+    integer, optional :: KIND
+    integer(KIND) :: IACHAR
 end function
 
 function IAND(I, J)
 	! Bitwise logical AND.
-    ! Standard: Fortran 95 and later
     ! Arguments:
     ! I    -The type shall be INTEGER.
     ! J    -The type shall be INTEGER, of the same kind as I.
     ! Return value:
     ! The return type is INTEGER, of the same kind as the arguments.
+    ! Standard: Fortran 95 and later
+    integer :: I, J, IAND
 end function
 
 function IBCLR(I, POS)
     !returns the value of I with the bit at position POS set to zero.
-    ! Standard: Fortran 95 and later
     ! Arguments:
     ! I     -The type shall be INTEGER.
     ! POS   -The type shall be INTEGER.
     ! Return value:
     ! The return value is of type INTEGER and of the same kind as I.
+    ! Standard: Fortran 95 and later
     integer :: IBCLR, I, POS
 end function
 
@@ -1045,47 +1087,50 @@ function IBITS(I, POS, LEN)
 	! IBITS extracts a field of length LEN from I, starting from bit position POS and extending left for LEN bits.
 	! The result is right-justified and the remaining bits are zeroed. The value of POS+LEN must be less
 	! than or equal to the value BIT_SIZE(I).
-    ! Standard: Fortran 95 and later
     ! Arguments:
     ! I     -The type shall be INTEGER.
     ! POS   -The type shall be INTEGER.
     ! LEN   -The type shall be INTEGER.
     ! Return value:
     ! The return value is of type INTEGER and of the same kind as I.
+    ! Standard: Fortran 95 and later
     integer :: IBITS, I, POS, LEN
 end function
 
 function IBSET(I, POS)
 	! IBSET returns the value of I with the bit at position POS set to one.
-    ! Standard: Fortran 95 and later
     ! Arguments:
     ! I     -The type shall be INTEGER.
     ! POS   -The type shall be INTEGER.
     ! Return value:
     ! The return value is of type INTEGER and of the same kind as I.
+    ! Standard: Fortran 95 and later
     integer :: IBSET, I, POS
 end function
 
 function ICHAR(C [, KIND])
 	! Returns the code for the character in the first character position of C in the system's
 	! native character set.
-    ! Standard: Fortan 95 and later, with KIND argument Fortran 2003 and later
     ! Arguments:
     ! C     -Shall be a scalar CHARACTER, with INTENT(IN)
     ! KIND  -(Optional) An INTEGER initialization expression indicating the kind parameter of the result.
     ! Return value:
     ! The return value is of type INTEGER and of kind KIND. If KIND is absent,
     ! the return value is of default integer kind.
+    ! Standard: Fortan 95 and later, with KIND argument Fortran 2003 and later
+    character, intent(in) :: C
+    integer, optional :: KIND
+    integer(KIND) :: ICHAR
 end function
 
 function IEOR(I, J)
 	! Returns the bitwise boolean exclusive-OR of I and J.
-    ! Standard: Fortran 95 and later
     ! Arguments:
     ! I     -The type shall be INTEGER.
     ! J     -The type shall be INTEGER, of the same kind as I.
     ! Return value:
     ! The return type is INTEGER, of the same kind as the arguments.
+    ! Standard: Fortran 95 and later
     integer :: IEOR, I, J
 end function
 
@@ -1110,7 +1155,6 @@ end function
 
 function INT(A [, KIND))
 	! Convert to integer type
-    ! Standard: Fortran 77 and later
     ! Arguments:
     ! A     -Shall be of type INTEGER, REAL, or COMPLEX.
     ! KIND  -(Optional) An INTEGER initialization expression indicating the kind parameter of the result.
@@ -1123,55 +1167,63 @@ function INT(A [, KIND))
     !    integer that does not exceed the range of A and whose sign is the same as the sign of A.
     ! (C)
     !    If A is of type COMPLEX, rule B is applied to the real part of A.
+    ! Standard: Fortran 77 and later
+    integer, real, complex :: A
+    integer, optional :: KIND
+    integer(KIND) :: INT
 end function
 
 function IFIX(A)
     ! This is specific name of INT function.
 	! Convert to integer type
     ! Standard: Fortran 77 and later
-    REAL :: IFIX, A
+    real :: A
+    integer :: IFIX
 end function
 
 function IDINT(A)
     ! This is specific name of INT function.
 	! Convert to integer type
     ! Standard: Fortran 77 and later
-    DOUBLE PRECISION :: IDINT, A
+    double precision :: A
+    integer :: IDINT
 end function
 
 function IOR(I, J)
 	! IOR returns the bitwise boolean inclusive-OR of I and J.
-    ! Standard: Fortran 95 and later
     ! Arguments:
     ! I     -The type shall be INTEGER.
     ! J 	-The type shall be INTEGER, of the same kind as I.
     ! Return value:
     ! The return type is INTEGER, of the same kind as the arguments.
+    ! Standard: Fortran 95 and later
     integer :: IOR, I, J
 end function
 
 function IS_IOSTAT_END(I)
-	! Tests whether an variable has the value of the I/O status “end of file”. The function is
+	! Tests whether an variable has the value of the I/O status 'end of file'. The function is
 	! equivalent to comparing the variable with the IOSTAT_END parameter of the intrinsic module ISO_FORTRAN_ENV.
-    ! Standard: Fortran 2003 and later
     ! Arguments:
     ! I   -Shall be of the type INTEGER.
     ! Return value:
     ! Returns a LOGICAL of the default kind, which .TRUE. if I has the value which indicates an end of file
     ! condition for IOSTAT= specifiers, and is .FALSE. otherwise.
+    ! Standard: Fortran 2003 and later
+    integer :: I
+    logical :: IS_IOSTAT_END
 end function
 
 function IS_IOSTAT_EOR(I)
-	! Tests whether an variable has the value of the I/O status “end of record”. The function is equivalent
+	! Tests whether an variable has the value of the I/O status 'end of record'. The function is equivalent
 	! to comparing the variable with the IOSTAT_EOR parameter of the intrinsic module ISO_FORTRAN_ENV.
-    ! Standard: Fortran 2003 and later
     ! Arguments:
     ! I     -Shall be of the type INTEGER.
     ! Return value:
     ! Returns a LOGICAL of the default kind, which .TRUE. if I has the value which indicates an end of file
     ! condition for IOSTAT= specifiers, and is .FALSE. otherwise.
+    ! Standard: Fortran 2003 and later
     logical :: IS_IOSTAT_EOR
-    integer :: i
+    integer :: I
 end function
 
 function ISHFT(I, SHIFT)
@@ -1180,12 +1232,13 @@ function ISHFT(I, SHIFT)
 	! less than zero corresponds to a right shift. If the absolute value of SHIFT is greater than BIT_SIZE(I),
 	! the value is undefined. Bits shifted out from the left end or right end are lost; zeros are shifted
 	! in from the opposite end.
-    ! Standard: Fortran 95 and later
     ! Arguments:
     ! I         -The type shall be INTEGER.
     ! SHIFT     -The type shall be INTEGER.
     ! Return value:
     ! The return value is of type INTEGER and of the same kind as I.
+    ! Standard: Fortran 95 and later
+    integer :: I, SHIFT, ISHFT
 end function
 
 function ISHFTC(I, SHIFT [, SIZE])
@@ -1194,30 +1247,30 @@ function ISHFTC(I, SHIFT [, SIZE])
 	! zero corresponds to a left shift, a value of zero corresponds to no shift, and a value less than
 	! zero corresponds to a right shift. The absolute value of SHIFT must be less than SIZE. If the SIZE
 	! argument is omitted, it is taken to be equivalent to BIT_SIZE(I).
-    !Standard:
-    !   Fortran 95 and later
     ! Arguments:
     !   I    -The type shall be INTEGER.
     ! SHIFT  -The type shall be INTEGER.
     ! SIZE   -(Optional) The type shall be INTEGER; the value must be greater than zero and less than or equal to BIT_SIZE(I).
     ! Return value:
     ! The return value is of type INTEGER and of the same kind as I.
+    ! Standard: Fortran 95 and later
+    integer :: I, SHIFT, ISHFTC
+    integer, optional :: SIZE
 end function
 
 function KIND(X)
     ! Returns the kind value of the entity X.
-    ! Standard:
-    !   Fortran 95 and later
     ! Arguments:
     ! X     -Shall be of type LOGICAL, INTEGER, REAL, COMPLEX or CHARACTER.
     ! Return value:
     ! The return value is a scalar of type INTEGER and of the default integer kind.
+    ! Standard: Fortran 95 and later
+    LOGICAL, INTEGER, REAL, COMPLEX, CHARACTER :: X
+    INTEGER :: KIND
 end function
 
 function LBOUND(ARRAY [, DIM [, KIND]])
     ! Returns the lower bounds of an array, or a single lower bound along the DIM dimension.
-    ! Standard:
-    !   Fortran 95 and later, with KIND argument Fortran 2003 and later
     ! Arguments:
     ! ARRAY     -Shall be an array, of any type.
     ! DIM       -(Optional) Shall be a scalar INTEGER.
@@ -1228,42 +1281,50 @@ function LBOUND(ARRAY [, DIM [, KIND]])
     ! the result is a scalar corresponding to the lower bound of the array along that dimension. If ARRAY is
     ! an expression rather than a whole array or array structure component, or if it has a zero extent along
     ! the relevant dimension, the lower bound is taken to be 1.
+    ! Standard: Fortran 95 and later, with KIND argument Fortran 2003 and later
+    type(any_type) :: ARRAY(:[,...])
+    integer, optional :: DIM, KIND
+    integer(KIND) :: LBOUND
 end function
 
 function LEADZ(I)
     ! Returns the number of leading zero bits of an integer.
-    ! Standard:
-    !   Fortran 2008 and later
     ! Arguments:
     ! I     -Shall be of type INTEGER.
     ! Return value:
     ! The type of the return value is the default INTEGER. If all the bits of I are zero, the result value is BIT_SIZE(I).
+    ! Standard: Fortran 2008 and later
+    integer :: I, LEADZ
 end function
 
 function LEN(STRING [, KIND])
     ! Returns the length of a character string. If STRING is an array, the length of an element of STRING
     ! is returned. Note that STRING need not be defined when this intrinsic is invoked, since only the length,
     ! not the content, of STRING is needed.
-    ! Standard:
-    !   Fortran 77 and later, with KIND argument Fortran 2003 and later
     ! Arguments:
     ! STRING    -Shall be a scalar or array of type CHARACTER, with INTENT(IN)
     ! KIND      -(Optional) An INTEGER initialization expression indicating the kind parameter of the result.
     ! Return value:
     ! The return value is of type INTEGER and of kind KIND. If KIND is absent,
     ! the return value is of default integer kind.
+    ! Standard: Fortran 77 and later, with KIND argument Fortran 2003 and later
+    character(len=*), intent(in) :: STRING
+    integer, optional :: KIND
+    integer(KIND) :: LEN
 end function
 
 function LEN_TRIM(STRING [, KIND])
 	! Returns the length of a character string, ignoring any trailing blanks.
-    ! Standard:
-    !   Fortran 95 and later, with KIND argument Fortran 2003 and later
     ! Arguments:
     ! STRING    -Shall be a scalar of type CHARACTER, with INTENT(IN)
     ! KIND      -(Optional) An INTEGER initialization expression indicating the kind parameter of the result.
     ! Return value:
     ! The return value is of type INTEGER and of kind KIND. If KIND is absent,
     ! the return value is of default integer kind.
+    ! Standard: Fortran 95 and later, with KIND argument Fortran 2003 and later
+    character(len=*), intent(in) :: STRING
+    integer, optional :: KIND
+    integer(KIND) :: LEN_TRIM
 end function
 
 function LGE(STRING_A, STRING_B)
@@ -1276,13 +1337,14 @@ function LGE(STRING_A, STRING_B)
     ! the corresponding intrinsic operators .GE., .GT., .LE., and .LT., in that the latter use the
     ! processor's character ordering (which is not ASCII on some targets), whereas the former
     ! always use the ASCII ordering.
-    ! Standard:
-    !   Fortran 77 and later
     ! Arguments:
     ! STRING_A      -Shall be of default CHARACTER type.
     ! STRING_B      -Shall be of default CHARACTER type.
     ! Return value:
     ! Returns .TRUE. if STRING_A >= STRING_B, and .FALSE. otherwise, based on the ASCII ordering.
+    ! Standard: Fortran 77 and later
+    character(len=*) :: STRING_A, STRING_B
+    logical :: LGE
 end function
 
 function LGT(STRING_A, STRING_B)
@@ -1293,13 +1355,14 @@ function LGT(STRING_A, STRING_B)
     ! In general, the lexical comparison intrinsics LGE, LGT, LLE, and LLT differ from the corresponding
     ! intrinsic operators .GE., .GT., .LE., and .LT., in that the latter use the processor's character
     ! ordering (which is not ASCII on some targets), whereas the former always use the ASCII ordering.
-    ! Standard:
-    !   Fortran 77 and later
     ! Arguments:
     ! STRING_A  -Shall be of default CHARACTER type.
     ! STRING_B  -Shall be of default CHARACTER type.
     ! Return value:
     ! Returns .TRUE. if STRING_A > STRING_B, and .FALSE. otherwise, based on the ASCII ordering.
+    ! Standard: Fortran 77 and later
+    character(len=*) :: STRING_A, STRING_B
+    logical :: LGT
 end function
 
 function LLE(STRING_A, STRING_B)
@@ -1311,13 +1374,14 @@ function LLE(STRING_A, STRING_B)
     ! corresponding intrinsic operators .GE., .GT., .LE., and .LT., in that the latter use the
     ! processor's character ordering (which is not ASCII on some targets), whereas the former
     ! always use the ASCII ordering.
-    ! Standard:
-    !    Fortran 77 and later
     ! Arguments:
     !    STRING_A 	-Shall be of default CHARACTER type.
     !    STRING_B 	-Shall be of default CHARACTER type.
     ! Return value:
     !    Returns .TRUE. if STRING_A <= STRING_B, and .FALSE. otherwise, based on the ASCII ordering.
+    ! Standard: Fortran 77 and later
+    character(len=*) :: STRING_A, STRING_B
+    logical :: LLE
 end function
 
 function LLT(STRING_A, STRING_B)
@@ -1329,116 +1393,119 @@ function LLT(STRING_A, STRING_B)
     ! corresponding intrinsic operators .GE., .GT., .LE., and .LT., in that the latter use
     ! the processor's character ordering (which is not ASCII on some targets), whereas the
     ! former always use the ASCII ordering.
-    ! Standard:
-    !    Fortran 77 and later
     ! Arguments:
     !    STRING_A 	Shall be of default CHARACTER type.
     !    STRING_B 	Shall be of default CHARACTER type.
     ! Return value:
     !    Returns .TRUE. if STRING_A < STRING_B, and .FALSE. otherwise, based on the ASCII ordering.
+    ! Standard: Fortran 77 and later
+    character(len=*) :: STRING_A, STRING_B
+    logical :: LLT
 end function
 
 function LOG(X)
 	! Computes the logarithm of X.
-    ! Standard:
-    !    Fortran 77 and later
     ! Arguments:
     !    X  -The type shall be REAL or COMPLEX.
     ! Return value:
     !    The return value is of type REAL or COMPLEX. The kind type parameter is the same as X.
     !    If X is COMPLEX, the imaginary part \omega is in the range -pi <= \omega <= pi.
+    ! Standard:  Fortran 77 and later
+    real, complex :: X, LOG
 end function
 
 function ALOG(X)
     ! This is specific name of LOG function.
 	! Computes the logarithm of X.
-    ! Standard:
-    !    Fortran 77 and later
     ! Arguments:
     !    X  -The type shall be REAL.
+    ! Standard: Fortran 77 and later
     real :: ALOG, X
 end function
 
 function CLOG(X)
     ! This is specific name of LOG function.
 	! Computes the logarithm of X.
-    ! Standard:
-    !    Fortran 77 and later
     ! Arguments:
     !    X  -The type shall be COMLEX.
+    ! Standard:
+    !    Fortran 77 and later
     complex :: CLOG, X
 end function
 
 function DLOG(X)
     ! This is specific name of LOG function.
 	! Computes the logarithm of X.
-    ! Standard:
-    !    Fortran 77 and later
     ! Arguments:
     !    X  -The type shall be DOUBLE PRECISION.
+    ! Standard:
+    !    Fortran 77 and later
     real :: DLOG, X
 end function
 
 function LOG10(X)
 	! Computes the base 10 logarithm of X.
-    ! Standard:
-    !    Fortran 77 and later
     ! Arguments:
     !    X    -The type shall be REAL.
     ! Return value:
     !    The return value is of type REAL or COMPLEX. The kind type parameter is the same as X.
+    ! Standard:
+    !    Fortran 77 and later
+    real :: X, LOG10
 end function
 
 function ALOG10(X)
     ! This is specific name of LOG10 function.
 	! Computes the base 10 logarithm of X.
-    ! Standard:
-    !    Fortran 77 and later
     ! Arguments:
     !    X    -The type shall be REAL.
     ! Return value:
     !    The return value is of type REAL.
+    ! Standard:
+    !    Fortran 77 and later
     real :: ALOG10, X
 end function
 
 function DLOG10(X)
     ! This is specific name of LOG10 function.
 	! Computes the base 10 logarithm of X.
-    ! Standard:
-    !    Fortran 77 and later
     ! Arguments:
     !    X    -The type shall be DOUBLE PRECISION.
     ! Return value:
     !    The return value is of type DOUBLE PRECISION.
+    ! Standard:
+    !    Fortran 77 and later
     double precision :: DLOG10, X
 end function
 
 function LOG_GAMMA(X)
 	! Computes the natural logarithm of the absolute value of the Gamma function.
-    ! Standard:
-    !    Fortran 2008 and later
     ! Arguments:
     !    X  -Shall be of type REAL and neither zero nor a negative integer.
     ! Return value:
     !    The return value is of type REAL of the same kind as X.
+    ! Standard:
+    !    Fortran 2008 and later
+    real :: X, LOG_GAMMA
 end function
 
 function LOGICAL(L [, KIND])
 	! Converts one kind of LOGICAL variable to another.
-    ! Standard:
-    !    Fortran 95 and later
     ! Arguments:
     !    L      -The type shall be LOGICAL.
     !    KIND   -(Optional) An INTEGER initialization expression indicating the kind parameter of the result.
     ! Return value:
     !    The return value is a LOGICAL value equal to L, with a kind corresponding to KIND, or of the
     !    default logical kind if KIND is not given.
+    ! Standard:
+    !    Fortran 95 and later
+    logical :: L
+    integer, optional :: KIND
+    logical(KIND) :: LOGICAL
 end function
 
 function MATMUL(MATRIX_A, MATRIX_B)
 	! Performs a matrix multiplication on numeric or logical arguments.
-    ! Standard:
-    !    Fortran 95 and later
     ! Arguments:
     !    MATRIX_A   -An array of INTEGER, REAL, COMPLEX, or LOGICAL type, with a rank of one or two.
     !    MATRIX_B   -An array of INTEGER, REAL, or COMPLEX type if MATRIX_A is of a numeric type; otherwise,
@@ -1447,12 +1514,13 @@ function MATMUL(MATRIX_A, MATRIX_B)
     ! Return value:
     !    The matrix product of MATRIX_A and MATRIX_B. The type and kind of the result follow the usual type
     !    and kind promotion rules, as for the * or .AND. operators.
+    ! Standard:
+    !    Fortran 95 and later
+    integer, real, complex or logical :: MATRIX_A(:[,:]), MATRIX_B(:[,:])
 end function
 
 function MAX(A1, A2[, A3, A4, A5, ...])
     ! Returns the argument with the largest (most positive) value.
-    ! Standard:
-    !    Fortran 77 and later
     ! Syntax:
     !    RESULT = MAX(A1, A2 [, A3 [, ...]])
     ! Arguments:
@@ -1461,13 +1529,14 @@ function MAX(A1, A2[, A3, A4, A5, ...])
     ! Return value:
     !    The return value corresponds to the maximum value among the arguments, and has the same
     !    type and kind as the argument.
+    ! Standard:
+    !    Fortran 77 and later
+    integer or real :: A1, A2, A3, A4, A5, MAX
 end function
 
 function MAX0(A1, A2)
     ! This is specific name of MAX function.
     ! Returns the argument with the largest (most positive) value.
-    ! Standard:
-    !    Fortran 77 and later
     ! Syntax:
     !    RESULT = MAX(A1, A2 [, A3 [, ...]])
     ! Arguments:
@@ -1476,14 +1545,14 @@ function MAX0(A1, A2)
     ! Return value:
     !    The return value corresponds to the maximum value among the arguments, and has the same
     !    type and kind as the argument.
+    ! Standard:
+    !    Fortran 77 and later
     integer :: MAX0, A1, A2
 end function
 
 function AMAX1(A1, A2)
     ! This is specific name of MAX function.
     ! Returns the argument with the largest (most positive) value.
-    ! Standard:
-    !    Fortran 77 and later
     ! Syntax:
     !    RESULT = MAX(A1, A2 [, A3 [, ...]])
     ! Arguments:
@@ -1492,14 +1561,14 @@ function AMAX1(A1, A2)
     ! Return value:
     !    The return value corresponds to the maximum value among the arguments, and has the same
     !    type and kind as the argument.
+    ! Standard:
+    !    Fortran 77 and later
     real :: AMAX1, A1, A2
 end function
 
 function DMAX1(A1, A2)
     ! This is specific name of MAX function.
     ! Returns the argument with the largest (most positive) value.
-    ! Standard:
-    !    Fortran 77 and later
     ! Syntax:
     !    RESULT = MAX(A1, A2 [, A3 [, ...]])
     ! Arguments:
@@ -1508,6 +1577,8 @@ function DMAX1(A1, A2)
     ! Return value:
     !    The return value corresponds to the maximum value among the arguments, and has the same
     !    type and kind as the argument.
+    ! Standard:
+    !    Fortran 77 and later
     double precision :: DMAX1, A1, A2
 end function
 
@@ -1515,8 +1586,6 @@ function MAX1(A1, A2)
     ! This is specific name of MAX function.
     ! MAX1 is equivalent to INT ( MAX ( . . .) )
     ! Returns the argument with the largest (most positive) value.
-    ! Standard:
-    !    Fortran 77 and later
     ! Syntax:
     !    RESULT = MAX(A1, A2 [, A3 [, ...]])
     ! Arguments:
@@ -1525,6 +1594,8 @@ function MAX1(A1, A2)
     ! Return value:
     !    The return value corresponds to the maximum value among the arguments, and has the same
     !    type and kind as the argument.
+    ! Standard:
+    !    Fortran 77 and later
     integer :: MAX1
     real :: A1, A2
 end function
@@ -1533,8 +1604,6 @@ function AMAX0(A1, A2)
     ! This is specific name of MAX function.
     ! AMAX0 is equivalent to REAL ( MAX ( . . . ) )
     ! Returns the argument with the largest (most positive) value.
-    ! Standard:
-    !    Fortran 77 and later
     ! Syntax:
     !    RESULT = MAX(A1, A2 [, A3 [, ...]])
     ! Arguments:
@@ -1543,18 +1612,22 @@ function AMAX0(A1, A2)
     ! Return value:
     !    The return value corresponds to the maximum value among the arguments, and has the same
     !    type and kind as the argument.
+    ! Standard:
+    !    Fortran 77 and later
     real :: AMAX0
     integer :: A1, A2
 end function
 
 function MAXEXPONENT(X)
     ! Returns the maximum exponent in the model of the type of X.
-    ! Standard:
-    !    Fortran 95 and later
     ! Arguments:
     !    X  -Shall be of type REAL.
     ! Return value:
     !    The return value is of type INTEGER and of the default integer kind.
+    ! Standard:
+    !    Fortran 95 and later
+    real :: X
+    integer :: MAXEXPONENT
 end function
 
 function MAXLOC(ARRAY [, DIM] [, MASK] [, KIND])
@@ -1566,8 +1639,6 @@ function MAXLOC(ARRAY [, DIM] [, MASK] [, KIND])
 	! or all of the elements of MASK are .FALSE., then the result is an array of zeroes. Similarly,
 	! if DIM is supplied and all of the elements of MASK along a given row are zero, the result value
 	! for that row is zero.
-    ! Standard:
-    !    Fortran 95 and later
     ! Syntax:
     !    RESULT = MAXLOC(ARRAY, DIM [, MASK])
     !    RESULT = MAXLOC(ARRAY [, MASK])
@@ -1581,6 +1652,13 @@ function MAXLOC(ARRAY [, DIM] [, MASK] [, KIND])
     !    If DIM is present, the result is an array with a rank one less than the rank of ARRAY, and
     !    a size corresponding to the size of ARRAY with the DIM dimension removed. If DIM is present
     !    and ARRAY has a rank of one, the result is a scalar. In all cases, the result is of default INTEGER type.
+    ! Standard:
+    !    Fortran 95 and later
+    integer or real :: ARRAY(:[,:,...])
+    integer, optional :: DIM
+    logical, optional :: MASK(:[,:,...])
+    integer :: KIND
+    integer :: MAXLOC(:[,:,...])
 end function
 
 function MAXVAL(ARRAY [, DIM] [, MASK])
@@ -1589,8 +1667,6 @@ function MAXVAL(ARRAY [, DIM] [, MASK])
 	! only the elements for which MASK is .TRUE. are considered. If the array has zero size, or all of the
 	! elements of MASK are .FALSE., then the result is -HUGE(ARRAY) if ARRAY is numeric, or a string of nulls
 	! if ARRAY is of character type.
-    ! Standard:
-    !    Fortran 95 and later
     ! Syntax:
     !    RESULT = MAXVAL(ARRAY, DIM [, MASK])
     !    RESULT = MAXVAL(ARRAY [, MASK])
@@ -1604,25 +1680,30 @@ function MAXVAL(ARRAY [, DIM] [, MASK])
     !    the result is an array with a rank one less than the rank of ARRAY, and a size corresponding
     !    to the size of ARRAY with the DIM dimension removed. In all cases, the result is of the same
     !    type and kind as ARRAY.
+    ! Standard: Fortran 95 and later
+    integer or real :: ARRAY(:[,:,...])
+    integer, optional :: DIM
+    logical, optional :: MASK(:[,:,...])
+    integer :: MAXVAL[(:,...)]
 end function
 
 function MERGE(TSOURCE, FSOURCE, MASK)
 	! Select values from two arrays according to a logical mask. The result is equal to TSOURCE if MASK
 	! is .TRUE., or equal to FSOURCE if it is .FALSE..
-    ! Standard:
-    !    Fortran 95 and later
     ! Arguments:
     !    TSOURCE    -May be of any type.
     !    FSOURCE    -Shall be of the same type and type parameters as TSOURCE.
     !    MASK       -Shall be of type LOGICAL.
     ! Return value:
     !    The result is of the same type and type parameters as TSOURCE.
+    ! Standard:
+    !    Fortran 95 and later
+    type(any_type) :: TSOURCE(:[,:,...]), FSOURCE(:[,:,...])
+    logical :: MASK(:[,:,...])
 end function
 
 function MIN(A1, A2[, A3, A4, A5, ...])
 	! Returns the argument with the smallest (most negative) value.
-    ! Standard:
-    !    Fortran 77 and later
     ! Syntax:
     !    RESULT = MIN(A1, A2 [, A3, ...])
     ! Arguments:
@@ -1631,13 +1712,14 @@ function MIN(A1, A2[, A3, A4, A5, ...])
     ! Return value:
     !    The return value corresponds to the maximum value among the arguments, and has the same type
     !    and kind as the first argument.
+    ! Standard:
+    !    Fortran 77 and later
+    integer or real :: A1, A2, A3, A4, A5, MIN
 end function
 
 function MIN0(A1, A2)
     ! This is specific name of MIN function.
 	! Returns the argument with the smallest (most negative) value.
-    ! Standard:
-    !    Fortran 77 and later
     ! Syntax:
     !    RESULT = MIN(A1, A2 [, A3, ...])
     ! Arguments:
@@ -1646,6 +1728,8 @@ function MIN0(A1, A2)
     ! Return value:
     !    The return value corresponds to the maximum value among the arguments, and has the same type
     !    and kind as the first argument.
+    ! Standard:
+    !    Fortran 77 and later
     integer :: MIN0, A1, A2
 end function
 
@@ -1653,8 +1737,6 @@ function AMIN0(A1, A2)
     ! This is specific name of MIN function.
     ! AMIN0 is equivalent to REAL ( MIN ( . . . ) )
 	! Returns the argument with the smallest (most negative) value.
-    ! Standard:
-    !    Fortran 77 and later
     ! Syntax:
     !    RESULT = MIN(A1, A2 [, A3, ...])
     ! Arguments:
@@ -1663,6 +1745,8 @@ function AMIN0(A1, A2)
     ! Return value:
     !    The return value corresponds to the maximum value among the arguments, and has the same type
     !    and kind as the first argument.
+    ! Standard:
+    !    Fortran 77 and later
     real :: AMIN0
     integer :: A1, A2
 end function
@@ -1670,8 +1754,6 @@ end function
 function AMIN1(A1, A2)
     ! This is specific name of MIN function.
 	! Returns the argument with the smallest (most negative) value.
-    ! Standard:
-    !    Fortran 77 and later
     ! Syntax:
     !    RESULT = MIN(A1, A2 [, A3, ...])
     ! Arguments:
@@ -1680,6 +1762,8 @@ function AMIN1(A1, A2)
     ! Return value:
     !    The return value corresponds to the maximum value among the arguments, and has the same type
     !    and kind as the first argument.
+    ! Standard:
+    !    Fortran 77 and later
     real :: AMIN1, A1, A2
 end function
 
@@ -1687,8 +1771,6 @@ function MIN1(A1, A2)
     ! This is specific name of MIN function.
     ! MIN1 is equivalent to INT ( MIN ( . . . ) )
 	! Returns the argument with the smallest (most negative) value.
-    ! Standard:
-    !    Fortran 77 and later
     ! Syntax:
     !    RESULT = MIN(A1, A2 [, A3, ...])
     ! Arguments:
@@ -1697,6 +1779,8 @@ function MIN1(A1, A2)
     ! Return value:
     !    The return value corresponds to the maximum value among the arguments, and has the same type
     !    and kind as the first argument.
+    ! Standard:
+    !    Fortran 77 and later
     integer :: MIN1
     real :: A1, A2
 end function
@@ -1704,8 +1788,6 @@ end function
 function DMIN1(A1, A2)
     ! This is specific name of MIN function.
 	! Returns the argument with the smallest (most negative) value.
-    ! Standard:
-    !    Fortran 77 and later
     ! Syntax:
     !    RESULT = MIN(A1, A2 [, A3, ...])
     ! Arguments:
@@ -1714,17 +1796,21 @@ function DMIN1(A1, A2)
     ! Return value:
     !    The return value corresponds to the maximum value among the arguments, and has the same type
     !    and kind as the first argument.
+    ! Standard:
+    !    Fortran 77 and later
     double precision :: DMIN1, A1, A2
 end function
 
 function MINEXPONENT(X)
 	! Returns the minimum exponent in the model of the type of X.
-    ! Standard:
-    !    Fortran 95 and later
     ! Arguments:
     !    X  -Shall be of type REAL.
     ! Return value:
     !    The return value is of type INTEGER and of the default integer kind.
+    ! Standard:
+    !    Fortran 95 and later
+    real :: X
+    integer :: MINEXPONENT
 end function
 
 function MINLOC(ARRAY [, DIM] [, MASK] [, KIND])
@@ -1735,8 +1821,6 @@ function MINLOC(ARRAY [, DIM] [, MASK] [, KIND])
     ! that of the first such element in array element order. If the array has zero size, or all of the
     ! elements of MASK are .FALSE., then the result is an array of zeroes. Similarly, if DIM is supplied
     ! and all of the elements of MASK along a given row are zero, the result value for that row is zero.
-    ! Standard:
-    !    Fortran 95 and later
     ! Syntax:
     !    RESULT = MINLOC(ARRAY, DIM [, MASK])
     !    RESULT = MINLOC(ARRAY [, MASK])
@@ -1750,6 +1834,8 @@ function MINLOC(ARRAY [, DIM] [, MASK] [, KIND])
     !    If DIM is present, the result is an array with a rank one less than the rank of ARRAY, and
     !    a size corresponding to the size of ARRAY with the DIM dimension removed. If DIM is present
     !    and ARRAY has a rank of one, the result is a scalar. In all cases, the result is of default INTEGER type.
+    ! Standard:
+    !    Fortran 95 and later
 end function
 
 function MINVAL(ARRAY, DIM [, MASK])
@@ -1758,8 +1844,6 @@ function MINVAL(ARRAY, DIM [, MASK])
 	! If MASK is present, only the elements for which MASK is .TRUE. are considered. If the array
 	! has zero size, or all of the elements of MASK are .FALSE., then the result is HUGE(ARRAY) if
 	! ARRAY is numeric, or a string of CHAR(255) characters if ARRAY is of character type.
-    ! Standard:
-    !    Fortran 95 and later
     ! Syntax:
     !    RESULT = MINVAL(ARRAY, DIM [, MASK])
     !    RESULT = MINVAL(ARRAY [, MASK])
@@ -1774,29 +1858,36 @@ function MINVAL(ARRAY, DIM [, MASK])
     !    the result is an array with a rank one less than the rank of ARRAY, and a size corresponding
     !    to the size of ARRAY with the DIM dimension removed. In all cases, the result is of the same
     !    type and kind as ARRAY.
+    ! Standard:
+    !    Fortran 95 and later
+    integer or real :: ARRAY(:[,:,...])
+    integer, optional :: DIM
+    logical, optional :: MASK(:[,:,...])
+    integer :: MINVAL(:[,:,...])
 end function
 
 function MOD(A, P)
 	! Computes the remainder of the division of A by P. It is calculated as A - (INT(A/P) * P).
-    ! Standard:
-    !    Fortran 77 and later
     ! Arguments:
     !    A  -Shall be a scalar of type INTEGER or REAL
     !    P  -Shall be a scalar of the same type as A and not equal to zero
     ! Return value:
     !    The kind of the return value is the result of cross-promoting the kinds of the arguments.
+    ! Standard:
+    !    Fortran 77 and later
+    integer or real :: A, P, MOD
 end function
 
 function AMOD(A, P)
     ! This is specific name of MOD function.
 	! Computes the remainder of the division of A by P. It is calculated as A - (INT(A/P) * P).
-    ! Standard:
-    !    Fortran 77 and later
     ! Arguments:
     !    A  -Shall be a scalar of type default REAL
     !    P  -Shall be a scalar of the same type as A and not equal to zero
     ! Return value:
     !    The kind of the return value is the result of cross-promoting the kinds of the arguments.
+    ! Standard:
+    !    Fortran 77 and later
     real :: AMOD, A, P
 end function
 
@@ -1815,8 +1906,6 @@ end function
 
 function MODULO(A, P)
 	! Computes the A modulo P.
-    ! Standard:
-    !    Fortran 95 and later
     ! Arguments:
     !    A  -Shall be a scalar of type INTEGER or REAL
     !    P  -Shall be a scalar of the same type and kind as A
@@ -1828,29 +1917,34 @@ function MODULO(A, P)
     !    If A and P are of type REAL:
     !        MODULO(A,P) has the value of A - FLOOR (A / P) * P.
     !    In all cases, if P is zero the result is processor-dependent.
+    ! Standard:
+    !    Fortran 95 and later
+    integer or real :: A, P, MODULO
 end function
 
 subroutine MOVE_ALLOC(FROM, TO)
 	! Moves the allocation from FROM to TO. FROM will become deallocated in the process.
-    ! Standard:
-    !    Fortran 2003 and later
     ! Arguments:
     !    FROM   -ALLOCATABLE, INTENT(INOUT), may be of any type and kind.
     !    TO     -ALLOCATABLE, INTENT(OUT), shall be of the same type, kind and rank as FROM.
+    ! Standard:
+    !    Fortran 2003 and later
+    type(any_type), allocatable :: FROM(:[,:,...]), TO(:[,:,...])
 end subroutine
 
 subroutine MVBITS(FROM, FROMPOS, LEN, TO, TOPOS)
 	! Moves LEN bits from positions FROMPOS through FROMPOS+LEN-1 of FROM to positions TOPOS
 	! through TOPOS+LEN-1 of TO. The portion of argument TO not affected by the movement of bits
 	! is unchanged. The values of FROMPOS+LEN-1 and TOPOS+LEN-1 must be less than BIT_SIZE(FROM).
-    ! Standard:
-    !    Fortran 95 and later
     ! Arguments:
     !    FROM   -The type shall be INTEGER.
     !    FROMPOS    -The type shall be INTEGER.
     !    LEN    -The type shall be INTEGER.
     !    TO     -The type shall be INTEGER, of the same kind as FROM.
     !    TOPOS  -The type shall be INTEGER.
+    ! Standard:
+    !    Fortran 95 and later
+    integer :: FROM, FROMPOS, LEN, TO, TOPOS
 end subroutine
 
 function NEAREST(X, S)
@@ -1864,52 +1958,62 @@ function NEAREST(X, S)
     !    The return value is of the same type as X. If S is positive, NEAREST returns the
     !    processor-representable number greater than X and nearest to it. If S is negative, NEAREST
     !    returns the processor-representable number smaller than X and nearest to it.
+    real :: X, NEAREST
+    real, optional :: S
 end function
 
 function NEW_LINE(C)
 	! Returns the new-line character.
-    ! Standard:
-    !    Fortran 2003 and later
     ! Arguments:
     !    C  -The argument shall be a scalar or array of the type CHARACTER.
     ! Return value:
     !    Returns a CHARACTER scalar of length one with the new-line character of the same kind as parameter C.
+    ! Standard:
+    !    Fortran 2003 and later
+    character(len=*) :: C
+    character(len=1) :: NEW_LINE
 end function
 
 function NINT(A [, KIND])
     ! Rounds its argument to the nearest whole number.
-    ! Standard:
-    !    Fortran 77 and later, with KIND argument Fortran 90 and later
     ! Arguments:
     !    A      -The type of the argument shall be REAL.
     !    KIND   -(Optional) An INTEGER initialization expression indicating the kind parameter of the result.
     ! Return value:
     !    Returns A with the fractional portion of its magnitude eliminated by rounding to the nearest whole
     !    number and with its sign preserved, converted to an INTEGER of the default kind.
+    ! Standard:
+    !    Fortran 77 and later, with KIND argument Fortran 90 and later
+    real :: A
+    integer, optional :: KIND
+    integer :: NINT
 end function
 
 function IDNINT(A)
     ! This is specific name of NINT function.
     ! Rounds its argument to the nearest whole number.
-    ! Standard:
-    !    Fortran 77 and later, with KIND argument Fortran 90 and later
     ! Arguments:
     !    A      -The type of the argument shall be DOUBLE PRECISION.
     !    KIND   -(Optional) An INTEGER initialization expression indicating the kind parameter of the result.
     ! Return value:
     !    Returns A with the fractional portion of its magnitude eliminated by rounding to the nearest whole
     !    number and with its sign preserved, converted to an INTEGER of the default kind.
-    integer :: IDNINT, A
+    ! Standard:
+    !    Fortran 77 and later, with KIND argument Fortran 90 and later
+    integer :: IDNINT
+    double precision :: A
+    integer, optional :: KIND
 end function
 
 function NOT(I)
 	! Returns the bitwise boolean inverse of I.
-    ! Standard:
-    !    Fortran 95 and later
     ! Arguments:
     !    I  -The type shall be INTEGER.
     ! Return value:
     !    The return type is INTEGER, of the same kind as the argument.
+    ! Standard:
+    !    Fortran 95 and later
+    integer :: I, NOT
 end function
 
 function NULL([MOLD])
@@ -1918,22 +2022,21 @@ function NULL([MOLD])
     ! otherwise the type is determined by context.
     ! In Fortran 95, MOLD is optional. Please note that Fortran 2003 includes cases
     ! where it is required.
-    ! Standard:
-    !    Fortran 95 and later
     ! Syntax:
     !    PTR => NULL([MOLD])
     ! Arguments:
     !    MOLD   -(Optional) shall be a pointer of any association status and of any type.
     ! Return value:
     !    A disassociated pointer.
+    ! Standard:
+    !    Fortran 95 and later
+    type(any_type), pointer, optional :: MOLD
 end function
 
-function PACK(ARRAY, MASK[,VECTOR])
+function PACK(ARRAY, MASK [, VECTOR])
 	! Stores the elements of ARRAY in an array of rank one.
     ! The beginning of the resulting array is made up of elements whose MASK equals TRUE.
     ! Afterwards, positions are filled with elements taken from VECTOR.
-    ! Standard:
-    !    Fortran 95 and later
     ! Arguments:
     !    ARRAY  -Shall be an array of any type.
     !    MASK   -Shall be an array of type LOGICAL and of the same size as ARRAY. Alternatively,
@@ -1945,33 +2048,41 @@ function PACK(ARRAY, MASK[,VECTOR])
     ! Return value:
     !    The result is an array of rank one and the same type as that of ARRAY. If VECTOR is present,
     !    the result size is that of VECTOR, the number of TRUE values in MASK otherwise.
+    ! Standard:
+    !    Fortran 95 and later
+    type(any_type) :: ARRAY(:[,:,...])
+    logical :: MASK[(:,...)]
+    type(same as ARRAY), optional :: VECTOR(:)
+    type(same as ARRAY) :: PACK(:)
 end function
 
 function PRECISION(X)
 	! Returns the decimal precision in the model of the type of X.
-    ! Standard:
-    !    Fortran 95 and later
     ! Arguments:
     !    X  -Shall be of type REAL or COMPLEX.
     ! Return value:
     !    The return value is of type INTEGER and of the default integer kind.
+    ! Standard:
+    !    Fortran 95 and later
+    real or complex :: X
+    integer :: PRECISION
 end function
 
 function PRESENT(A)
     ! Determines whether an optional dummy argument is present.
-    ! Standard:
-    !    Fortran 95 and later
     ! Arguments:
     !    A  -May be of any type and may be a pointer, scalar or array value, or a dummy procedure.
     !        It shall be the name of an optional dummy argument accessible within the current subroutine or function.
     ! Return value:
     !    Returns either TRUE if the optional argument A is present, or FALSE otherwise.
+    ! Standard:
+    !    Fortran 95 and later
+    type(any_type) :: A
+    logical :: PRESENT
 end function
 
 function PRODUCT(ARRAY [, DIM] [, MASK])
 	! Multiplies the elements of ARRAY along dimension DIM if the corresponding element in MASK is TRUE.
-    ! Standard:
-    !    Fortran 95 and later
     ! Syntax:
     !    RESULT = PRODUCT(ARRAY[, MASK])
     !    RESULT = PRODUCT(ARRAY, DIM[, MASK])
@@ -1985,32 +2096,37 @@ function PRODUCT(ARRAY [, DIM] [, MASK])
     !    If DIM is absent, a scalar with the product of all elements in ARRAY is returned. Otherwise,
     !    an array of rank n-1, where n equals the rank of ARRAY, and a shape similar to that of ARRAY
     !    with dimension DIM dropped is returned.
+    ! Standard:
+    !    Fortran 95 and later
+    integer, real or complex :: ARRAY(:[,:,...])
+    integer :: DIM
 end function
 
 function RADIX(X)
 	! Returns the base of the model representing the entity X.
-    ! Standard:
-    !    Fortran 95 and later
     ! Arguments:
     !    X  -Shall be of type INTEGER or REAL
     ! Return value:
     !    The return value is a scalar of type INTEGER and of the default integer kind.
+    ! Standard:
+    !    Fortran 95 and later
+    integer or real :: X
+    integer :: RADIX
 end function
 
 subroutine RANDOM_NUMBER(HARVEST)
     ! Returns a single pseudorandom number or an array of pseudorandom numbers from the uniform distribution
     ! over the range 0 <= x < 1.
-    ! Standard:
-    !    Fortran 95 and later
     ! Arguments:
     !    HARVEST    -Shall be a scalar or an array of type REAL.
+    ! Standard:
+    !    Fortran 95 and later
+    real :: HARVEST[(:,...)]
 end subroutine
 
 subroutine RANDOM_SEED([SIZE, PUT, GET])
 	! Restarts or queries the state of the pseudorandom number generator used by RANDOM_NUMBER.
     ! If RANDOM_SEED is called without arguments, it is initialized to a default state.
-    ! Standard:
-    !    Fortran 95 and later
     ! Arguments:
     !    SIZE   -(Optional) Shall be a scalar and of type default INTEGER, with INTENT(OUT).
     !            It specifies the minimum size of the arrays used with the PUT and GET arguments.
@@ -2019,22 +2135,27 @@ subroutine RANDOM_SEED([SIZE, PUT, GET])
     !             returned by the SIZE argument.
     !    GET    -(Optional) Shall be an array of type default INTEGER and rank one. It is INTENT(OUT)
     !            and the size of the array must be larger than or equal to the number returned by the SIZE argument.
+    ! Standard:
+    !    Fortran 95 and later
+    integer, optional, intent(out) :: SIZE
+    integer, optional, intent(in) :: PUT(:)
+    integer, optional, intent(out) :: GET(:)
 end subroutine
 
 function RANGE(X)
     ! Returns the decimal exponent range in the model of the type of X.
-    ! Standard:
-    !    Fortran 95 and later
     ! Arguments:
     !    X  -Shall be of type INTEGER, REAL or COMPLEX.
     ! Return value:
     !    The return value is of type INTEGER and of the default integer kind.
+    ! Standard:
+    !    Fortran 95 and later
+    INTEGER, REAL or COMPLEX :: X
+    INTEGER :: RANGE
 end function
 
 function REAL(A [, KIND])
 	! Converts its argument A to a real type.
-    ! Standard:
-    !    Fortran 77 and later
     ! Arguments:
     !    A      -Shall be INTEGER, REAL, or COMPLEX.
     !    KIND   -(Optional) An INTEGER initialization expression indicating the kind parameter of the result.
@@ -2047,15 +2168,20 @@ function REAL(A [, KIND])
     !    (C)
     !        REAL(A, KIND) is converted to a real type with kind type parameter KIND if A is a complex,
     !        integer, or real variable.
+    ! Standard:
+    !    Fortran 77 and later
+    integer, real or complex :: A
+    integer, optional :: KIND
+    real[(KIND)] :: REAL
 end function
 
 function FLOAT(A)
     ! This is specific name of REAL function.
 	! Converts its argument A to a real type.
-    ! Standard:
-    !    Fortran 77 and later
     ! Arguments:
     !    A      -Shall be default INTEGER.
+    ! Standard:
+    !    Fortran 77 and later
     real :: FLOAT
     integer :: A
 end function
@@ -2063,36 +2189,36 @@ end function
 function SAME_TYPE_AS(A,B)
 	! Inquires whether the dynamic type of A is the same as the dynamic type of B.
 	! Function returns true if the dynamic type of A is the same as the dynamic type of B.
-    ! Standard:
-    !    Fortran 2003 and later
     ! Arguments:
     ! A   -must be an object of extensible type. If it is a pointer, it must not have an undefined association status.
     ! B   -must be an object of extensible type. If it is a pointer, it must not have an undefined association status.
     ! Return value:
     ! Default LOGICAL scalar
+    ! Standard:
+    !    Fortran 2003 and later
     logical :: SAME_TYPE_AS
 end function
 
 function SNGL(A)
     ! This is specific name of REAL function.
 	! Converts its argument A to a real type.
-    ! Standard:
-    !    Fortran 77 and later
     ! Arguments:
     !    A      -Shall be default DOUBLE PRECISION.
+    ! Standard:
+    !    Fortran 77 and later
     real :: SNGL
     double precision :: A
 end function
 
 function REPEAT(STRING, NCOPIES)
 	! Concatenates NCOPIES copies of a string.
-    ! Standard:
-    !    Fortran 95 and later
     ! Arguments:
     !    STRING     -Shall be scalar and of type CHARACTER.
     !    NCOPIES    -Shall be scalar and of type INTEGER.
     ! Return value:
     !    A new scalar of type CHARACTER built up from NCOPIES copies of STRING.
+    ! Standard:
+    !    Fortran 95 and later
     character(len=*) :: REPEAT, STRING
     integer :: NCOPIES
 end function
@@ -2100,8 +2226,6 @@ end function
 function RESHAPE(SOURCE, SHAPE[, PAD, ORDER])
 	! Reshapes SOURCE to correspond to SHAPE. If necessary, the new array may be padded with
 	! elements from PAD or permuted as defined by ORDER.
-    ! Standard:
-    !    Fortran 95 and later
     ! Arguments:
     !    SOURCE     -Shall be an array of any type.
     !    SHAPE      -Shall be of type INTEGER and an array of rank one. Its values must be positive or zero.
@@ -2111,28 +2235,37 @@ function RESHAPE(SOURCE, SHAPE[, PAD, ORDER])
     !                 ORDER is absent, the natural ordering shall be assumed.
     ! Return value:
     !    The result is an array of shape SHAPE with the same type as SOURCE.
+    ! Standard:
+    !    Fortran 95 and later
+    type(any_type) :: SOURCE(:[,:,...])
+    integer :: SHAPE(:)
+    type(any_type), optional :: PAD(:[,:,...])
+    integer, optional :: ORDER(:)
 end function
 
 function RRSPACING(X)
 	! Returns the reciprocal of the relative spacing of model numbers near X.
-    ! Standard:
-    !    Fortran 95 and later
     ! Arguments:
     !    X  -Shall be of type REAL.
     ! Return value:
     !    The return value is of the same type and kind as X. The value returned is equal
     !    to ABS(FRACTION(X)) * FLOAT(RADIX(X))**DIGITS(X).
+    ! Standard:
+    !    Fortran 95 and later
+    real :: X, RRSPACING
 end function
 
 function SCALE(X, I)
 	! Returns X * RADIX(X)**I.
-    ! Standard:
-    !    Fortran 95 and later
     ! Arguments:
     !    X  -The type of the argument shall be a REAL.
     !    I  -The type of the argument shall be a INTEGER.
     ! Return value:
     !    The return value is of the same type and kind as X. Its value is X * RADIX(X)**I.
+    ! Standard:
+    !    Fortran 95 and later
+    real :: X, SCALE
+    integer :: I
 end function
 
 function SCAN(STRING, SET[, BACK [, KIND]])
@@ -2140,8 +2273,6 @@ function SCAN(STRING, SET[, BACK [, KIND]])
     ! If BACK is either absent or equals FALSE, this function returns the position of the leftmost
     ! character of STRING that is in SET. If BACK equals TRUE, the rightmost position is returned.
     ! If no character of SET is found in STRING, the result is zero.
-    ! Standard:
-    !    Fortran 95 and later, with KIND argument Fortran 2003 and later
     ! Arguments:
     !    STRING     -Shall be of type CHARACTER.
     !    SET        -Shall be of type CHARACTER.
@@ -2150,33 +2281,39 @@ function SCAN(STRING, SET[, BACK [, KIND]])
     ! Return value:
     !    The return value is of type INTEGER and of kind KIND. If KIND is absent, the return value
     !    is of default integer kind.
+    ! Standard:
+    !    Fortran 95 and later, with KIND argument Fortran 2003 and later
+    character(len=*) :: STRING, SET
+    logical, optional :: BACK
+    integer, optional :: KIND
 end function
 
 function SELECTED_CHAR_KIND(NAME)
     ! Returns the kind value for the character set named NAME, if a character set with such a name
     ! is supported, or -1 otherwise.
-    ! Standard:
-    !    Fortran 2003 and later
     ! Arguments:
     !    NAME 	Shall be a scalar and of the default character type.
+    ! Standard:
+    !    Fortran 2003 and later
+    character(len=*) :: NAME
+    integer :: SELECTED_CHAR_KIND
 end function
 
 function SELECTED_INT_KIND(R)
     ! Return the kind value of the smallest integer type that can represent all values ranging
     ! from -10^R (exclusive) to 10^R (exclusive). If there is no integer kind that accommodates
     ! this range, SELECTED_INT_KIND returns -1.
-    ! Standard:
-    !    Fortran 95 and later
     ! Arguments:
     !    R   -Shall be a scalar and of type INTEGER.
+    ! Standard:
+    !    Fortran 95 and later
     integer :: R
+    integer :: SELECTED_INT_KIND
 end function
 
 function SELECTED_REAL_KIND([P, R])
     ! Returns the kind value of a real data type with decimal precision of at least P digits and
     ! exponent range greater at least R.
-    ! Standard:
-    !    Fortran 95 and later
     ! Arguments:
     !    P    -(Optional) shall be a scalar and of type INTEGER.
     !    R    -(Optional) shall be a scalar and of type INTEGER.
@@ -2192,24 +2329,28 @@ function SELECTED_REAL_KIND([P, R])
     !    -2 if the processor does not support a real type with an exponent
     !        range greater than or equal to R
     !    -3 if neither is supported.
+    ! Standard:
+    !    Fortran 95 and later
+    integer, optional :: P, R
+    integer :: SELECTED_REAL_KIND
 end function
 
 function SET_EXPONENT(X, I)
-    ! Returns the real number whose fractional part is that that of X and whose exponent part is I.
-    ! Standard:
-    !    Fortran 95 and later
+    ! Returns the real number whose fractional part is that of X and whose exponent part is I.
     ! Arguments:
     !    X      -Shall be of type REAL.
     !    I      -Shall be of type INTEGER.
     ! Return value:
     !    The return value is of the same type and kind as X. The real number whose fractional part
     !    is that that of X and whose exponent part if I is returned; it is FRACTION(X) * RADIX(X)**I.
+    ! Standard:
+    !    Fortran 95 and later
+    real :: X
+    integer :: I
 end function
 
 function SHAPE(SOURCE [, KIND])
     ! Determines the shape of an array.
-    ! Standard:
-    !    Fortran 95 and later
     ! Arguments:
     !    SOURCE     -Shall be an array or scalar of any type. If SOURCE is a pointer it must be
     !                associated and allocatable arrays must be allocated.
@@ -2217,108 +2358,114 @@ function SHAPE(SOURCE [, KIND])
     !    An INTEGER array of rank one with as many elements as SOURCE has dimensions. The elements
     !    of the resulting array correspond to the extend of SOURCE along the respective dimensions.
     !    If SOURCE is a scalar, the result is the rank one array of size zero.
+    ! Standard:
+    !    Fortran 95 and later
+    type(any_type) :: SOURCE[(:,...)]
+    integer :: KIND
+    integer :: SHAPE(:)
 end function
 
 function SIGN(A, B)
     ! Returns the value of A with the sign of B.
-    ! Standard:
-    !    Fortran 77 and later
     ! Arguments:
     !    A      -Shall be of type INTEGER or REAL
     !    B      -Shall be of the same type and kind as A
     ! Return value:
     !    The kind of the return value is that of A and B. If B >= 0 then the result is ABS(A),
     !    else it is -ABS(A).
+    ! Standard:
+    !    Fortran 77 and later
+    integer or real :: A, B
 end function
 
 function DSIGN(A, B)
     ! This is specific name of SIGN function.
     ! Returns the value of A with the sign of B.
-    ! Standard:
-    !    Fortran 77 and later
     ! Arguments:
     !    A      -Shall be of type DOUBLE PRECISION
     !    B      -Shall be of the same type and kind as A
     ! Return value:
     !    The kind of the return value is that of A and B. If B >= 0 then the result is ABS(A),
     !    else it is -ABS(A).
+    ! Standard:
+    !    Fortran 77 and later
     double precision :: DSIGN, A, B
 end function
 
 function ISIGN(A, B)
     ! This is specific name of SIGN function.
     ! Returns the value of A with the sign of B.
-    ! Standard:
-    !    Fortran 77 and later
     ! Arguments:
     !    A      -Shall be of type default INTEGER
     !    B      -Shall be of the same type and kind as A
     ! Return value:
     !    The kind of the return value is that of A and B. If B >= 0 then the result is ABS(A),
     !    else it is -ABS(A).
+    ! Standard:
+    !    Fortran 77 and later
     integer :: ISIGN, A, B
 end function
 
 function SIN(X)
     ! Computes the sine of X.
-    ! Standard:
-    !    Fortran 77 and later
     ! Arguments:
     !    X      -The type shall be REAL or COMPLEX.
     ! Return value:
     !    The return value has same type and kind as X.
+    ! Standard:
+    !    Fortran 77 and later
+    real or complex :: X, SIN
 end function
 
 function CSIN(X)
     ! This is specific name of SIN function.
     ! Computes the sine of X.
-    ! Standard:
-    !    Fortran 77 and later
     ! Arguments:
     !    X      -The type shall be COMPLEX.
     ! Return value:
     !    The return value has same type and kind as X.
+    ! Standard:
+    !    Fortran 77 and later
     complex :: CSIN, X
 end function
 
 function DSIN(X)
     ! This is specific name of SIN function.
     ! Computes the sine of X.
-    ! Standard:
-    !    Fortran 77 and later
     ! Arguments:
     !    X      -The type shall be DOUBLE PRECISION.
     ! Return value:
     !    The return value has same type and kind as X.
-    complex :: DSIN, X
+    ! Standard:
+    !    Fortran 77 and later
+    double precision :: DSIN, X
 end function
 
 function SINH(X)
     ! Computes the hyperbolic sine of X.
-    ! Standard:
-    !    Fortran 95 and later, for a complex argument Fortran 2008 or later
     ! Arguments:
     !    X   -The type shall be REAL or COMPLEX.
     ! Return value:
     !    The return value has same type and kind as X.
+    ! Standard:
+    !    Fortran 95 and later, for a complex argument Fortran 2008 or later
+    real or complex :: X, SINH
 end function
 
 function DSINH(X)
     ! Computes the hyperbolic sine of X.
-    ! Standard:
-    !    Fortran 95 and later
     ! Arguments:
     !    X   -The type shall be DOUBLE PRECISION.
     ! Return value:
     !    The return value has same type and kind as X.
+    ! Standard:
+    !    Fortran 95 and later
     double precision :: DSINH, X
 end function
 
 function SIZE(ARRAY[, DIM [, KIND]])
     ! Determine the extent of ARRAY along a specified dimension DIM, or the total number of elements
     ! in ARRAY if DIM is absent.
-    ! Standard:
-    !    Fortran 95 and later, with KIND argument Fortran 2003 and later
     ! Arguments:
     !    ARRAY    -Shall be an array of any type. If ARRAY is a pointer it must be associated and
     !              allocatable arrays must be allocated.
@@ -2329,33 +2476,39 @@ function SIZE(ARRAY[, DIM [, KIND]])
     ! Return value:
     !    The return value is of type INTEGER and of kind KIND. If KIND is absent, the return value
     !    is of default integer kind.
+    ! Standard:
+    !    Fortran 95 and later, with KIND argument Fortran 2003 and later
+    type(any_type) :: SOURCE[(:,...)]
+    integer, optional :: DIM, KIND
+    integer :: SIZE
 end function
 
 function SNGL(A)
     ! Converts the double precision real A to a default real value. This is an archaic form of REAL
     ! that is specific to one type for A.
-    ! Standard:
-    !    Fortran 77 and later
     ! Arguments:
     !    A 	The type shall be a double precision REAL.
     ! Return value:
     !    The return value is of type default REAL.
+    ! Standard:
+    !    Fortran 77 and later
+    double precision :: A
+    real :: SNGL
 end function
 
 function SPACING(X)
     ! Determines the distance between the argument X and the nearest adjacent number of the same type.
-    ! Standard:
-    !    Fortran 95 and later
     ! Arguments:
     !    X 	Shall be of type REAL.
     ! Return value:
     !    The result is of the same type as the input argument X.
+    ! Standard:
+    !    Fortran 95 and later
+    real :: X, SPACING
 end function
 
 function SPREAD(SOURCE, DIM, NCOPIES)
     ! Replicates a SOURCE array NCOPIES times along a specified dimension DIM.
-    ! Standard:
-    !    Fortran 95 and later
     ! Arguments:
     !    SOURCE     -Shall be a scalar or an array of any type and a rank less than seven.
     !    DIM        -Shall be a scalar of type INTEGER with a value in the range from 1 to n+1,
@@ -2363,46 +2516,50 @@ function SPREAD(SOURCE, DIM, NCOPIES)
     !    NCOPIES    -Shall be a scalar of type INTEGER.
     ! Return value:
     !    The result is an array of the same type as SOURCE and has rank n+1 where n equals the rank of SOURCE.
+    ! Standard:
+    !    Fortran 95 and later
+    type(any_type) :: SOURCE[(:,...)]
+    integer :: DIM, NCOPIES
+    type(same_as_SOURCE) :: SPREAD(:[,:,...])
 end function
 
 function SQRT(X)
     ! Computes the square root of X.
-    ! Standard:
-    !    Fortran 77 and later
     ! Arguments:
     !    X      -The type shall be REAL or COMPLEX.
     ! Return value:
     !    The return value is of type REAL or COMPLEX. The kind type parameter is the same as X.
+    ! Standard:
+    !    Fortran 77 and later
+    real or complex :: X, SQRT
 end function
 
 function CSQRT(X)
     ! This is specific name of SQRT function.
     ! Computes the square root of X.
-    ! Standard:
-    !    Fortran 77 and later
     ! Arguments:
     !    X      -The type shall be COMPLEX.
     ! Return value:
     !    The return value is of type COMPLEX.
+    ! Standard:
+    !    Fortran 77 and later
     complex :: CSQRT, X
 end function
 
 function DSQRT(X)
     ! This is specific name of SQRT function.
     ! Computes the square root of X.
-    ! Standard:
-    !    Fortran 77 and later
     ! Arguments:
     !    X      -The type shall be DOUBLE PRECISION.
     ! Return value:
     !    The return value is of type DOUBLE PRECISION.
+    ! Standard:
+    !    Fortran 77 and later
     double precision :: DSQRT, X
 end function
 
 function SUM(ARRAY[, DIM] [, MASK])
     ! Adds the elements of ARRAY along dimension DIM if the corresponding element in MASK is TRUE.
-    ! Standard:
-    !    Fortran 95 and later
     ! Syntax:
     !    RESULT = SUM(ARRAY[, MASK])
     !    RESULT = SUM(ARRAY, DIM[, MASK])
@@ -2416,94 +2573,101 @@ function SUM(ARRAY[, DIM] [, MASK])
     !    If DIM is absent, a scalar with the sum of all elements in ARRAY is returned. Otherwise,
     !    an array of rank n-1, where n equals the rank of ARRAY,and a shape similar to that of ARRAY with
     !    dimension DIM dropped is returned.
+    ! Standard:
+    !    Fortran 95 and later
+    integer, real or complex :: ARRAY(:[,:,...])
+    integer, optional :: DIM
+    logical :: MASK(:[,:,...])
 end function
 
 subroutine SYSTEM_CLOCK([COUNT, COUNT_RATE, COUNT_MAX])
     ! Determines the COUNT of milliseconds of wall clock time. COUNT_RATE determines the number of clock
     ! ticks per second or zero if there is no processor clock. COUNT_MAX is assigned the maximum value of COUNT,
     ! if a processor clock is available, or otherwise, zero.
-    ! Standard:
-    !    Fortran 95 and later
     !Arguments:
     !    COUNT  -(Optional) shall be a scalar of type default INTEGER with INTENT(OUT).
     !    COUNT_RATE     -(Optional) shall be a scalar of type default INTEGER with INTENT(OUT).
     !    COUNT_MAX  -(Optional) shall be a scalar of type default INTEGER with INTENT(OUT).
+    ! Standard:
+    !    Fortran 95 and later
     integer, optional, intent(out) :: COUNT, COUNT_RATE, COUNT_MAX
 end subroutine
 
 function TAN(X)
     ! Computes the tangent of X.
-    ! Standard:
-    !    Fortran 77 and later, for a complex argument Fortran 2008 or later
     ! Arguments:
     !    X  -The type shall be REAL or COMPLEX.
     ! Return value:
     !    The return value has same type and kind as X.
+    ! Standard:
+    !    Fortran 77 and later, for a complex argument Fortran 2008 or later
+    real or complex :: X, TAN
 end function
 
 function DTAN(X)
     ! This is specific name of TAN function.
     ! Computes the tangent of X.
-    ! Standard:
-    !    Fortran 77 and later
     ! Arguments:
     !    X  -The type shall be DOUBLE PRECISION.
     ! Return value:
     !    The return value has same type and kind as X.
+    ! Standard:
+    !    Fortran 77 and later
     double precision :: DTAN, X
 end function
 
 function TANH(X)
     ! Computes the hyperbolic tangent of X.
-    ! Standard:
-    !    Fortran 77 and later, for a complex argument Fortran 2008 or later
     ! Arguments:
     !    X 	The type shall be REAL or COMPLEX.
     ! Return value:
     !    The return value has same type and kind as X. If X is complex, the imaginary part of the result
     !    is in radians. If X is REAL, the return value lies in the range - 1 <= tanh(x) <= 1 .
+    ! Standard:
+    !    Fortran 77 and later, for a complex argument Fortran 2008 or later
+    real or complex :: X, TANH
 end function
 
 function DTANH(X)
     ! This is specific name of TANH function.
     ! Computes the hyperbolic tangent of X.
-    ! Standard:
-    !    Fortran 77 and later
     ! Arguments:
     !    X 	The type shall be DOUBLE PRECISION.
     ! Return value:
     !    The return value has same type and kind as X.
     !    If X is REAL, the return value lies in the range - 1 <= tanh(x) <= 1 .
+    ! Standard:
+    !    Fortran 77 and later
     double precision :: DTANH, X
 end function
 
 function TINY(X)
     ! Returns the smallest positive (non zero) number in the model of the type of X.
-    ! Standard:
-    !    Fortran 95 and later
     ! Arguments:
     !    X  -Shall be of type REAL.
     ! Return value:
     !    The return value is of the same type and kind as X
+    ! Standard:
+    !    Fortran 95 and later
+    real :: X, TINY
 end function
 
 function TRAILZ(I)
     ! Returns the number of trailing zero bits of an integer.
-    ! Standard:
-    !    Fortran 2008 and later
     ! Arguments:
     !    I  -Shall be of type INTEGER.
     ! Return value:
     !    The type of the return value is the default INTEGER. If all the bits of I are zero,
     !    the result value is BIT_SIZE(I).
+    ! Standard:
+    !    Fortran 2008 and later
+    integer :: I, TRAILZ
 end function
 
 function TRANSFER(SOURCE, MOLD[, SIZE])
     ! Interprets the bitwise representation of SOURCE in memory as if it is the representation of a variable
     ! or array of the same type and type parameters as MOLD.
     ! This is approximately equivalent to the C concept of casting one type to another.
-    ! Standard:
-    !    Fortran 95 and later
     ! Arguments:
     !    SOURCE     -Shall be a scalar or an array of any type.
     !    MOLD       -Shall be a scalar or an array of any type.
@@ -2521,33 +2685,36 @@ function TRANSFER(SOURCE, MOLD[, SIZE])
     !    type as MOLD, the results are undefined, and subsequent operations on the result cannot be guaranteed to produce
     !    sensible behavior. For example, it is possible to create LOGICAL variables for which VAR and .NOT.VAR both
     !    appear to be true.
+    ! Standard:
+    !    Fortran 95 and later
+    type(any_type) :: SOURCE[(:,...)], MOLD[(:,...)]
+    integer :: SIZE
 end function
 
 function TRANSPOSE(MATRIX)
     ! Transpose an array of rank two. Element (i, j) of the result has the value MATRIX(j, i), for all i, j.
-    ! Standard:
-    !    Fortran 95 and later
     ! Arguments:
     !    MATRIX     -Shall be an array of any type and have a rank of two.
     ! Return value:
     !    The result has the same type as MATRIX, and has shape (/ m, n /) if MATRIX has shape (/ n, m /).
+    ! Standard:
+    !    Fortran 95 and later
+    type(any_type) :: MATRIX(:,:), TRANSPOSE(:,:)
 end function
 
 function TRIM(STRING)
     ! Removes trailing blank characters of a string.
-    ! Standard:
-    !    Fortran 95 and later
     ! Arguments:
     !    STRING     -Shall be a scalar of type CHARACTER.
     ! Return value:
     !    A scalar of type CHARACTER which length is that of STRING less the number of trailing blanks.
+    ! Standard:
+    !    Fortran 95 and later
     character(len=*) :: TRIM, STRING
 end function
 
 function UBOUND(ARRAY [, DIM [, KIND]])
     ! Returns the upper bounds of an array, or a single upper bound along the DIM dimension.
-    ! Standard:
-    !    Fortran 95 and later, with KIND argument Fortran 2003 and later
     ! Arguments:
     !    ARRAY  -Shall be an array, of any type.
     !    DIM    -(Optional) Shall be a scalar INTEGER.
@@ -2559,12 +2726,15 @@ function UBOUND(ARRAY [, DIM [, KIND]])
     !    dimension. If ARRAY is an expression rather than a whole array or array structure component, or if
     !    it has a zero extent along the relevant dimension, the upper bound is taken to be the number of
     !    elements along the relevant dimension.
+    ! Standard:
+    !    Fortran 95 and later, with KIND argument Fortran 2003 and later
+    type(any_type) :: ARRAY(:[,...])
+    integer, optional :: DIM, KIND
+    integer(KIND) :: UBOUND
 end function
 
 function UNPACK(VECTOR, MASK, FIELD)
     ! Store the elements of VECTOR in an array of higher rank.
-    ! Standard:
-    !    Fortran 95 and later
     ! Arguments:
     !    VECTOR     -Shall be an array of any type and rank one. It shall have at least as many
     !                elements as MASK has TRUE values.
@@ -2573,6 +2743,12 @@ function UNPACK(VECTOR, MASK, FIELD)
     ! Return value:
     !    The resulting array corresponds to FIELD with TRUE elements of MASK replaced by values
     !    from VECTOR in array element order.
+    ! Standard:
+    !    Fortran 95 and later
+    type(any_type) :: VECTOR(:)
+    logical :: MASK(:[,:,...])
+    type(same_as_VECTOR) :: FIELD(:[,:,...])
+    type(same_as_VECTOR) :: UNPACK(:[,:,...])
 end function
 
 function VERIFY(STRING, SET[, BACK [, KIND]])
@@ -2580,8 +2756,6 @@ function VERIFY(STRING, SET[, BACK [, KIND]])
     ! If BACK is either absent or equals FALSE, this function returns the position of the leftmost character
     ! of STRING that is not in SET. If BACK equals TRUE, the rightmost position is returned. If all
     ! characters of SET are found in STRING, the result is zero.
-    ! Standard:
-    !    Fortran 95 and later, with KIND argument Fortran 2003 and later
     ! Arguments:
     !    STRING     -Shall be of type CHARACTER.
     !    SET        -Shall be of type CHARACTER.
@@ -2590,6 +2764,8 @@ function VERIFY(STRING, SET[, BACK [, KIND]])
     ! Return value:
     !    The return value is of type INTEGER and of kind KIND. If KIND is absent, the return value is of
     !    default integer kind.
+    ! Standard:
+    !    Fortran 95 and later, with KIND argument Fortran 2003 and later
     integer(KIND=KIND) :: VERIFY
     character(len=*) :: STRING, SET
     logical, optional :: BACK
@@ -2602,25 +2778,14 @@ function EXTENDS_TYPE_OF (A, MOLD)
     ! If A is unlimited polymorphic and is either a disassociated pointer or unallocated allocatable, the result is false.
     ! If the dynamic type of A is an extension type of the dynamic type of MOLD, the result is true.
     ! In other cases, the result is false.
-    ! Standard:
-    !   Fortran 2003 and later
     ! Arguments:
     ! A  -object of extensible type. If A is a pointer, A must not have an undefined association status.
     ! MOLD   -object of extensible type. If MOLD is a pointer, MOLD must not have an undefined association status.
     ! Return value:
     !    The return value is default logical
+    ! Standard:
+    !   Fortran 2003 and later
     logical :: EXTENDS_TYPE_OF
-Result type and attributes
-
-Default logical scalar
-
+    type(any_extensible_type) :: A, MOLD
 end function
-
-
-# SAME_TYPE_AS -knygoje f2003 yra si funkcija, o gfortran aprasyme jos nematyti. ????
-
-
-Siame sarase nera specifiniu tipu proceduru. Ju sarasas duotas f2003 knygoje.
-
-
 

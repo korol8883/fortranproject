@@ -39,8 +39,10 @@ FPOptionsDlg::FPOptionsDlg(wxWindow* parent, NativeParserF* np, FortranProject* 
     XRCCTRL(*this, "chkEvalTooltip", wxCheckBox)->SetValue(cfg->ReadBool(_T("/eval_tooltip"), true));
     XRCCTRL(*this, "chkAutoSelectOne", wxCheckBox)->SetValue(cfg->ReadBool(_T("/auto_select_one"), false));
     XRCCTRL(*this, "chkSmartCodeCompletion", wxCheckBox)->SetValue(cfg->ReadBool(_T("/use_smart_code_completion"), true));
+    XRCCTRL(*this, "chkOnlyUseAssociated", wxCheckBox)->SetValue(cfg->ReadBool(_T("/only_use_associated"), true));
+    XRCCTRL(*this, "chkShowHiddenEntities", wxCheckBox)->SetValue(cfg->ReadBool(_T("/show_hidden_entities"), false));
     XRCCTRL(*this, "chkAutoLaunch", wxCheckBox)->SetValue(cfg->ReadBool(_T("/auto_launch"), true));
-    XRCCTRL(*this, "spnAutoLaunchChars", wxSpinCtrl)->SetValue(cfg->ReadInt(_T("/auto_launch_chars"), 4));
+    XRCCTRL(*this, "spnAutoLaunchChars", wxSpinCtrl)->SetValue(cfg->ReadInt(_T("/auto_launch_chars"), 2));
     XRCCTRL(*this, "spnMaxMatches", wxSpinCtrl)->SetValue(cfg->ReadInt(_T("/max_matches"), 16384));
 
     XRCCTRL(*this, "chkNoSB", wxCheckBox)->SetValue(!cfg->ReadBool(_T("/use_symbols_browser"), true));
@@ -59,7 +61,7 @@ FPOptionsDlg::FPOptionsDlg(wxWindow* parent, NativeParserF* np, FortranProject* 
     XRCCTRL(*this, "chkKL_9", wxCheckBox)->SetValue(cfg->ReadBool(_T("/lexer_keywords_set9"), false));
 
     XRCCTRL(*this, "txtFExtFixed", wxTextCtrl)->ChangeValue(cfg-> Read(_T("/extension_fixed"), _T("for, f77, f, fpp")));
-    XRCCTRL(*this, "txtFExtFree", wxTextCtrl)->ChangeValue(cfg->Read(_T("/extension_free"), _T("f90, f95, f03, f2k")));
+    XRCCTRL(*this, "txtFExtFree", wxTextCtrl)->ChangeValue(cfg->Read(_T("/extension_free"), _T("f90, f95, f2k, f03, f08")));
 
     XRCCTRL(*this, "rbCase", wxRadioBox)->SetSelection(cfg->ReadInt(_T("/keywords_case"), 0));
 
@@ -104,6 +106,8 @@ void FPOptionsDlg::OnUpdateUI(wxUpdateUIEvent& event)
     XRCCTRL(*this, "chkEvalTooltip", wxCheckBox)->Enable(en);
     XRCCTRL(*this, "chkAutoSelectOne", wxCheckBox)->Enable(en);
     XRCCTRL(*this, "chkSmartCodeCompletion", wxCheckBox)->Enable(en);
+    XRCCTRL(*this, "chkOnlyUseAssociated", wxCheckBox)->Enable(en);
+    XRCCTRL(*this, "chkShowHiddenEntities", wxCheckBox)->Enable(en);
     XRCCTRL(*this, "chkAutoLaunch", wxCheckBox)->Enable(en);
     XRCCTRL(*this, "spnAutoLaunchChars", wxSpinCtrl)->Enable(en && auto_launch);
     XRCCTRL(*this, "spnMaxMatches", wxSpinCtrl)->Enable(en);
@@ -120,6 +124,7 @@ void FPOptionsDlg::OnUpdateUI(wxUpdateUIEvent& event)
     XRCCTRL(*this, "chkKL_7", wxCheckBox)->Enable(en);
     XRCCTRL(*this, "chkKL_8", wxCheckBox)->Enable(en);
     XRCCTRL(*this, "chkKL_9", wxCheckBox)->Enable(en);
+    bool enA = en;
 
 
     en = !XRCCTRL(*this, "chkNoSB", wxCheckBox)->GetValue();
@@ -127,14 +132,16 @@ void FPOptionsDlg::OnUpdateUI(wxUpdateUIEvent& event)
     XRCCTRL(*this, "chkBottomTree", wxCheckBox)->Enable(en);
     XRCCTRL(*this, "chkSortSB", wxCheckBox)->Enable(en);
 
-//    int sel = XRCCTRL(*this, "lstRepl", wxListBox)->GetSelection();
-//    XRCCTRL(*this, "btnEditRepl", wxButton)->Enable(sel != -1);
-//    XRCCTRL(*this, "btnDelRepl", wxButton)->Enable(sel != -1);
-
     en = !XRCCTRL(*this, "chkNoFortranInfo", wxCheckBox)->GetValue();
     XRCCTRL(*this, "chkComAbove", wxCheckBox)->Enable(en);
     XRCCTRL(*this, "chkComBelow", wxCheckBox)->Enable(en);
     XRCCTRL(*this, "chkDeclarLog", wxCheckBox)->Enable(en);
+
+    if (enA)
+    {
+        bool enUA = XRCCTRL(*this, "chkOnlyUseAssociated", wxCheckBox)->GetValue();
+        XRCCTRL(*this, "chkShowHiddenEntities", wxCheckBox)->Enable(enUA);
+    }
 }
 
 void FPOptionsDlg::OnApply()
@@ -149,6 +156,8 @@ void FPOptionsDlg::OnApply()
     // set all other member options
     cfg->Write(_T("/auto_select_one"), (bool)XRCCTRL(*this, "chkAutoSelectOne", wxCheckBox)->GetValue());
     cfg->Write(_T("/use_smart_code_completion"), (bool)XRCCTRL(*this, "chkSmartCodeCompletion", wxCheckBox)->GetValue());
+    cfg->Write(_T("/only_use_associated"), (bool)XRCCTRL(*this, "chkOnlyUseAssociated", wxCheckBox)->GetValue());
+    cfg->Write(_T("/show_hidden_entities"), (bool)XRCCTRL(*this, "chkShowHiddenEntities", wxCheckBox)->GetValue());
     cfg->Write(_T("/auto_launch"), (bool)XRCCTRL(*this, "chkAutoLaunch", wxCheckBox)->GetValue());
     cfg->Write(_T("/auto_launch_chars"), (int)XRCCTRL(*this, "spnAutoLaunchChars", wxSpinCtrl)->GetValue());
     cfg->Write(_T("/max_matches"), (int)XRCCTRL(*this, "spnMaxMatches", wxSpinCtrl)->GetValue());
@@ -175,7 +184,7 @@ void FPOptionsDlg::OnApply()
 
     wxString ext_free = XRCCTRL(*this, "txtFExtFree", wxTextCtrl)->GetValue().Trim();
     if (ext_free.IsEmpty())
-        ext_free = _T("f90, f95, f03, f2k");
+        ext_free = _T("f90, f95, f2k, f03, f08");
 
     cfg->Write(_T("/extension_fixed"), ext_fixed);
     cfg->Write(_T("/extension_free"), ext_free);

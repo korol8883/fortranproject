@@ -113,12 +113,15 @@ class FortranProject : public cbCodeCompletionPlugin
         int                                m_CurrentLine;
         bool                               m_LexerKeywordsToInclude[9];
         bool                               m_UseSmartCC;
+        size_t                             m_MaxMatch;
 
         bool                               m_LogUseWindow;
         bool                               m_LogComAbove;
         bool                               m_LogComBelow;
         bool                               m_LogDeclar;
         bool                               m_LogComVariab;
+        bool                               m_LogOnlyUseAssoc;
+        bool                               m_LogOnlyPublicNames;
 
         bool                               m_ComVariab;
 

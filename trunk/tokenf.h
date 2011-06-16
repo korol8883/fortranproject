@@ -10,6 +10,11 @@
 #include <wx/string.h>
 #include <wx/dynarray.h>
 #include <wx/thread.h>
+#include <wx/arrstr.h>
+
+#include <list>
+
+WX_DEFINE_ARRAY_SIZE_T(size_t, ArrOfSizeT);
 
 static wxCriticalSection s_CritSect;
 
@@ -40,6 +45,14 @@ enum TokenKindF
     tkInterface = 0x08000,
     tkInterfaceExplicit = 0x10000,
     tkProcedure = 0x20000,
+    tkAccessList = 0x40000,
+};
+
+enum TokenAccessKind
+{
+    taPublic = 1,
+    taPrivate,
+    taProtected
 };
 
 
@@ -48,7 +61,7 @@ class TokenF
 	public:
 		TokenF();
 		TokenF(const wxString& name, const wxString& filename, unsigned int line);
-		~TokenF();
+		virtual ~TokenF();
 
 		void Clear();
 		void AddChild(TokenF* child);
@@ -68,6 +81,7 @@ class TokenF
 		unsigned int m_LineEnd;
 		unsigned int m_DefinitionLength;
 		TokenKindF m_TokenKind;
+		TokenAccessKind m_TokenAccess;
 
 		//For function only
 		wxString m_ResultVariable;
@@ -104,11 +118,14 @@ class TokenFlat : public TokenF
         TokenFlat(const TokenF* tok);
         TokenFlat(const TokenFlat* tok);
 		~TokenFlat();
+		void Rename(wxString& newName);
+		void ChangeDisplayName(wxString& newName);
 
 		wxString m_ParentName;
 		wxString m_ParentDisplayName;
 		TokenKindF m_ParentTokenKind;
 
+        wxString m_Rename; // rename through use association
 };
 
 class TokensArrayFlatClass
@@ -118,6 +135,8 @@ class TokensArrayFlatClass
         ~TokensArrayFlatClass();
         TokensArrayFlat* GetTokens(){return &m_Tokens;};
         TokensArrayFlat m_Tokens;
+        bool HasTokensWithName(const wxString&, ArrOfSizeT&);
+        void DelTokensWithName(const wxString&);
     protected:
     private:
 };

@@ -9,6 +9,8 @@
 
 #include "tokenf.h"
 #include "tokenizerf.h"
+#include "usetokenf.h"
+#include "moduletokenf.h"
 #include <set>
 
 
@@ -26,6 +28,8 @@ class ParserThreadF
     private:
         TokenF* DoAddToken(TokenKindF kind, const wxString& name, const wxString& args=wxEmptyString, const wxString& typeDefinition=wxEmptyString);
         TokenF* DoAddToken(TokenKindF kind, const wxString& name, const wxString& args, const unsigned int defStartLine);
+        UseTokenF* DoAddUseToken(const wxString& modName);
+        ModuleTokenF* DoAddModuleToken(const wxString& modName);
 
 		Tokenizerf m_Tokens;
 		TokensArrayF* m_pTokens;
@@ -40,20 +44,25 @@ class ParserThreadF
 		unsigned int m_InterfaceWrite;
 
         void InitSecondEndPart();
-		void HandleModProg(TokenKindF);
-		void HandleFunction(TokenKindF);
+		void HandleModule();
+		void HandleFunction(TokenKindF, TokenAccessKind taKind=taPublic);
+		void HandleType(bool& needDefault, TokenF* &newToken);
 		void HandleType();
 		void HandleUse();
-		void HandleInterface();
+		void HandleInterface(TokenAccessKind taKind=taPublic);
 		void HandleBlockData();
 		void HandleInclude();
+		void HandleAccessList(TokenAccessKind taKind, bool& changeDefault, int& countAccess, wxArrayString& nameList);
 		void HandleProcedureList();
+		void HandlePrivatePublic();
 		void GoThroughBody();
 		bool IsEnd(wxString tok_low, wxString nex_low);
 		bool ParseDeclarationsFirstPart(wxString& token, wxString& next);
-		void ParseDeclarationsSecondPart(wxString& token);
-		void CheckParseOneDeclaration(wxString& token, wxString& tok_low, wxString& next, wxString& next_low);
+		void ParseDeclarationsSecondPart(wxString& token, bool& needDefault, TokensArrayF& newTokenArr);
+		void CheckParseOneDeclaration(wxString& token, wxString& tok_low, wxString& next, wxString& next_low, bool& needDefault, TokensArrayF& newTokenArr);
 		void ParseTypeBoundProcedures();
+		void MakeArrayStringLower(wxArrayString &arr, wxArrayString &arrLw);
+		void ChangeTokenAccess(ModuleTokenF* modToken, TokenF* token);
 
         std::set<wxString> m_EndSecPart;
 };

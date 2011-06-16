@@ -21,11 +21,18 @@
 typedef std::vector<FortranSourceForm> ArrayOfFortranSourceForm;
 typedef std::set<wxString> StringSet;
 
+enum kindOfCCList
+{
+    kccUseAssocTokens = 1,
+    kccAccessList,
+    kccOther
+};
+
 
 class CCSmartFilter
 {
     public:
-        static void GetTokenKind(wxArrayString& words, int& kindFilter, bool& allowVariables);
+        static void GetTokenKind(wxArrayString& words, int& kindFilter, bool& allowVariables, kindOfCCList& kindCC);
     protected:
     private:
 };

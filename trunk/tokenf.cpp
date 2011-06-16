@@ -19,6 +19,7 @@ TokenF::TokenF(const wxString& name, const wxString& filename, unsigned int line
 	: m_Name(name),
 	m_Filename(filename),
 	m_LineStart(line),
+	m_TokenAccess(taPublic),
 	m_Pass(true),
 	m_pParent(0L)
 {
@@ -68,6 +69,7 @@ wxString TokenF::GetTokenKindString()
         case tkInterface: return _("interface");
         case tkInterfaceExplicit: return _("explicit interface");
         case tkProcedure: return _("procedure");
+        case tkAccessList: return _("access list");
 	}
 	return _("other");
 }
@@ -106,6 +108,7 @@ TokenFlat::TokenFlat(const TokenF* tok)
     m_LineEnd = tok->m_LineEnd;
     m_TokenKind = tok->m_TokenKind;
     m_DefinitionLength = tok->m_DefinitionLength;
+    m_TokenAccess = tok->m_TokenAccess;
 
     if (tok->m_pParent)
     {
@@ -138,6 +141,7 @@ TokenFlat::TokenFlat(const TokenFlat* tok)
     m_LineEnd = tok->m_LineEnd;
     m_TokenKind = tok->m_TokenKind;
     m_DefinitionLength = tok->m_DefinitionLength;
+    m_TokenAccess = tok->m_TokenAccess;
 
     m_ParentName = tok->m_ParentName;
     m_ParentDisplayName = tok->m_ParentDisplayName;
@@ -154,12 +158,25 @@ TokenFlat::TokenFlat(const TokenFlat* tok)
         m_Pass = tok->m_Pass;
     }
     m_PartLast = tok->m_PartLast;
+    m_Rename = tok->m_Rename;
 }
 
 TokenFlat::~TokenFlat()
 {
 	//dtor
 }
+
+void TokenFlat::Rename(wxString& newName)
+{
+    m_Name = newName.Lower();
+    m_DisplayName = newName;
+}
+
+void TokenFlat::ChangeDisplayName(wxString& newName)
+{
+    m_DisplayName = newName;
+}
+
 
 //--------------------------------------------------------------------
 
@@ -177,3 +194,33 @@ TokensArrayFlatClass::~TokensArrayFlatClass()
     m_Tokens.Clear();
 }
 
+bool TokensArrayFlatClass::HasTokensWithName(const wxString& name, ArrOfSizeT& idx)
+{
+    bool found = false;
+    for(size_t i=0; i<m_Tokens.size(); i++)
+    {
+        if (m_Tokens.Item(i)->m_Name.IsSameAs(name))
+        {
+            if (!found)
+                found = true;
+            idx.Add(i);
+        }
+    }
+    return found;
+}
+
+void TokensArrayFlatClass::DelTokensWithName(const wxString& name)
+{
+    size_t toksiz = m_Tokens.size();
+    for(size_t i=0; i<toksiz; i++)
+    {
+        if (m_Tokens.Item(i)->m_Name.IsSameAs(name))
+        {
+            m_Tokens.Item(i)->Clear();
+            delete m_Tokens.Item(i);
+            m_Tokens.RemoveAt(i);
+            toksiz--;
+            i--;
+        }
+    }
+}

@@ -522,7 +522,7 @@ bool WorkspaceBrowserBuilder::SelectNode(wxTreeItemId node)
             }
             case sfToken:
             {
-				wxTreeItemId rootFuncs = m_pTreeBottom->AppendItem(root, _("Functions"), m_ImgNr["function_folder"]);
+				wxTreeItemId rootFuncs = m_pTreeBottom->AppendItem(root, _("Procedures"), m_ImgNr["function_folder"]);
 				wxTreeItemId rootOthers = m_pTreeBottom->AppendItem(root, _("Others"), m_ImgNr["others_folder"]);
 
                 TokenF* pToken = data->m_pToken;
@@ -599,7 +599,7 @@ wxTreeItemId WorkspaceBrowserBuilder::AddNodeIfNotThere(wxTreeCtrl* tree, wxTree
 void WorkspaceBrowserBuilder::CreateSpecialFolders()
 {
     wxTreeItemId parent = m_pTreeTop->GetRootItem();
-    wxTreeItemId gfuncs = AddNodeIfNotThere(m_pTreeTop, parent, _("Global functions"), m_ImgNr["function_folder"], new TreeDataF(sfGFuncs, 0));
+    wxTreeItemId gfuncs = AddNodeIfNotThere(m_pTreeTop, parent, _("Global procedures"), m_ImgNr["function_folder"], new TreeDataF(sfGFuncs, 0));
     wxTreeItemId preproc = AddNodeIfNotThere(m_pTreeTop, parent, _("Others"), m_ImgNr["others_folder"], new TreeDataF(sfOthers, 0));
 
     if (!m_Options.visibleBottomTree)
@@ -683,7 +683,7 @@ void WorkspaceBrowserBuilder::SelectItem(TokenF* token)
         {
             if (token->m_TokenKind == tkFunction)
             {
-                item = FindItemByName(m_pTreeTop, _("Global functions"));
+                item = FindItemByName(m_pTreeTop, _("Global procedures"));
                 if (item.IsOk())
                 {
                     m_pTreeTop->SelectItem(item);
@@ -997,7 +997,10 @@ void WorkspaceBrowserBuilder::MarkSymbol(const wxString& filename, int line)
 void WorkspaceBrowserBuilder::MarkItem(wxTreeCtrl* tree, wxTreeItemId& item, bool mark)
 {
     if (item.IsOk())
+    {
         tree->SetItemBold(item, mark);
+        tree->Refresh();
+    }
 }
 
 bool WorkspaceBrowserBuilder::MarkBottomSymbol(const wxString& filename, int line)

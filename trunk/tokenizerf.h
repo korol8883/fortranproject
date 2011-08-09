@@ -40,6 +40,7 @@ class Tokenizerf
 		wxString PeekTokenSameFortranLine();
 		const wxString& GetFilename(){ return m_Filename; }
 		unsigned int GetLineNumber(){ return m_LineNumber; }
+		unsigned int GetPeekedLineNumber(){ return m_PeekedLineNumber; }
 		bool IsOK(){ return m_IsOK; }
 		bool SkipToOneOfChars(const char* chars, bool toLineEnd = false);
 		wxArrayString GetTokensToEOL(wxArrayString* arrStrLines = 0);

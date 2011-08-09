@@ -251,33 +251,43 @@ bool Tokenizerf::SkipToOneOfChars(const char* chars, bool toLineEnd)
 	// skip everything until we find any one of chars or end of line if toLineEnd
 	while (1)
 	{
-	    if(toLineEnd && CurrentChar() == '\n')
+	    wxChar cch = CurrentChar();
+	    if(toLineEnd && cch == '\n')
 	    {
             break;
 	    }
-	    if(CurrentChar() == '&')
+	    if(cch == '&')
 	    {
-            SkipToEOL();
-            MoveToNextChar();
+	        MoveToNextChar();
+	        SkipWhiteSpace(); //cia as pridejau kaime
+	        cch = CurrentChar();
+	        if (cch == '\n' || cch == '\r' || cch == '!')
+            {
+	        //if (curchar yra kazkas kita nei '!' ar EOL, tai niko, o jeigu EOL ar ! tai SkipToEOL())
+                SkipToEOL();
+            //MoveToNextChar();
+                cch = CurrentChar();
+            }
 	    }
-	    if(toLineEnd && CurrentChar() == '!')
+	    if(toLineEnd && cch == '!')
 	    {
 	        SkipToEOL();
-	        MoveToNextChar();
+	        //MoveToNextChar();
 	        break;
 	    }
-	    else if(CurrentChar() == '!')
+	    else if(cch == '!')
 	    {
 	        SkipToEOL();
-	        MoveToNextChar();
+	        //MoveToNextChar();
+	        cch = CurrentChar();
 	    }
-	    if(IsEOF() || CharInString(CurrentChar(), chars))
+	    if(IsEOF() || CharInString(cch, chars))
 	    {
             break;
 	    }
 	    else
 	    {
-	        if (CurrentChar() == '"' || CurrentChar() == '\'')
+	        if (cch == '"' || cch == '\'')
 			{
 				// this is the case that match is inside a string!
 				char ch = CurrentChar();
@@ -364,7 +374,6 @@ bool Tokenizerf::SkipUnwanted()
 	while (CurrentChar() == '#' ||
            (CurrentChar() == '=' && !m_DetailedParsing) ||
            //CurrentChar() == '[' ||
-           CurrentChar() == '?' ||
            CurrentChar() == '!' ||
            ((CurrentChar() == 'c' || CurrentChar() == 'C' || CurrentChar() == '*') && m_Column == 1 && m_SourceForm == fsfFixed))
 	{
@@ -418,14 +427,6 @@ bool Tokenizerf::SkipUnwanted()
 		    {
 		        return true;
 		    }
-		}
-
-		while (CurrentChar() == '?')
-		{
-			// skip "condition ? true : false"
-			// TODO: what happens with operators?
-			if (!SkipToOneOfChars(";}"))
-				return false;
 		}
 	}
 	return true;

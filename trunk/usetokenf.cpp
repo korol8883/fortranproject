@@ -27,11 +27,17 @@ void UseTokenF::SetModuleNature(ModuleNature modNature)
     m_ModuleNature = modNature;
 }
 
-void UseTokenF::AddToNamesList(wxString& localName, wxString& externalName)
+void UseTokenF::AddToNamesList(wxString& localName)
+{
+    m_NamesList.insert(localName);
+}
+
+void UseTokenF::AddToRenameList(wxString& localName, wxString& externalName)
 {
     wxArrayString pair;
     pair.Add(localName);
     pair.Add(externalName);
-    m_NamesList.push_back(pair);
+    m_RenameList.push_back(pair);
 }
+
 

@@ -60,6 +60,7 @@ void ProjectDependencies::Clear()
     }
     m_ChildrenTable.clear();
     m_WasInfiniteLoop = false;
+    m_FileWeights.Empty();
 }
 
 void ProjectDependencies::MakeProjectFilesDependencies(ProjectFilesArray& prFilesArr, ParserF& parser)
@@ -123,6 +124,8 @@ void ProjectDependencies::MakeProjectFilesDependencies(ProjectFilesArray& prFile
 	    MakeFileChildren(children, i);
 	    m_ChildrenTable.push_back(children);
 	}
+    m_FileWeights.Alloc(nfil);
+    m_FileWeights.Add(-1,nfil);
 }
 
 
@@ -146,6 +149,8 @@ unsigned short int ProjectDependencies::GetFileWeight(wxString& fileName)
 
 unsigned short int ProjectDependencies::GetFileWeightByIndex(size_t idx)
 {
+    if (m_FileWeights[idx] != -1)
+        return m_FileWeights[idx];
     if (m_Deep > 99)
     {
         m_WasInfiniteLoop = true;
@@ -200,6 +205,7 @@ unsigned short int ProjectDependencies::GetFileWeightByIndex(size_t idx)
                 wt_max = wt;
         }
     }
+    m_FileWeights[idx] = wt_max;
     return wt_max;
 }
 

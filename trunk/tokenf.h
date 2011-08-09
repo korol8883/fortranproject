@@ -118,8 +118,8 @@ class TokenFlat : public TokenF
         TokenFlat(const TokenF* tok);
         TokenFlat(const TokenFlat* tok);
 		~TokenFlat();
-		void Rename(wxString& newName);
-		void ChangeDisplayName(wxString& newName);
+		void Rename(const wxString& newName);
+		void ChangeDisplayName(const wxString& newName);
 
 		wxString m_ParentName;
 		wxString m_ParentDisplayName;

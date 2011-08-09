@@ -166,13 +166,13 @@ TokenFlat::~TokenFlat()
 	//dtor
 }
 
-void TokenFlat::Rename(wxString& newName)
+void TokenFlat::Rename(const wxString& newName)
 {
     m_Name = newName.Lower();
     m_DisplayName = newName;
 }
 
-void TokenFlat::ChangeDisplayName(wxString& newName)
+void TokenFlat::ChangeDisplayName(const wxString& newName)
 {
     m_DisplayName = newName;
 }

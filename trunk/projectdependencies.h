@@ -56,6 +56,7 @@ class ProjectDependencies
         int m_Deep;
         bool m_WasInfiniteLoop;
         bool m_BreakChain;
+        wxArrayInt m_FileWeights;
 };
 
 #endif // PROJECTDEPENDENCIES_H

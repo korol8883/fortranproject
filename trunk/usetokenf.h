@@ -3,6 +3,7 @@
 
 #include "tokenf.h"
 #include <wx/arrstr.h>
+#include <set>
 #include <list>
 
 enum ModuleNature
@@ -19,16 +20,19 @@ class UseTokenF : public TokenF
         virtual ~UseTokenF();
         void SetOnly(bool hasOnly);
         void SetModuleNature(ModuleNature modNature);
-        void AddToNamesList(wxString& localName, wxString& externalName);
+        void AddToNamesList(wxString& localName);
+        void AddToRenameList(wxString& localName, wxString& externalName);
 
         ModuleNature GetModuleNature() {return m_ModuleNature;};
         bool HasOnly() {return m_HasOnly;};
-        std::list<wxArrayString>* GetNamesList() {return &m_NamesList;};
+        std::set<wxString>* GetNamesList() {return &m_NamesList;};
+        std::list<wxArrayString>* GetRenameList() {return &m_RenameList;};
     //protected:
     private:
         ModuleNature m_ModuleNature;
         bool m_HasOnly;
-        std::list<wxArrayString> m_NamesList;
+        std::set<wxString> m_NamesList;
+        std::list<wxArrayString> m_RenameList;
 };
 
 #endif // USETOKENF_H

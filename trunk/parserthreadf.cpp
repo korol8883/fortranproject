@@ -44,15 +44,15 @@ ParserThreadF::~ParserThreadF()
 void ParserThreadF::InitSecondEndPart()
 {
     m_EndSecPart.insert(_T("associate"));
-	m_EndSecPart.insert(_T("do"));
-	m_EndSecPart.insert(_T("enum"));
-	m_EndSecPart.insert(_T("file"));
-	m_EndSecPart.insert(_T("forall"));
-	m_EndSecPart.insert(_T("if"));
-	m_EndSecPart.insert(_T("select"));
-	m_EndSecPart.insert(_T("where"));
-	m_EndSecPart.insert(_T("block"));
-	m_EndSecPart.insert(_T("critical"));
+    m_EndSecPart.insert(_T("do"));
+    m_EndSecPart.insert(_T("enum"));
+    m_EndSecPart.insert(_T("file"));
+    m_EndSecPart.insert(_T("forall"));
+    m_EndSecPart.insert(_T("if"));
+    m_EndSecPart.insert(_T("select"));
+    m_EndSecPart.insert(_T("where"));
+    m_EndSecPart.insert(_T("block"));
+    m_EndSecPart.insert(_T("critical"));
 }
 
 bool ParserThreadF::Parse()
@@ -95,7 +95,7 @@ bool ParserThreadF::Parse()
         {
             HandleFunction(tkSubroutine);
         }
-        else if (tok_low.Matches(_T("type")) && !nex_low(0,1).Matches(_T("(")))
+        else if (tok_low.Matches(_T("type")) && !nex_low(0,1).Matches(_T("(")) && !nex_low.Matches(_T("is")))
         {
             HandleType();
         }
@@ -242,7 +242,10 @@ void ParserThreadF::HandleUse()
                     break; // '=>' on end of line
                 }
             }
-            pUseTok->AddToNamesList(localName, externalName);
+            if (externalName.IsEmpty())
+                pUseTok->AddToNamesList(localName);
+            else
+                pUseTok->AddToRenameList(localName, externalName);
         }
     }
     else
@@ -268,7 +271,7 @@ void ParserThreadF::HandleUse()
                 {
                     break; // '=>' on end of line
                 }
-                pUseTok->AddToNamesList(localName, externalName);
+                pUseTok->AddToRenameList(localName, externalName);
                 idx++;
                 if (ltCount <= idx)
                     break;
@@ -333,7 +336,8 @@ void ParserThreadF::HandleModule()
 
         wxString next = m_Tokens.PeekToken();
         wxString nex_low = next.Lower();
-        if (IsEnd(tok_low, nex_low))
+        if ( ((m_Tokens.GetLineNumber() == m_Tokens.GetPeekedLineNumber()) && IsEnd(tok_low, nex_low)) ||
+             ((m_Tokens.GetLineNumber() != m_Tokens.GetPeekedLineNumber()) && IsEnd(tok_low, _T(""))) )
         {
             m_Tokens.SkipToOneOfChars(";", true);
             break;
@@ -420,14 +424,9 @@ void ParserThreadF::HandleModule()
         decklTokens.Item(i)->m_TokenAccess = taDefKind;
     }
 
-wxString eilute;
-
     for (size_t i=0; i<publicNameList.GetCount(); i++)
     {
         modToken->AddToPublicList(publicNameList.Item(i));
-
-eilute << publicNameList.Item(i) << _T(" & ");
-
     }
     for (size_t i=0; i<privateNameList.GetCount(); i++)
     {
@@ -577,6 +576,7 @@ void ParserThreadF::CheckParseOneDeclaration(wxString& token, wxString& tok_low,
             || tok_low.IsSameAs(_T("complex")) || tok_low.IsSameAs(_T("logical"))
             || ( tok_low.IsSameAs(_T("double")) && next_low.IsSameAs(_T("precision")) )
             || ( tok_low.IsSameAs(_T("type")) && next_low.StartsWith(_T("(")) )
+            || ( tok_low.IsSameAs(_T("class")) && next_low.StartsWith(_T("(")) )
         )
         {
             wxArrayString lineTok = m_Tokens.PeekTokensToEOL();
@@ -725,7 +725,7 @@ bool ParserThreadF::ParseDeclarationsFirstPart(wxString& token, wxString& next)
                 m_Tokens.SkipToOneOfChars(";", true);
             }
         }
-        else if (tok_low.IsSameAs(_T("type")))
+        else if (tok_low.IsSameAs(_T("type"))  && !next_low.IsSameAs(_T("is")))
         {
             // we found type definition
             HandleType();
@@ -802,13 +802,15 @@ void ParserThreadF::ParseDeclarationsSecondPart(wxString& token, bool& needDefau
                 i++;
             }
         }
-        if (i+1 < lineTok.GetCount() && (lineTok.Item(i+1).IsSameAs(_T("=>")) || lineTok.Item(i+1).IsSameAs(_T("="))) )
+        if (i+1 < lineTok.GetCount() && (lineTok.Item(i+1).IsSameAs(_T("=>")) || lineTok.Item(i+1).IsSameAs(_T("=")) || lineTok.Item(i+1).IsSameAs(_T("*"))) )
         {
-            i += 2;
+            i += 1;
             for (;i<lineTok.GetCount();i++)
             {
                 if (lineTok.Item(i).IsSameAs(_T(",")))
                     break;
+                else
+                    arg1 << lineTok.Item(i);
             }
 //            if (i+1 < lineTok.GetCount())
 //            {
@@ -1111,7 +1113,7 @@ void ParserThreadF::GoThroughBody()
             m_Tokens.SkipToOneOfChars(";", true);
             break;
         }
-        else if (tok_low.Matches(_T("type")) && !nex_low(0,1).Matches(_T("(")))
+        else if (tok_low.Matches(_T("type")) && !nex_low(0,1).Matches(_T("(")) && !nex_low.Matches(_T("is")))
         {
             HandleType();
         }

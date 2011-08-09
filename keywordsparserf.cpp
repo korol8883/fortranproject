@@ -78,6 +78,12 @@ void KeywordsParserF::GetCallTips(const wxString& name, wxArrayString& callTips,
     }
 }
 
+void KeywordsParserF::GetTokensForToolTip(const wxString& name, TokensArrayFlat& result)
+{
+    int tokKind = tkFunction | tkSubroutine;
+    m_Parser.FindMatchTokensDeclared(name, result, tokKind, false);
+}
+
 void KeywordsParserF::MakeOtherKeywordSet()
 {
     TokensArrayFlatClass tokensTmp;

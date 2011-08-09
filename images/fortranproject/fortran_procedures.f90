@@ -38,7 +38,8 @@ function list_of_other_fortran_keywords()
                 import, is, &
                 null, new_line,  block, abstract, delegate, static, reference, round, &
                 decorate, extends, extensible, generic, non_overridable, enum, endenum, enumerator, typealias, &
-                submodule, endsubmodule, concurrent, contiguous, re, im, endblock, non_intrinsic
+                submodule, endsubmodule, concurrent, contiguous, re, im, endblock, non_intrinsic, codimension, &
+                impure, critical, endcritical
 
 end function
 
@@ -2789,3 +2790,69 @@ function EXTENDS_TYPE_OF (A, MOLD)
     type(any_extensible_type) :: A, MOLD
 end function
 
+function bge (...)
+    !bit sequence comparison
+end function
+
+function bgt (...)
+end function
+
+function ble (...)
+end function
+
+function blt (...)
+end function
+
+function dshiftl (...)
+end function
+
+function dshiftr (...)
+end function
+
+function popcnt (...)
+end function
+
+function poppar (...)
+end function
+
+function maskl (...)
+end function
+
+function maskr (...)
+end function
+
+function shifta (...)
+end function
+
+function shiftl (...)
+end function
+
+function shiftr (...)
+end function
+
+subroutine merge_bits(...)
+end subroutine
+
+function iall (...)
+end function
+
+function iany (...)
+end function
+
+function iparity (...)
+end function
+
+function storage_size (...)
+end function
+
+function parity (...)
+end function
+
+function norm2 (...)
+end function
+
+subroutine execute_command_line(...)
+end subroutine
+
+function findloc (...)
+end function

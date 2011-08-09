@@ -124,8 +124,6 @@ void FPOptionsDlg::OnUpdateUI(wxUpdateUIEvent& event)
     XRCCTRL(*this, "chkKL_7", wxCheckBox)->Enable(en);
     XRCCTRL(*this, "chkKL_8", wxCheckBox)->Enable(en);
     XRCCTRL(*this, "chkKL_9", wxCheckBox)->Enable(en);
-    bool enA = en;
-
 
     en = !XRCCTRL(*this, "chkNoSB", wxCheckBox)->GetValue();
     XRCCTRL(*this, "chkFloatSB", wxCheckBox)->Enable(en);
@@ -136,12 +134,6 @@ void FPOptionsDlg::OnUpdateUI(wxUpdateUIEvent& event)
     XRCCTRL(*this, "chkComAbove", wxCheckBox)->Enable(en);
     XRCCTRL(*this, "chkComBelow", wxCheckBox)->Enable(en);
     XRCCTRL(*this, "chkDeclarLog", wxCheckBox)->Enable(en);
-
-    if (enA)
-    {
-        bool enUA = XRCCTRL(*this, "chkOnlyUseAssociated", wxCheckBox)->GetValue();
-        XRCCTRL(*this, "chkShowHiddenEntities", wxCheckBox)->Enable(enUA);
-    }
 }
 
 void FPOptionsDlg::OnApply()

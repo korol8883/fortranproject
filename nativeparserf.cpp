@@ -592,7 +592,7 @@ void NativeParserF::GetCallTips(const wxString& name, bool onlyUseAssoc, bool on
     }
     else
     {
-        m_Parser.FindMatchTokensDeclared(name, *result, tokKind, false);
+        m_Parser.FindMatchTokensDeclared(name, *result, tokKind, false, 0, onlyPublicNames);
     }
     int resCount = result->GetCount();
 

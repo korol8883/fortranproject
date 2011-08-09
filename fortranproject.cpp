@@ -25,6 +25,10 @@
 
 #include <wx/event.h>
 
+#include <wx/stopwatch.h>
+
+
+
 // this auto-registers the plugin
 namespace
 {
@@ -870,8 +874,15 @@ int FortranProject::CodeComplete()
     bool isAfterPercent;
     int tokenKind;
 
+wxStopWatch sw;
+
+
     if (!pParser->FindMatchTokensForCodeCompletion(m_UseSmartCC, m_LogOnlyUseAssoc, m_LogOnlyPublicNames, m_MaxMatch, NameUnderCursor, ed, *result, isAfterPercent, tokenKind))
         return -1;
+
+
+Manager::Get()->GetLogManager()->DebugLog(F(_T("FortranProject: Build of CC list took %d ms. %d items were found."), sw.Time(), result->size()));
+
 
     if (result->size() <= m_MaxMatch)
     {
@@ -892,7 +903,7 @@ int FortranProject::CodeComplete()
             if (unique_strings.find(token->m_Name) != unique_strings.end())
                 continue;
 
-            unique_strings.insert(result->Item(i)->m_Name);
+            unique_strings.insert(token->m_Name);
             int iidx = m_pNativeParser->GetTokenKindImageIdx(token);
             if (already_registered.Index(iidx) == wxNOT_FOUND)
             {
@@ -1204,6 +1215,8 @@ void FortranProject::OnValueTooltip(CodeBlocksEvent& event)
 
     bool isAfterPercent = false;
     pParser->FindMatchTokensForToolTip(nameUnder, endOfWord, ed, m_LogOnlyUseAssoc, m_LogOnlyPublicNames, *result, isAfterPercent);
+    if (result->IsEmpty())
+        m_pKeywordsParser->GetTokensForToolTip(nameUnder, *result);
 
     if (result->size() > 32 || result->size() == 0)
         return;

@@ -25,9 +25,6 @@
 
 #include <wx/event.h>
 
-#include <wx/stopwatch.h>
-
-
 
 // this auto-registers the plugin
 namespace
@@ -170,6 +167,13 @@ void FortranProject::OnAttach()
     pm->RegisterEventSink(cbEVT_CLEAN_PROJECT_STARTED, new cbEventFunctor<FortranProject, CodeBlocksEvent>(this, &FortranProject::OnCleanProjectStarted));
     pm->RegisterEventSink(cbEVT_CLEAN_WORKSPACE_STARTED, new cbEventFunctor<FortranProject, CodeBlocksEvent>(this, &FortranProject::OnCleanWorkspaceStarted));
 
+    pm->RegisterEventSink(cbEVT_DEBUGGER_STARTED, new cbEventFunctor<FortranProject, CodeBlocksEvent>(this, &FortranProject::OnDebuggerStarted));
+    pm->RegisterEventSink(cbEVT_DEBUGGER_FINISHED, new cbEventFunctor<FortranProject, CodeBlocksEvent>(this, &FortranProject::OnDebuggerFinished));
+
+    pm->RegisterEventSink(cbEVT_COMPLETE_CODE, new cbEventFunctor<FortranProject, CodeBlocksEvent>(this, &FortranProject::CompleteCodeEvt));
+    pm->RegisterEventSink(cbEVT_SHOW_CALL_TIP, new cbEventFunctor<FortranProject, CodeBlocksEvent>(this, &FortranProject::ShowCallTipEvt));
+
+    m_IsDebugging = false;
     m_InitDone = true;
 }
 
@@ -337,11 +341,13 @@ void FortranProject::OnEditorActivated(CodeBlocksEvent& event)
 
 void FortranProject::OnCompilerStarted(CodeBlocksEvent& event)
 {
+    event.Skip();
     m_pNativeParser->UpdateWorkspaceFilesDependency();
 }
 
 void FortranProject::OnCleanProjectStarted(CodeBlocksEvent& event)
 {
+    event.Skip();
     //Remove all *.mod files from obj folder
     wxString targetName = event.GetBuildTargetName();
     cbProject* pr = event.GetProject();
@@ -358,6 +364,7 @@ void FortranProject::OnCleanProjectStarted(CodeBlocksEvent& event)
 
 void FortranProject::OnCleanWorkspaceStarted(CodeBlocksEvent& event)
 {
+    event.Skip();
     //Remove all *.mod files from obj folder
     ProjectDependencies::RemoveModFilesWS(m_pNativeParser);
 }
@@ -367,13 +374,20 @@ void FortranProject::BuildMenu(wxMenuBar* menuBar)
     if (!IsAttached())
         return;
 
+
+// No code completion if CodeCompletion plugin is active
+    cbPlugin* ccplug = Manager::Get()->GetPluginManager()->FindPluginByName(_T("CodeCompletion"));
+
     int pos = menuBar->FindMenu(_("&Edit"));
     if (pos != wxNOT_FOUND)
     {
-        m_EditMenu = menuBar->GetMenu(pos);
-        m_EditMenuSeparator = m_EditMenu->AppendSeparator();
-        m_EditMenu->Append(idMenuCodeComplete, _("F complete code\tCtrl-Space"));
-        m_EditMenu->Append(idMenuShowCallTip, _("F show call tip\tCtrl-Shift-Space"));
+        if (!ccplug) // don't create menu items if CC plugin found.
+        {
+            m_EditMenu = menuBar->GetMenu(pos);
+            m_EditMenuSeparator = m_EditMenu->AppendSeparator();
+            m_EditMenu->Append(idMenuCodeComplete, _("Complete code\tCtrl-Space"));
+            m_EditMenu->Append(idMenuShowCallTip, _("Show call tip\tCtrl-Shift-Space"));
+        }
     }
     else
         Manager::Get()->GetLogManager()->DebugLog(_T("FortranProject: Could not find Edit menu!"));
@@ -579,8 +593,8 @@ void FortranProject::DoCodeComplete()
         return;
 
     int style = ed->GetControl()->GetStyleAt(ed->GetControl()->GetCurrentPos());
-    if (style != wxSCI_F_DEFAULT && style != wxSCI_F_OPERATOR && style != wxSCI_F_IDENTIFIER
-                && style != wxSCI_F_OPERATOR2)
+    if (style != wxSCI_F_DEFAULT && style != wxSCI_F_WORD && style != wxSCI_F_WORD2 && style != wxSCI_F_WORD3
+        && style != wxSCI_F_OPERATOR && style != wxSCI_F_IDENTIFIER && style != wxSCI_F_OPERATOR2)
         return;
 
     CodeComplete();
@@ -608,31 +622,18 @@ void FortranProject::EditorEventHook(cbEditor* editor, wxScintillaEvent& event)
         event.Skip();
         return;
     }
-    // No code completion if CodeCompletion plugin is active
-//    cbPlugin* ccplug = Manager::Get()->GetPluginManager()->FindPluginByName(_T("CodeCompletion"));
-//    if (ccplug)
-//    {
-//        if (ccplug->IsAttached())
-//        {
-//            ConfigManager* cfg = Manager::Get()->GetConfigManager(_T("code_completion"));
-//            if (cfg->ReadBool(_T("/use_code_completion"), true))
-//            {
-//                event.Skip();
-//                return;
-//            }
-//        }
-//    }
+
     if (!m_pNativeParser->IsFileFortran(editor->GetShortName()))
     {
         event.Skip();
         return;
     }
 
+    cbStyledTextCtrl* control = editor->GetControl();
+
     ConfigManager* cfg = Manager::Get()->GetConfigManager(_T("fortran_project"));
     if (!cfg->ReadBool(_T("/use_code_completion"), true))
         return;
-
-    cbStyledTextCtrl* control = editor->GetControl();
 
     if (((event.GetKey() == '.') || (event.GetKey() == '%')) && control->AutoCompActive())
         control->AutoCompCancel();
@@ -665,7 +666,7 @@ void FortranProject::EditorEventHook(cbEditor* editor, wxScintillaEvent& event)
         int pos = control->GetCurrentPos();
         int wordstart = control->WordStartPosition(pos, true);
 
-        // if more than 4 chars have been typed, invoke CC
+        // if more than 2 chars have been typed, invoke CC
         int autoCCchars = cfg->ReadInt(_T("/auto_launch_chars"), 2);
         bool autoCC = cfg->ReadBool(_T("/auto_launch"), true) &&
                     pos - wordstart >= autoCCchars;
@@ -788,28 +789,37 @@ wxArrayString FortranProject::GetCallTips()
 
 void FortranProject::OnCodeComplete(wxCommandEvent& event)
 {
+    event.Skip();
+    MakeCompleteCode();
+}
+
+void FortranProject::CompleteCodeEvt(CodeBlocksEvent& event)
+{
+    event.Skip();
+    MakeCompleteCode();
+}
+
+void FortranProject::MakeCompleteCode()
+{
     cbEditor* ed = Manager::Get()->GetEditorManager()->GetBuiltinActiveEditor();
-    if (!ed)
+    if (!ed
+        || !m_pNativeParser->IsFileFortran(ed->GetShortName())
+        || !Manager::Get()->GetConfigManager(_T("fortran_project"))->ReadBool(_T("/use_code_completion"), true))
     {
-        event.Skip();
-        return;
-    }
-    if (!m_pNativeParser->IsFileFortran(ed->GetShortName()))
-    {
-        event.Skip();
-        return;
-    }
-    if (!Manager::Get()->GetConfigManager(_T("fortran_project"))->ReadBool(_T("/use_code_completion"), true))
-    {
-        event.Skip();
         return;
     }
     if (IsAttached() && m_InitDone)
         DoCodeComplete();
-    event.Skip();
 }
 
 void FortranProject::OnShowCallTip(wxCommandEvent& event)
+{
+    if (IsAttached() && m_InitDone)
+        ShowCallTip();
+    event.Skip();
+}
+
+void FortranProject::ShowCallTipEvt(CodeBlocksEvent& event)
 {
     if (IsAttached() && m_InitDone)
         ShowCallTip();
@@ -874,15 +884,8 @@ int FortranProject::CodeComplete()
     bool isAfterPercent;
     int tokenKind;
 
-wxStopWatch sw;
-
-
     if (!pParser->FindMatchTokensForCodeCompletion(m_UseSmartCC, m_LogOnlyUseAssoc, m_LogOnlyPublicNames, m_MaxMatch, NameUnderCursor, ed, *result, isAfterPercent, tokenKind))
         return -1;
-
-
-Manager::Get()->GetLogManager()->DebugLog(F(_T("FortranProject: Build of CC list took %d ms. %d items were found."), sw.Time(), result->size()));
-
 
     if (result->size() <= m_MaxMatch)
     {
@@ -1155,9 +1158,7 @@ void FortranProject::ShowCallTip()
         }
     }
     else if (ed->GetControl()->CallTipActive())
-    {
         ed->GetControl()->CallTipCancel();
-    }
 
     if (m_LogUseWindow && (!m_WasCallTipInfoLog || !m_LastCallTipName.IsSameAs(lastName)))
         ShowInfoLog(result, isAfterPercent);
@@ -1183,12 +1184,19 @@ void FortranProject::OnValueTooltip(CodeBlocksEvent& event)
     if (!m_pNativeParser->IsFileFortran(ed->GetShortName()))
         return;
 
+    if ((m_ShowedCallTip && ed->GetControl()->CallTipActive()) || ed->GetControl()->AutoCompActive())
+        return;
+
+    if (ed->GetControl()->CallTipActive())
+        ed->GetControl()->CallTipCancel();
+
+    if (wxWindow::FindFocus() != static_cast<wxWindow*>(ed->GetControl()))
+        return;
+
     if (!Manager::Get()->GetConfigManager(_T("fortran_project"))->ReadBool(_T("eval_tooltip"), true))
         return;
 
     cbStyledTextCtrl* control = ed->GetControl();
-    if (control->CallTipActive())
-        control->CallTipCancel();
 
     if (wxWindow::FindFocus() != static_cast<wxWindow*>(control))
         return;
@@ -1299,8 +1307,11 @@ void FortranProject::OnValueTooltip(CodeBlocksEvent& event)
     else
         msg.Trim();
 
-    control->CallTipShow(pos, msg);
-    m_ShowedCallTip = false;
+    if (!m_IsDebugging)
+    {
+        control->CallTipShow(pos, msg);
+        m_ShowedCallTip = false;
+    }
 
     if (result->GetCount() >= 1 && m_LogUseWindow)
     {
@@ -1503,6 +1514,18 @@ void FortranProject::JumpToLine(const LineAddress& adr)
     {
         ed->GotoLine(adr.m_LineNumber);
     }
+}
+
+void FortranProject::OnDebuggerStarted(CodeBlocksEvent& event)
+{
+    event.Skip();
+    m_IsDebugging = true;
+}
+
+void FortranProject::OnDebuggerFinished(CodeBlocksEvent& event)
+{
+    event.Skip();
+    m_IsDebugging = false;
 }
 
 

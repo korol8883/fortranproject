@@ -577,6 +577,7 @@ void ParserThreadF::CheckParseOneDeclaration(wxString& token, wxString& tok_low,
             || ( tok_low.IsSameAs(_T("double")) && next_low.IsSameAs(_T("precision")) )
             || ( tok_low.IsSameAs(_T("type")) && next_low.StartsWith(_T("(")) )
             || ( tok_low.IsSameAs(_T("class")) && next_low.StartsWith(_T("(")) )
+            || tok_low.IsSameAs(_T("enumerator"))
         )
         {
             wxArrayString lineTok = m_Tokens.PeekTokensToEOL();
@@ -681,7 +682,8 @@ bool ParserThreadF::ParseDeclarationsFirstPart(wxString& token, wxString& next)
 
     if ( tok_low.IsSameAs(_T("integer")) || tok_low.IsSameAs(_T("real"))
         || tok_low.IsSameAs(_T("doubleprecision")) || tok_low.IsSameAs(_T("character"))
-        || tok_low.IsSameAs(_T("complex")) || tok_low.IsSameAs(_T("logical")) )
+        || tok_low.IsSameAs(_T("complex")) || tok_low.IsSameAs(_T("logical"))
+        || tok_low.IsSameAs(_T("enumerator")) )
     {
         if (next_low.StartsWith(_T("(")))
         {

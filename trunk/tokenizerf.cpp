@@ -764,6 +764,7 @@ wxArrayString Tokenizerf::GetTokensToEOL(wxArrayString* arrStrLines)
 	wxArrayString arrStr;
 	wxString o_tok;
 	wxString tok;
+    bool newLineNext = false;
 	while (1)
 	{
 	    unsigned int line = m_LineNumber;
@@ -773,21 +774,47 @@ wxArrayString Tokenizerf::GetTokensToEOL(wxArrayString* arrStrLines)
 	    if (tok.IsEmpty())
             break;
 	    unsigned int n_line = m_LineNumber;
-	    if ( (n_line > line) && !o_tok.IsSameAs(_T("&")) )
+	    if (m_SourceForm == fsfFree)
         {
-            UngetToken();
-            break;
-	    }
-	    else if (tok.IsSameAs(_T(";")))
-	    {
-	        break;
-	    }
-	    else if (!tok.IsSameAs(_T("&")) && ((!m_DetailedParsing && !tok.IsSameAs(_T(","))) || m_DetailedParsing) )
-	    {
-            arrStr.Add(tok);
-            if (arrStrLines)
-                arrStrLines->Add(GetCurrentLine());
-	    }
+            if ( (n_line > line) && !o_tok.IsSameAs(_T("&")) )
+            {
+                UngetToken();
+                break;
+            }
+            else if (tok.IsSameAs(_T(";")))
+            {
+                break;
+            }
+            else if (!tok.IsSameAs(_T("&")) && ((!m_DetailedParsing && !tok.IsSameAs(_T(","))) || m_DetailedParsing) )
+            {
+                arrStr.Add(tok);
+                if (arrStrLines)
+                    arrStrLines->Add(GetCurrentLine());
+            }
+        }
+        else
+        {
+            if ( (((n_line > line) && (m_Column != 0)) || newLineNext) && (m_Column != 7 || tok.Length() > 1) )
+            {
+                UngetToken();
+                break;
+            }
+            else if (tok.IsSameAs(_T(";")) || (m_Column < 7 && m_Column != 0))
+            {
+                break;
+            }
+            else if ((m_Column > 7 || m_Column == 0) && ((!m_DetailedParsing && !tok.IsSameAs(_T(","))) || m_DetailedParsing) )
+            {
+                arrStr.Add(tok);
+                if (arrStrLines)
+                    arrStrLines->Add(GetCurrentLine());
+            }
+
+            if (m_Column == 0)
+                newLineNext = true;
+            else
+                newLineNext = false;
+        }
 	}
 	return arrStr;
 }

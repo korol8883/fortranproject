@@ -10,6 +10,7 @@
 #include <manager.h>
 #include "cbeditor.h"
 #include "editorcolourset.h"
+#include <wx/sizer.h>
 
 FInfoWindow::FInfoWindow()
     :wxPanel(Manager::Get()->GetAppWindow())

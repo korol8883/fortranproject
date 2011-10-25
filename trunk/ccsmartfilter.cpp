@@ -105,9 +105,12 @@ void CCSmartFilter::GetTokenKind(wxArrayString& words, int& kindFilter, bool& al
         kindFilter = tkOther;
         allowVariables = true;
     }
-    else if (woCount > 1 && wordLw.IsSameAs(')') && words.Item(woCount-1).Lower().IsSameAs(_T("if")))
+    else if (woCount > 1 && wordLw.IsSameAs(')') && (
+                (words.Item(woCount-1).Lower().IsSameAs(_T("if")))
+             || (words.Item(woCount-1).Lower().IsSameAs(_T("read")))
+             || (words.Item(woCount-1).Lower().IsSameAs(_T("write"))) ))
     {
-        kindFilter = tkOther;
+        kindFilter = tkOther | tkFunction | tkInterface;
         allowVariables = true;
     }
     else

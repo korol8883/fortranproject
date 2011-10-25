@@ -14,7 +14,7 @@
 
 function list_of_other_fortran_keywords()
 	! This pseudo function contains fortran keywords, which should be included in code-completion list, but
-	! they are not functions or subroutines. The keywords are defined as variables of a type 'other'.
+	! they are not functions or subroutines. The keywords are defined as variables of the type 'other'.
 	type(other) :: logical, real, access, action, advance, allocatable, allocate, &
                     access, action, advance, allocatable, allocate, &
                 apostrophe, assign, assignment, associate, asynchronous, backspace, &
@@ -22,7 +22,7 @@ function list_of_other_fortran_keywords()
                 complex, contains, continue, cycle, data, deallocate, decimal, delim, &
                 default, dimension, direct, do, dowhile, double, doubleprecision, else, &
                 elseif, elsewhere, encoding, end, endassociate, endblockdata, enddo, &
-                endfile, endforall, endfunction, endif, endinterface, endmodule, endprogram, &
+                endfile, endforall, endfunction, endif, endinterface, endmodule, endprocedure, endprogram, &
                 endselect, endsubroutine, endtype, endwhere, entry, eor, equivalence, &
                 err, errmsg, exist, exit, external, final, file, flush, fmt, forall, form, format, &
                 formatted, function, go, goto, id, if, implicit, in, include, inout, &
@@ -37,9 +37,9 @@ function list_of_other_fortran_keywords()
                 volatile, wait, where, while, write, procedure, elemental, pure, sequence, &
                 import, is, &
                 null, new_line,  block, abstract, delegate, static, reference, round, &
-                decorate, extends, extensible, generic, non_overridable, enum, endenum, enumerator, typealias, &
+                decorate, extends, generic, non_overridable, enum, endenum, enumerator, typealias, &
                 submodule, endsubmodule, concurrent, contiguous, re, im, endblock, non_intrinsic, codimension, &
-                impure, critical, endcritical
+                impure, critical, endcritical, lock, unlock, error, sync, all, memory, images
 
 end function
 
@@ -2856,3 +2856,25 @@ end subroutine
 
 function findloc (...)
 end function
+
+function num_images (...)
+end function
+
+function this_image (...)
+end function
+
+function ucobound (...)
+end function
+
+function lcobound (...)
+end function
+
+function image_index (...)
+end function
+
+subroutine atomic_define (...)
+end subroutine
+
+subroutine atomic_ref (...)
+end subroutine
+

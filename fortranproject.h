@@ -47,6 +47,10 @@ class FortranProject : public cbCodeCompletionPlugin
         virtual void ShowCallTip();
         void OnCodeComplete(wxCommandEvent& event);
         void OnShowCallTip(wxCommandEvent& event);
+        void CompleteCodeEvt(CodeBlocksEvent& event);
+        void ShowCallTipEvt(CodeBlocksEvent& event);
+        void MakeCompleteCode();
+
 
 
         void EditorEventHook(cbEditor* editor, wxScintillaEvent& event);
@@ -87,6 +91,10 @@ class FortranProject : public cbCodeCompletionPlugin
         void OnJumpHome(wxCommandEvent& event);
         void OnJumpForward(wxCommandEvent& event);
         void JumpToLine(const LineAddress& adr);
+
+        void OnDebuggerStarted(CodeBlocksEvent& event);
+        void OnDebuggerFinished(CodeBlocksEvent& event);
+        bool m_IsDebugging;
 
         bool m_InitDone;
 

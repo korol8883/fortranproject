@@ -1026,18 +1026,20 @@ void ParserF::FindMatchTokensForToolTip(const wxString& nameUnder, int posEndOfW
     if (!isAfterPercent)
     {
         int tokKind = tkModule | tkFunction | tkProgram | tkSubroutine | tkPreprocessor | tkInterface | tkBlockData | tkType;
-
         if (onlyUseAssoc)
         {
+            int noChildrenOf = tkInterface | tkModule | tkFunction | tkSubroutine | tkProgram;
+            tokKind = tokKind | tkVariable;
             FindUseAssociatedTokens(onlyPublicNames, ed, nameUnder, false, result, tokKind, false);
-            FindMatchTokensDeclared(nameUnder, result, tokKind, false, tkInterface | tkModule); // take global procedures only
+            FindMatchTokensDeclared(nameUnder, result, tokKind, false, noChildrenOf); // take global procedures only
         }
         else
         {
-            FindMatchTokensDeclared(nameUnder, result, tokKind, false, 0, onlyPublicNames);
+            int noChildrenOf = tkInterface | tkFunction | tkSubroutine | tkProgram;
+            FindMatchTokensDeclared(nameUnder, result, tokKind, false, noChildrenOf, onlyPublicNames);
+            FindMatchVariablesInModules(nameUnder, result, false);
         }
         FindMatchDeclarationsInCurrentScope(nameUnder, ed, result, false, posEndOfWord);
-        FindMatchVariablesInModules(nameUnder, result, false);
     }
 }
 
@@ -2332,210 +2334,6 @@ void ParserF::FindUseAssociatedTokens(bool onlyPublicNames, cbEditor* ed, const 
     ClearBoolArray3D(m_CanBeSeenVisited);
 }
 
-//void ParserF::FindUseAssociatedTokens(TokenF* useToken, const wxString& searchLw, TokensArrayFlat& result, int tokenKindMask, bool partialMatch,
-//                                      bool changeDisplayName, bool onlyPublicNames, TokensArrayFlat* useWithRenameTok)
-//{
-//    if (!useToken || useToken->m_TokenKind != tkUse)
-//        return;
-//
-//    //m_VisitedModules.Add(useToken->m_Name);
-//
-//    if (recursiveDeep > 20)
-//        return;  // deep limit was reached
-//    recursiveDeep++;
-//
-//    UseTokenF* uTok = static_cast<UseTokenF*>(useToken);
-//    if (uTok->GetModuleNature() == mnIntrinsic)
-//        return;
-//    TokensArrayFlatClass tokensTmpCl;
-//    TokensArrayFlat* tokensTmp = tokensTmpCl.GetTokens();
-//    int noChildrenOf = tkInterface | tkFunction | tkSubroutine | tkType;
-//    FindMatchTokensInModuleAndUse(uTok->m_Name, searchLw, *tokensTmp, tokenKindMask, noChildrenOf, partialMatch,
-//                                  onlyPublicNames, changeDisplayName, useWithRenameTok);
-//
-//    if (uTok->GetNamesList()->size() > 0)
-//    {
-//        std::set<wxArrayString> *namesList = uTok->GetNamesList();
-//        if (uTok->HasOnly())
-//        {
-//            //with ONLY: keyword
-//            for(std::set<wxArrayString>::iterator pos=namesList->begin(); pos != namesList->end(); ++pos)
-//            {
-//                // pos->Item(0) -local name
-//                // pos->Item(1) -external name
-//                if (pos->Item(1).IsEmpty())
-//                {
-//                    // no rename
-//                    ArrOfSizeT idx;
-//                    if (tokensTmpCl.HasTokensWithName(pos->Item(0).Lower(),idx))
-//                    {
-//                        for (size_t ia=0; ia<idx.GetCount(); ia++)
-//                        {
-//                            AddUniqueResult(result, tokensTmp->Item(idx.Item(ia)));
-//                        }
-//                    }
-//                }
-//                else
-//                {
-//                    // with rename
-//                    wxString locNamLw = pos->Item(0).Lower();
-//                    if ( (partialMatch && locNamLw.StartsWith(searchLw)) ||
-//                         (!partialMatch && locNamLw.IsSameAs(searchLw)) )
-//                    {
-//                        TokensArrayFlatClass tokRenCl;
-//                        TokensArrayFlat* tokRen = tokRenCl.GetTokens();
-//                        FindMatchTokensInModuleAndUse(uTok->m_Name, pos->Item(1).Lower(), *tokRen, tokenKindMask, noChildrenOf, false,
-//                                                      onlyPublicNames, changeDisplayName, useWithRenameTok);
-//                        if (tokRen->GetCount() > 0)
-//                        {
-//                            for (size_t ia=0; ia<tokRen->GetCount(); ia++)
-//                            {
-//                                TokenFlat* tf = new TokenFlat(tokRen->Item(ia));
-//                                if (changeDisplayName)
-//                                {
-//                                    tf->Rename(pos->Item(0));
-//                                }
-//                                tf->m_Rename << pos->Item(0);
-//                                AddUniqueResult(result, tf);
-//                            }
-//                            if (useWithRenameTok)
-//                            {
-//                                TokenFlat* tfu = new TokenFlat(useToken);
-//                                tfu->m_Rename = pos->Item(0) + _T(" => ") + pos->Item(1);
-//                                useWithRenameTok->Add(tfu);
-//                            }
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//        else
-//        {
-//            //no ONLY keyword
-//            for (std::set<wxArrayString>::iterator pos=namesList->begin(); pos != namesList->end(); ++pos)
-//            {
-//                if (pos->Item(0).IsEmpty() || pos->Item(1).IsEmpty())
-//                {
-//                    //some mistake
-//                }
-//                else
-//                {
-//                    tokensTmpCl.DelTokensWithName(pos->Item(1).Lower());
-//                    wxString locNamLw = pos->Item(0).Lower();
-//                    if ( (partialMatch && locNamLw.StartsWith(searchLw)) ||
-//                         (!partialMatch && locNamLw.IsSameAs(searchLw)) )
-//                    {
-//                        TokensArrayFlatClass tokRenCl;
-//                        TokensArrayFlat* tokRen = tokRenCl.GetTokens();
-//                        FindMatchTokensInModuleAndUse(uTok->m_Name, pos->Item(1).Lower(), *tokRen, tokenKindMask, noChildrenOf, false,
-//                                                      onlyPublicNames, changeDisplayName, useWithRenameTok);
-//                        if (tokRen->GetCount() > 0)
-//                        {
-//                            for (size_t ia=0; ia<tokRen->GetCount(); ia++)
-//                            {
-//                                TokenFlat* tf = new TokenFlat(tokRen->Item(ia));
-//                                if (changeDisplayName)
-//                                {
-//                                    tf->Rename(pos->Item(0));
-//                                }
-//                                tf->m_Rename << pos->Item(0);
-//                                AddUniqueResult(result, tf);
-//                            }
-//                            if (useWithRenameTok)
-//                            {
-//                                TokenFlat* tfu = new TokenFlat(useToken);
-//                                tfu->m_Rename = pos->Item(0) + _T(" => ") + pos->Item(1);
-//                                useWithRenameTok->Add(tfu);
-//                            }
-//                        }
-//                    }
-//                }
-//            }
-//            for (size_t i=0; i<tokensTmp->Count(); i++)
-//            {
-//                AddUniqueResult(result, tokensTmp->Item(i));
-//            }
-//        }
-//    }
-//    else
-//    {
-//        for (size_t i=0; i<tokensTmp->Count(); i++)
-//        {
-//            AddUniqueResult(result, tokensTmp->Item(i));
-//        }
-//    }
-//    recursiveDeep--;
-//}
-//
-//
-//void ParserF::FindMatchTokensInModuleAndUse(const wxString& modName, const wxString& searchLw, TokensArrayFlat& result, int tokenKindMask,
-//                                            int noChildrenOf, bool partialMatch, bool onlyPublicNames, bool changeDisplayName, TokensArrayFlat* useWithRenameTok)
-//{
-//    TokenF* modTok = FindModuleToken(modName);
-//    if (!modTok)
-//        return;
-//    ModuleTokenF* mToken = static_cast<ModuleTokenF*>(modTok);
-//    TokensArrayF* children = &modTok->m_Children;
-//    if (!children)
-//        return;
-//
-//    TokensArrayF useTokens;
-//    for (size_t i=0; i<children->GetCount(); i++)
-//    {
-//        if (children->Item(i)->m_TokenKind == tkUse)
-//        {
-//            useTokens.Add(children->Item(i));
-//        }
-//        else if (children->Item(i)->m_TokenKind == tkSubroutine || children->Item(i)->m_TokenKind == tkFunction)
-//        {
-//            break; // 'use' statments must be located above procedures
-//        }
-//    }
-//
-//    FindMatchChildrenDeclared(*children, searchLw, result, tokenKindMask, partialMatch, noChildrenOf, onlyPublicNames);
-//
-//    if (onlyPublicNames)
-//    {
-//        wxString nameT;
-//        for (size_t i=0; i<useTokens.Count(); i++)
-//        {
-//            TokensArrayFlat resTmp;
-//            FindUseAssociatedTokens(useTokens.Item(i), searchLw, resTmp, tokenKindMask,
-//                                    partialMatch, changeDisplayName, onlyPublicNames, useWithRenameTok);
-//            bool defPub = mToken->GetDefaultPublic();
-//            for (size_t j=0; j<resTmp.Count(); j++)
-//            {
-//                if (!changeDisplayName)
-//                {
-//                    if (resTmp.Item(j)->m_Rename.IsEmpty())
-//                        nameT = resTmp.Item(j)->m_Name;
-//                    else
-//                        nameT = resTmp.Item(j)->m_Rename.Lower();
-//                }
-//
-//                if ( (changeDisplayName && ((defPub && !mToken->HasNameInPrivateList(resTmp.Item(j)->m_Name)) ||
-//                                            (!defPub && mToken->HasNameInPublicList(resTmp.Item(j)->m_Name)))) ||
-//                     (!changeDisplayName && ((defPub && !mToken->HasNameInPrivateList(nameT)) ||
-//                                            (!defPub && mToken->HasNameInPublicList(nameT)))) )
-//                {
-//                    result.Add(resTmp.Item(j));
-//                }
-//                else
-//                {
-//                    resTmp.Item(j)->Clear();
-//                    delete resTmp.Item(j);
-//                }
-//            }
-//        }
-//    }
-//    else
-//    {
-//        for (size_t i=0; i<useTokens.Count(); i++)
-//        {
-//            FindUseAssociatedTokens(useTokens.Item(i), searchLw, result, tokenKindMask, partialMatch, changeDisplayName, onlyPublicNames, useWithRenameTok);
-//        }
-//    }
-//}
 
 void ParserF::FindAddress(cbEditor* ed, wxArrayString& address)
 {
@@ -3291,7 +3089,6 @@ void ParserF::FindMatchTokensInModuleAndUse2(const wxString& modName, const wxSt
                                  (!changeDisplayName && ((defPub && !mToken->HasNameInPrivateList(nameT)) ||
                                                         (!defPub && mToken->HasNameInPublicList(nameT)))) )
                             {
-                                //(*canSeeTmp)[k] = true;
                                 if (!hasPub)
                                     hasPub = true;
                             }
@@ -3361,7 +3158,6 @@ void ParserF::FindMatchTokensInModuleAndUse2(const wxString& modName, const wxSt
                     delete renamedTokensTmp.Item(j);
                 }
             }
-            //ClearBoolArray2D(canBeSeen2DTmp);
         }
     }
     else // !onlyPublicNames
@@ -3381,8 +3177,6 @@ void ParserF::FindMatchTokensInModuleAndUse2(const wxString& modName, const wxSt
                 if (ind == wxNOT_FOUND)
                 {
                     childrenIdx->Add(childrenIdxTmp.Item(j));
-                    //BoolArray1D* canSee = new BoolArray1D(*canSeeTmp);
-                    //canBeSeen2D->push_back(canSee);
                     canBeSeen2D->push_back(canSeeTmp);
                 }
                 else
@@ -3401,7 +3195,6 @@ void ParserF::FindMatchTokensInModuleAndUse2(const wxString& modName, const wxSt
             {
                 passedTokens->Add(renamedTokensTmp.Item(j));
             }
-            //ClearBoolArray2D(canBeSeen2DTmp);
         }
     }
 

@@ -691,16 +691,12 @@ void NativeParserF::BreakUpInLines(wxString& str, const wxString& original_str, 
     size_t pos = 0;
     size_t copy_start = 0;
     int last_comma = -1;
-    int last_space = -1;
     while (pos < original_str.Length())
     {
         wxChar c = original_str.GetChar(pos);
 
         if      (c == _T(','))
             last_comma = pos;
-        else if (   (c == _T(' '))
-                 || (c == _T('\t')) )
-            last_space = pos;
 
         if (pos % chars_per_line == 0 && last_comma != -1)
         {

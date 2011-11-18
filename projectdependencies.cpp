@@ -9,6 +9,7 @@
 
 #include "projectdependencies.h"
 #include <projectmanager.h>
+#include <logmanager.h>
 #include <compiler.h>
 #include <compilerfactory.h>
 #include <macrosmanager.h>
@@ -61,6 +62,8 @@ void ProjectDependencies::Clear()
     m_ChildrenTable.clear();
     m_WasInfiniteLoop = false;
     m_FileWeights.Empty();
+
+    m_MadeChildrenSet.clear();
 }
 
 void ProjectDependencies::MakeProjectFilesDependencies(ProjectFilesArray& prFilesArr, ParserF& parser)
@@ -116,14 +119,23 @@ void ProjectDependencies::MakeProjectFilesDependencies(ProjectFilesArray& prFile
 	    }
 	}
 
+    m_MadeChildrenSet.resize(nfil,false);
+    m_ChildrenTable.resize(nfil);
+
 	for (size_t i = 0; i < nfil; ++i)
 	{
-	    IntSet* children = new IntSet;
-	    m_Deep = 0;
-	    m_BreakChain = false;
-	    MakeFileChildren(children, i);
-	    m_ChildrenTable.push_back(children);
+	    if (m_MadeChildrenSet[i] == false)
+        {
+            IntSet* children = new IntSet;
+            m_Deep = 0;
+            m_BreakChain = false;
+            MakeFileChildren(children, i);
+            m_ChildrenTable[i] = children;
+        }
 	}
+
+    //PrintChildrenTable();
+
     m_FileWeights.Alloc(nfil);
     m_FileWeights.Add(-1,nfil);
 }
@@ -214,12 +226,13 @@ void ProjectDependencies::MakeFileChildren(IntSet* children, size_t fileIndex)
     if (m_Deep > 99)
     {
         m_BreakChain = true;
-        return; // may be infinite reference loop?
+        return; // maybe infinite reference loop?
     }
     else if (m_BreakChain)
     {
         return;
     }
+
     StringSet* fileDeclaredModules = m_pDeclaredModules[fileIndex];
     StringSet::iterator pos;
     for (pos = fileDeclaredModules->begin(); pos != fileDeclaredModules->end(); ++pos)
@@ -233,9 +246,21 @@ void ProjectDependencies::MakeFileChildren(IntSet* children, size_t fileIndex)
             if (m_pUseModules[k]->count(modName))
             {
                 children->insert(k);
-                m_Deep++;
-                MakeFileChildren(children, k);
-                m_Deep--;
+
+                if (m_MadeChildrenSet[k] == true)
+                {
+                    children->insert(m_ChildrenTable[k]->begin(),m_ChildrenTable[k]->end());
+                }
+                else
+                {
+                    IntSet* childrenNew = new IntSet;
+                    m_Deep++;
+                    MakeFileChildren(childrenNew, k);
+                    m_Deep--;
+                    children->insert(childrenNew->begin(),childrenNew->end());
+                    m_ChildrenTable[k] = childrenNew;
+                    m_MadeChildrenSet[k] = true;
+                }
             }
         }
     }
@@ -251,9 +276,21 @@ void ProjectDependencies::MakeFileChildren(IntSet* children, size_t fileIndex)
         if (m_pIncludes[k]->count(fname) || m_pIncludes[k]->count(fnameExt))
         {
             children->insert(k);
-            m_Deep++;
-            MakeFileChildren(children, k);
-            m_Deep--;
+
+            if (m_MadeChildrenSet[k] == true)
+            {
+                children->insert(m_ChildrenTable[k]->begin(),m_ChildrenTable[k]->end());
+            }
+            else
+            {
+                IntSet* childrenNew = new IntSet;
+                m_Deep++;
+                MakeFileChildren(childrenNew, k);
+                m_Deep--;
+                children->insert(childrenNew->begin(),childrenNew->end());
+                m_ChildrenTable[k] = childrenNew;
+                m_MadeChildrenSet[k] = true;
+            }
         }
     }
 }
@@ -402,6 +439,27 @@ void ProjectDependencies::RemoveModFilesWS(NativeParserF* nativeParser)
         {
             ProjectBuildTarget* bTarget = pr->GetBuildTarget(pr->GetActiveBuildTarget());
             RemoveModFiles(pr, bTarget, nativeParser);
+        }
+    }
+}
+
+void ProjectDependencies::PrintChildrenTable()
+{
+    Manager::Get()->GetLogManager()->DebugLog(_T("\nProjectDependencies::PrintChildrenTable"));
+
+    for(size_t i=0; i < m_ChildrenTable.size(); i++)
+    {
+        ProjectFile* pfile = m_prFilesArr[i];
+
+        Manager::Get()->GetLogManager()->DebugLog(_T("\n")+pfile->file.GetName());
+
+        IntSet* children = m_ChildrenTable[i];
+        IntSet::iterator pos;
+        for (pos=children->begin(); pos != children->end(); ++pos)
+        {
+            ProjectFile* pf = m_prFilesArr[*pos];
+            wxString fname = pf->file.GetName();
+            Manager::Get()->GetLogManager()->DebugLog(_T("        ")+fname);
         }
     }
 }

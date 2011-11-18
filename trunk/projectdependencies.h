@@ -22,6 +22,7 @@ typedef std::map<int,wxString> IntStringMap;
 typedef std::set<int> IntSet;
 typedef std::vector<IntSet*> PointersToIntSet;
 typedef std::vector<ProjectFile*> ProjectFilesArray;
+typedef std::vector<bool> BoolVector;
 
 class NativeParserF;
 
@@ -57,6 +58,9 @@ class ProjectDependencies
         bool m_WasInfiniteLoop;
         bool m_BreakChain;
         wxArrayInt m_FileWeights;
+        BoolVector m_MadeChildrenSet;
+
+        void PrintChildrenTable();
 };
 
 #endif // PROJECTDEPENDENCIES_H

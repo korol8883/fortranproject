@@ -259,26 +259,22 @@ bool Tokenizerf::SkipToOneOfChars(const char* chars, bool toLineEnd)
 	    if(cch == '&')
 	    {
 	        MoveToNextChar();
-	        SkipWhiteSpace(); //cia as pridejau kaime
+	        SkipWhiteSpace();
 	        cch = CurrentChar();
 	        if (cch == '\n' || cch == '\r' || cch == '!')
             {
-	        //if (curchar yra kazkas kita nei '!' ar EOL, tai niko, o jeigu EOL ar ! tai SkipToEOL())
                 SkipToEOL();
-            //MoveToNextChar();
                 cch = CurrentChar();
             }
 	    }
 	    if(toLineEnd && cch == '!')
 	    {
 	        SkipToEOL();
-	        //MoveToNextChar();
 	        break;
 	    }
 	    else if(cch == '!')
 	    {
 	        SkipToEOL();
-	        //MoveToNextChar();
 	        cch = CurrentChar();
 	    }
 	    if(IsEOF() || CharInString(cch, chars))
@@ -332,6 +328,7 @@ bool Tokenizerf::SkipBlock(const wxChar& ch, int maxLines)
 	MoveToNextChar();
 	int n_lines = 1;
 	int count = 1; // counter for nested blocks (xxx())
+	bool wasCont= false;
 	while (!IsEOF())
 	{
 	    while (!IsEOF())
@@ -351,14 +348,19 @@ bool Tokenizerf::SkipBlock(const wxChar& ch, int maxLines)
 			++count;
 		else if (CurrentChar() == match)
 			--count;
-        else if (CurrentChar() == '&' && m_SourceForm == fsfFree)
+        else if (CurrentChar() == '&' && m_SourceForm == fsfFree && !wasCont)
+        {
             SkipToEOL();
+            wasCont = true;
+        }
         else if (maxLines > 0 && CurrentChar() == '\n')
         {
             n_lines++;
             if (n_lines > maxLines)
                 count = 0;
         }
+        else if (wasCont && m_SourceForm == fsfFree && !isspace(CurrentChar()))
+            wasCont = false;
 
         MoveToNextChar();
 		if (count == 0)

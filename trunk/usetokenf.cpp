@@ -29,14 +29,14 @@ void UseTokenF::SetModuleNature(ModuleNature modNature)
 
 void UseTokenF::AddToNamesList(wxString& localName)
 {
-    m_NamesList.insert(localName);
+    m_NamesList.insert(localName.Lower());
 }
 
 void UseTokenF::AddToRenameList(wxString& localName, wxString& externalName)
 {
     wxArrayString pair;
     pair.Add(localName);
-    pair.Add(externalName);
+    pair.Add(externalName.Lower());
     m_RenameList.push_back(pair);
 }
 

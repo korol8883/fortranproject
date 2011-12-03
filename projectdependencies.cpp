@@ -381,9 +381,10 @@ void ProjectDependencies::RemoveModFiles(cbProject* pr, ProjectBuildTarget* bTar
         !CompilerFactory::CompilerInheritsFrom(comID, _T("pgfortran")) )
     {
         bool haveFortran = false;
-        for (int i = 0; i < pr->GetFilesCount(); ++i)
+        for (FilesList::iterator it = pr->GetFilesList().begin(); it != pr->GetFilesList().end(); ++it)
         {
-            if (nativeParser->IsFileFortran(pr->GetFile(i)->file.GetFullPath()))
+            ProjectFile* prjfile = *it;
+            if (nativeParser->IsFileFortran(prjfile->file.GetFullPath()))
             {
                 haveFortran = true;
                 break;
@@ -395,9 +396,9 @@ void ProjectDependencies::RemoveModFiles(cbProject* pr, ProjectBuildTarget* bTar
 
     wxString objDir;
     bool found = false;
-    for (int i=0; i < pr->GetFilesCount(); i++)
+    for (FilesList::iterator it = pr->GetFilesList().begin(); it != pr->GetFilesList().end(); ++it)
     {
-        ProjectFile* pf = pr->GetFile(i);
+        ProjectFile* pf = *it;
         const pfDetails& pfd = pf->GetFileDetails(bTarget);
         if (&pfd)
         {

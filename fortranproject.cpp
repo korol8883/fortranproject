@@ -635,7 +635,7 @@ void FortranProject::EditorEventHook(cbEditor* editor, wxScintillaEvent& event)
     if (!cfg->ReadBool(_T("/use_code_completion"), true))
         return;
 
-    if (((event.GetKey() == '.') || (event.GetKey() == '%')) && control->AutoCompActive())
+    if (((event.GetKey() == '.') || (event.GetKey() == '%') || (event.GetKey() == '(')) && control->AutoCompActive())
         control->AutoCompCancel();
 
     if (event.GetEventType() == wxEVT_SCI_AUTOCOMP_SELECTION)

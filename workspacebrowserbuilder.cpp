@@ -283,9 +283,9 @@ bool WorkspaceBrowserBuilder::HasGlobalFunctionsOthers(int tokenKindMask)
         }
         case bdfProject:
         {
-            for (int i = 0; i < m_pActiveProject->GetFilesCount(); ++i)
+            for (FilesList::iterator it = m_pActiveProject->GetFilesList().begin(); it != m_pActiveProject->GetFilesList().end(); ++it)
             {
-                ProjectFile* pf = m_pActiveProject->GetFile(i);
+                ProjectFile* pf = *it;
                 if (FileHasTokens(UnixFilename(pf->file.GetFullPath()), tokenKindMask))
                 {
                     has = true;
@@ -363,9 +363,9 @@ void WorkspaceBrowserBuilder::AddTreeChildren(wxTreeCtrl* tree, wxTreeItemId par
         }
         case bdfProject:
         {
-            for (int i = 0; i < m_pActiveProject->GetFilesCount(); ++i)
+            for (FilesList::iterator it = m_pActiveProject->GetFilesList().begin(); it != m_pActiveProject->GetFilesList().end(); ++it)
             {
-                ProjectFile* pf = m_pActiveProject->GetFile(i);
+                ProjectFile* pf = *it;
                 AddFileNodes(tree, parent, UnixFilename(pf->file.GetFullPath()), tokenKindMask);
             }
             break;
@@ -1205,9 +1205,9 @@ bool WorkspaceBrowserBuilder::IsLineInGlobals(const wxString& file, int line)
                 }
                 case bdfProject:
                 {
-                    for (int i = 0; i < m_pActiveProject->GetFilesCount(); ++i)
+                    for (FilesList::iterator it = m_pActiveProject->GetFilesList().begin(); it != m_pActiveProject->GetFilesList().end(); ++it)
                     {
-                        ProjectFile* pf = m_pActiveProject->GetFile(i);
+                        ProjectFile* pf = *it;
                         foundFileToken = UnixFilename(pf->file.GetFullPath()).IsSameAs(file);
                         if(foundFileToken)
                             break;

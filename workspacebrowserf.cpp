@@ -352,9 +352,9 @@ size_t WorkspaceBrowserF::FindMatchTokens(wxString search, TokensArrayF& result)
         }
         case bdfProject:
         {
-            for (int i = 0; i < m_pActiveProject->GetFilesCount(); ++i)
+            for (FilesList::iterator it = m_pActiveProject->GetFilesList().begin(); it != m_pActiveProject->GetFilesList().end(); ++it)
             {
-                ProjectFile* pf = m_pActiveProject->GetFile(i);
+                ProjectFile* pf = *it;
                 count = m_pParser->FindMatchTokens(pf->file.GetFullPath(), search, result);
             }
             break;
@@ -365,9 +365,9 @@ size_t WorkspaceBrowserF::FindMatchTokens(wxString search, TokensArrayF& result)
             for (size_t i=0; i < projects->GetCount(); ++i)
             {
                 cbProject* project = projects->Item(i);
-                for (int ip=0; ip < project->GetFilesCount(); ++ip)
+                for (FilesList::iterator it = project->GetFilesList().begin(); it != project->GetFilesList().end(); ++it)
                 {
-                    ProjectFile* pf = project->GetFile(ip);
+                    ProjectFile* pf = *it;
                     count = m_pParser->FindMatchTokens(pf->file.GetFullPath(), search, result);
                 }
             }

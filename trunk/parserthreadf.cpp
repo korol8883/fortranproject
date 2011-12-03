@@ -1095,12 +1095,17 @@ void ParserThreadF::HandleAccessList(TokenAccessKind taKind, bool& changeDefault
 
 void ParserThreadF::GoThroughBody()
 {
+    wxString tok_low;
+
     while (1)
     {
+        unsigned int ln_tokold = m_Tokens.GetLineNumber();
+
     	wxString token = m_Tokens.GetToken();
     	if (token.IsEmpty())
             break;
-        wxString tok_low = token.Lower();
+
+        tok_low = token.Lower();
 
         if (tok_low.Matches(_T("::")))
         {
@@ -1115,7 +1120,8 @@ void ParserThreadF::GoThroughBody()
             m_Tokens.SkipToOneOfChars(";", true);
             break;
         }
-        else if (tok_low.Matches(_T("type")) && !nex_low(0,1).Matches(_T("(")) && !nex_low.Matches(_T("is")))
+        else if (tok_low.Matches(_T("type")) && !nex_low(0,1).Matches(_T("(")) && !nex_low.Matches(_T("is"))
+                 && ln_tokold != m_Tokens.GetLineNumber())
         {
             HandleType();
         }

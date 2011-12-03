@@ -141,9 +141,9 @@ void NativeParserF::RemoveFromParser(cbProject* project)
     if (!project)
         return;
 
-    for (int i = 0; i < project->GetFilesCount(); ++i)
+    for (FilesList::iterator it = project->GetFilesList().begin(); it != project->GetFilesList().end(); ++it)
     {
-        ProjectFile* pf = project->GetFile(i);
+        ProjectFile* pf = *it;
         m_Parser.RemoveFile(pf->file.GetFullPath());
     }
     RemoveProjectFilesDependency(project);
@@ -182,17 +182,17 @@ void NativeParserF::ParseProject(cbProject* project)
     FortranSourceForm fsForm;
     ArrayOfFortranSourceForm fileForms;
 
-    for (int i = 0; i < project->GetFilesCount(); ++i)
-	{
-		ProjectFile* pf = project->GetFile(i);
+    for (FilesList::iterator it = project->GetFilesList().begin(); it != project->GetFilesList().end(); ++it)
+    {
+        ProjectFile* pf = *it;
 
         if (IsFileFortran(pf->relativeFilename, fsForm))
         {
             files.Add(pf->file.GetFullPath());
             fileForms.push_back(fsForm);
         }
-	}
-	if (!files.IsEmpty())
+    }
+    if (!files.IsEmpty())
     {
         parser->BatchParse(files, fileForms);
     }
@@ -209,9 +209,10 @@ void NativeParserF::ReparseProject(cbProject* project)
 {
     if (project && !Manager::IsAppShuttingDown())
     {
-        for (int i = 0; i < project->GetFilesCount(); ++i)
+        for (FilesList::iterator it = project->GetFilesList().begin(); it != project->GetFilesList().end(); ++it)
         {
-            ReparseFile(project->GetFile(i)->file.GetFullPath());
+            ProjectFile* pf = *it;
+            ReparseFile(pf->file.GetFullPath());
         }
     }
 }
@@ -277,9 +278,9 @@ void NativeParserF::UpdateProjectFilesDependency(cbProject* project)
     project->SaveAllFiles();
 
     std::vector<ProjectFile*> pfs;
-    for (int j = 0; j < project->GetFilesCount(); ++j)
+    for (FilesList::iterator it = project->GetFilesList().begin(); it != project->GetFilesList().end(); ++it)
     {
-        ProjectFile* pf = project->GetFile(j);
+        ProjectFile* pf = *it;
         if (IsFileFortran(pf->relativeFilename))
         {
             pfs.push_back(pf);

@@ -39,8 +39,8 @@ void CCSmartFilter::GetTokenKind(wxArrayString& words, int& kindFilter, bool& al
         kindFilter = tkSubroutine | tkInterface;
     }
     else if (woCount > 1 &&
-             ( words.Item(woCount-1).Lower().IsSameAs(_T("procedure")) ||
-              ( words.Item(woCount-1).Lower().IsSameAs(_T("module")) && words.Item(woCount-2).Lower().IsSameAs(_T("procedure")) ) ))
+             ( wordLastLw.IsSameAs(_T("generic")) || wordLastLw.IsSameAs(_T("procedure")) ||
+              ( wordLastLw.IsSameAs(_T("module")) && words.Item(woCount-2).Lower().IsSameAs(_T("procedure")) ) ))
     {
         kindFilter = tkSubroutine | tkFunction | tkInterface;
     }
@@ -75,6 +75,11 @@ void CCSmartFilter::GetTokenKind(wxArrayString& words, int& kindFilter, bool& al
         kindFilter = tkFunction | tkInterface;
         allowVariables = true;
     }
+    else if (woCount == 3 && wordLw.IsSameAs('(') &&  words.Item(1).Lower().IsSameAs(_T("is"))
+             && (words.Item(2).Lower().IsSameAs(_T("type")) || words.Item(2).Lower().IsSameAs(_T("class"))) )
+    {
+        kindFilter = tkType;
+    }
     else if (wordLw.IsSameAs('(') || wordLw.IsSameAs(','))
     {
         kindFilter = tkFunction | tkInterface | tkOther;
@@ -106,9 +111,9 @@ void CCSmartFilter::GetTokenKind(wxArrayString& words, int& kindFilter, bool& al
         allowVariables = true;
     }
     else if (woCount > 1 && wordLw.IsSameAs(')') && (
-                (words.Item(woCount-1).Lower().IsSameAs(_T("if")))
-             || (words.Item(woCount-1).Lower().IsSameAs(_T("read")))
-             || (words.Item(woCount-1).Lower().IsSameAs(_T("write"))) ))
+                (wordLastLw.IsSameAs(_T("if")))
+             || (wordLastLw.IsSameAs(_T("read")))
+             || (wordLastLw.IsSameAs(_T("write"))) ))
     {
         kindFilter = tkOther | tkFunction | tkInterface;
         allowVariables = true;

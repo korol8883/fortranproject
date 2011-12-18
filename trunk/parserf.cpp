@@ -2698,6 +2698,9 @@ void ParserF::AddUniqueResult(TokensArrayFlat& result, const TokenFlat* token)
 void ParserF::FindUseAssociatedTokens2(TokenF* useToken, const wxString &searchLw, ArrOfSizeT &resChildrenIdx, BoolArray2D &resCanBeSeen2D, int tokenKindMask, bool partialMatch,
                                       bool changeDisplayName, bool onlyPublicNames, TokensArrayFlat &renamedTokens, TokensArrayFlat* useWithRenameTok)
 {
+    if (recursiveDeep > 20)
+        return;  // deep limit was reached
+
     if (!useToken || useToken->m_TokenKind != tkUse)
         return;
 
@@ -2705,6 +2708,8 @@ void ParserF::FindUseAssociatedTokens2(TokenF* useToken, const wxString &searchL
     UseTokenF* uTok = static_cast<UseTokenF*>(useToken);
     if (uTok->GetModuleNature() == mnIntrinsic)
         return;
+
+    recursiveDeep++;
 
     ArrOfSizeT* childrenIdx = NULL;
     BoolArray2D* canBeSeen2D = NULL;
@@ -2728,15 +2733,14 @@ void ParserF::FindUseAssociatedTokens2(TokenF* useToken, const wxString &searchL
     }
     else
     {
-        if (recursiveDeep > 20)
-            return;  // deep limit was reached
-        recursiveDeep++;
-
         FindMatchTokensInModuleAndUse2(uTok->m_Name, searchLw, childrenIdx, canBeSeen2D, tokenKindMask, noChildrenOf, partialMatch,
                                       onlyPublicNames, changeDisplayName, useWithRenameTok);
     }
     if (!childrenIdx || !canBeSeen2D)
+    {
+        recursiveDeep--;
         return;
+    }
 
     std::list<wxArrayString> *renameList = uTok->GetRenameList();
     std::set<wxString> *namesList = uTok->GetNamesList();

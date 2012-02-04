@@ -465,4 +465,65 @@ void ProjectDependencies::PrintChildrenTable()
     }
 }
 
+size_t ProjectDependencies::GetSizeFiles()
+{
+    return m_prFilesArr.size();
+}
 
+void ProjectDependencies::GetUseFilesFile(const wxString& filename, wxArrayString& useFiles)
+{
+    if (m_FileIndexMap.count(filename) == 0)
+        return;
+    size_t fileIndex = m_FileIndexMap[filename];
+    StringSet* useModules = m_pUseModules[fileIndex];
+    StringSet::iterator pos;
+    for (pos = useModules->begin(); pos != useModules->end(); ++pos)
+    {
+        wxString modName = *pos;
+        if (m_ModuleFileIdxMap.count(modName) == 1)
+        {
+            size_t fidx = m_ModuleFileIdxMap[modName];
+            if (fidx != fileIndex)
+            {
+                StringIntMap::const_iterator it;
+                for (it = m_FileIndexMap.begin(); it != m_FileIndexMap.end(); ++it)
+                {
+                    if (it->second == fidx)
+                    {
+                        useFiles.Add(it->first);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+}
+
+void ProjectDependencies::GetIncludeFilesFile(const wxString& filename, wxArrayString& includeFiles)
+{
+    if (m_FileIndexMap.count(filename) == 0)
+        return;
+    size_t fileIndex = m_FileIndexMap[filename];
+    StringSet* incls = m_pIncludes[fileIndex];
+    StringSet::iterator pos;
+    for (pos = incls->begin(); pos != incls->end(); ++pos)
+    {
+        wxString incName = *pos;
+        if (m_IncludeFileIdxMap.count(incName) == 1)
+        {
+            size_t fidx = m_IncludeFileIdxMap[incName];
+            if (fidx != fileIndex)
+            {
+                StringIntMap::const_iterator it;
+                for (it = m_FileIndexMap.begin(); it != m_FileIndexMap.end(); ++it)
+                {
+                    if (it->second == fidx)
+                    {
+                        includeFiles.Add(it->first);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+}

@@ -40,7 +40,7 @@ class ParserF
         void ObtainUsedDeclaredModules(const wxString& fileName, StringSet* fileUseModules, StringSet* fileDeclaredModules, StringSet* fileIncludes);
         bool Done();
         bool IsFileFortran(const wxString& filename, FortranSourceForm& fsForm);
-        void FindMatchDeclarationsInCurrentScope(const wxString& search, cbEditor* ed, TokensArrayFlat& result, bool partialMatch, int endPos=-1);
+        void FindMatchDeclarationsInCurrentScope(const wxString& search, cbEditor* ed, TokensArrayFlat& result, bool partialMatch, int endPos=-1, int* nLineStart=NULL);
         void FindMatchVariablesInModules(const wxString& search, TokensArrayFlat& result, bool partialMatch);
         bool FindMatchTypeComponents(cbEditor* ed, const wxString& line, TokensArrayFlat& result, bool partialMatch, bool onlyPublicNames, bool& isAfterPercent, bool getAsProcedure=false);
         void FindMatchTokensForToolTip(const wxString& nameUnder, int posEndOfWord, cbEditor* ed, bool onlyUseAssoc, bool onlyPublicNames, TokensArrayFlat& result, bool& isAfterPercent);
@@ -86,6 +86,7 @@ class ParserF
                                       bool onlyPublicNames, TokensArrayFlat& renamedTokens, TokensArrayFlat* useWithRenameTok);
         void FindMatchTokensInModuleAndUse2(const wxString& modName, const wxString& searchLw, ArrOfSizeT* &childrenIdx, BoolArray2D* &canBeSeen2D, int tokenKindMask,
                                              int noChildrenOf, bool partialMatch, bool onlyPublicNames, bool changeDisplayName, TokensArrayFlat* useWithRenameTok);
+        void ChangeAssociatedName(wxString& line, TokenFlat* token);
         void FindAddress(cbEditor* ed, wxArrayString& address);
         void FindTokensForUse(const wxString& search, wxArrayString& firstWords, TokensArrayFlat& result, int& tokKind, bool onlyPublicNames);
         void AddUniqueResult(TokensArrayFlat& result, const TokenF* token);

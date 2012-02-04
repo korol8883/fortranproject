@@ -46,6 +46,8 @@ enum TokenKindF
     tkInterfaceExplicit = 0x10000,
     tkProcedure = 0x20000,
     tkAccessList = 0x40000,
+    tkBlockConstruct = 0x80000,
+    tkAssociateConstruct = 0x100000,
 };
 
 enum TokenAccessKind
@@ -115,6 +117,7 @@ class TokensArrayClass
 class TokenFlat : public TokenF
 {
     public:
+        TokenFlat();
         TokenFlat(const TokenF* tok);
         TokenFlat(const TokenFlat* tok);
 		~TokenFlat();

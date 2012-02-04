@@ -85,12 +85,14 @@ static const char * unknown_keyword_xpm[] = {
 "                "};
 
 
-int idGotoDeclaration = wxNewId();
-int idCodeCompleteTimer = wxNewId();
-int idMenuCodeComplete = wxNewId();
-int idMenuShowCallTip = wxNewId();
-int idMenuGotoDeclaration = wxNewId();
-int idViewSymbolsBrowser = wxNewId();
+int idGotoDeclaration      = wxNewId();
+int idCodeCompleteTimer    = wxNewId();
+int idMenuCodeComplete     = wxNewId();
+int idMenuShowCallTip      = wxNewId();
+int idMenuGotoDeclaration  = wxNewId();
+int idViewSymbolsBrowser   = wxNewId();
+int idMenuFortranTools     = wxNewId();
+int idMenuGenerateMakefile = wxNewId();
 
 BEGIN_EVENT_TABLE(FortranProject, cbCodeCompletionPlugin)
     EVT_UPDATE_UI(idViewSymbolsBrowser, FortranProject::OnUpdateUI)
@@ -99,6 +101,7 @@ BEGIN_EVENT_TABLE(FortranProject, cbCodeCompletionPlugin)
     EVT_MENU(idMenuShowCallTip, FortranProject::OnShowCallTip)
     EVT_MENU(idGotoDeclaration, FortranProject::OnGotoDeclaration)
     EVT_MENU(idViewSymbolsBrowser, FortranProject::OnViewWorkspaceBrowser)
+    EVT_MENU(idMenuGenerateMakefile, FortranProject::OnGenerateMakefile)
     EVT_TIMER(idCodeCompleteTimer, FortranProject::OnCodeCompleteTimer)
     EVT_TOOL(XRCID("idFortProjBack"), FortranProject::OnJumpBack)
     EVT_TOOL(XRCID("idFortProjHome"), FortranProject::OnJumpHome)
@@ -136,6 +139,7 @@ void FortranProject::OnAttach()
     m_EditMenuSeparator = 0;
     m_SearchMenu = 0;
     m_ViewMenu = 0;
+    m_ToolsMenu = 0;
 
     m_pNativeParser = new NativeParserF(this);
     m_pNativeParser->CreateWorkspaceBrowser();
@@ -213,6 +217,10 @@ void FortranProject::OnRelease(bool appShutDown)
         {
             m_ViewMenu->Delete(idViewSymbolsBrowser);
         }
+    }
+    if (m_ToolsMenu && m_FortranToolsMenu)
+    {
+        m_ToolsMenu->Destroy(m_FortranToolsMenu);
     }
 } // end of OnRelease
 
@@ -426,6 +434,17 @@ void FortranProject::BuildMenu(wxMenuBar* menuBar)
     }
     else
         Manager::Get()->GetLogManager()->DebugLog(_T("FortranProject: Could not find View menu!"));
+
+    pos = menuBar->FindMenu(_("&Tools"));
+    if (pos != wxNOT_FOUND)
+    {
+        m_ToolsMenu = menuBar->GetMenu(pos);
+        wxMenu* fortranMenu = new wxMenu();
+        fortranMenu->Append(idMenuGenerateMakefile, _("Generate Makefile"));
+        m_FortranToolsMenu = m_ToolsMenu->Append(idMenuFortranTools, _("Fortran"), fortranMenu);
+    }
+    else
+        Manager::Get()->GetLogManager()->DebugLog(_T("FortranProject: Could not find Tools menu!"));
 }
 
 
@@ -1527,5 +1546,11 @@ void FortranProject::OnDebuggerFinished(CodeBlocksEvent& event)
     event.Skip();
     m_IsDebugging = false;
 }
+
+void FortranProject::OnGenerateMakefile(wxCommandEvent& event)
+{
+    m_pNativeParser->GenMakefile();
+}
+
 
 

@@ -14,9 +14,9 @@
 #include "cbstyledtextctrl.h"
 #include <configmanager.h>
 #include "ccsmartfilter.h"
+#include <vector>
 
 #include <logmanager.h>
-
 
 ParserF::ParserF()
 {
@@ -390,14 +390,22 @@ bool ParserF::FindMatchTypeComponents(cbEditor* ed, const wxString& lineCur, Tok
 
     TokensArrayFlatClass tokensTmp;
     TokensArrayFlat* resultTmp = tokensTmp.GetTokens();
-    FindMatchDeclarationsInCurrentScope(name, ed, *resultTmp, false);
+    int tmpEndPos = -1;
+    int nLineCurScope = -1;
+    FindMatchDeclarationsInCurrentScope(name, ed, *resultTmp, false, tmpEndPos, &nLineCurScope);
+
+    if (nLineCurScope == -1)
+        return false; // something wrong with finding current scope
 
     wxString myFilename = UnixFilename(ed->GetFilename());
     unsigned int myScopeLine = 0;
     if (resultTmp->Count() > 0)
         myScopeLine = resultTmp->Item(0)->m_LineStart;
     else if (resultTmp->Count() == 0)
-        FindMatchVariablesInModules(name, *resultTmp, false); //Is it global variable?
+        FindUseAssociatedTokens(onlyPublicNames, ed, name, false, *resultTmp, tkVariable, false);
+
+    //if (resultTmp->Count() == 0)
+    //    FindMatchVariablesInModules(name, *resultTmp, false); //Is it global variable defined in other modules?
 
     wxString nameType;
     bool nameType_found = false;
@@ -581,14 +589,55 @@ void ParserF::FindChildrenOfToken(TokensArrayF &children, const wxString &nameTo
 }
 
 
-void ParserF::FindMatchDeclarationsInCurrentScope(const wxString& search, cbEditor* ed, TokensArrayFlat& result, bool partialMatch, int endPos)
+void ParserF::FindMatchDeclarationsInCurrentScope(const wxString& search, cbEditor* ed, TokensArrayFlat& result, bool partialMatch, int endPos, int* nLineStart)
 {
     int lineStart = -1;
     TokenFlat* tokFl = NULL;
     FindLineScopeLN(ed, lineStart, tokFl, endPos);
 
+Manager::Get()->GetLogManager()->DebugLog(F(_T("FindMatchDeclarationsInCurrentScope: Po FindLineScopeLN lineStart=%d"),lineStart));
+
+    wxString searchLw = search.Lower();
+
     if (tokFl)
+    {
+        if (tokFl->m_TokenKind == tkAssociateConstruct)
+        {
+            wxString args = tokFl->m_Args;
+            std::map<wxString,wxString> assocMap;
+            ParserThreadF::SplitAssociateConstruct(args, assocMap);
+
+            std::map<wxString,wxString>::iterator it;
+            for ( it=assocMap.begin(); it != assocMap.end(); ++it )
+            {
+                if ((partialMatch && (*it).first.Lower().StartsWith(searchLw)) ||
+                    (!partialMatch && (*it).first.Lower().IsSameAs(searchLw)))
+                {
+                    TokenFlat* newToken = new TokenFlat();
+                    newToken->m_Name = (*it).first.Lower();
+
+                    newToken->m_TokenKind = tkVariable;
+                    newToken->m_pParent = NULL;
+                    newToken->m_Filename = ed->GetFilename();
+                    newToken->m_LineStart = lineStart;
+                    newToken->m_DisplayName = (*it).first;
+                    newToken->m_Args << _T(" => ") << (*it).second;
+                    newToken->m_TypeDefinition = _T("AssociateConstruct");
+                    newToken->m_DefinitionLength = 1;
+
+                    result.Add(newToken);
+                }
+            }
+            if (nLineStart)
+                *nLineStart = lineStart;
+            delete tokFl;
+            return;
+        }
         delete tokFl;
+    }
+
+    if (nLineStart)
+        *nLineStart = lineStart;
 
     if (lineStart == -1)
         return;
@@ -616,15 +665,14 @@ void ParserF::FindMatchDeclarationsInCurrentScope(const wxString& search, cbEdit
     ParserThreadF thread = ParserThreadF(txtRange, parsResult, fsForm, true);
     thread.ParseDeclarations();
 
-    wxString searchLw = search.Lower();
-
     //Add results
     for (size_t i=0; i<parsResult->GetCount(); i++)
     {
         if ((partialMatch && parsResult->Item(i)->m_Name.StartsWith(searchLw)) ||
             (!partialMatch && parsResult->Item(i)->m_Name.IsSameAs(searchLw)))
         {
-            if (parsResult->Item(i)->m_TokenKind != tkAccessList)
+            if (parsResult->Item(i)->m_TokenKind != tkAccessList &&
+                parsResult->Item(i)->m_TokenKind != tkBlockConstruct)
             {
                 parsResult->Item(i)->m_Filename = filename;
                 parsResult->Item(i)->m_LineStart += lineStart - 1;
@@ -632,6 +680,9 @@ void ParserF::FindMatchDeclarationsInCurrentScope(const wxString& search, cbEdit
             }
         }
     }
+
+Manager::Get()->GetLogManager()->DebugLog(_T("FindMatchDeclarationsInCurrentScope: paciame gale"));
+
     return;
 }
 
@@ -640,15 +691,13 @@ bool ParserF::FindLineScope(unsigned int line, int& lineStart, int tokenKindMask
     bool found = false;
     for (size_t i=0; i<children.GetCount(); i++)
     {
-        if ((children.Item(i)->m_LineStart <= line) && (children.Item(i)->m_TokenKind & tokenKindMask))
+        if ((children.Item(i)->m_LineStart <= line) && (children.Item(i)->m_LineEnd >= line) && (children.Item(i)->m_TokenKind & tokenKindMask))
         {
             lineStart = children.Item(i)->m_LineStart;
             pToken = children.Item(i);
-            if (FindLineScope(line, lineStart, tokenKindMask, children.Item(i)->m_Children, pToken))
-            {
-                found = true;
-                break;
-            }
+            FindLineScope(line, lineStart, tokenKindMask, children.Item(i)->m_Children, pToken);
+            found = true;
+            break;
         }
         else if (children.Item(i)->m_LineStart > line)
         {
@@ -679,7 +728,7 @@ void ParserF::FindLineScopeLN(cbEditor* ed, int& lineStart, TokenFlat* &token, i
         curPos = endPos;
 
     unsigned int curLine = control->LineFromPosition(curPos) + 1;
-    int tokenKindMask = tkFunction | tkProgram | tkSubroutine | tkModule; // | tkType;
+    int tokenKindMask = tkFunction | tkProgram | tkSubroutine | tkModule | tkBlockConstruct | tkAssociateConstruct; // | tkType;
 
     //Parse to find a scope
     unsigned int parseStartLine;
@@ -700,6 +749,7 @@ void ParserF::FindLineScopeLN(cbEditor* ed, int& lineStart, TokenFlat* &token, i
         linesUntil = parseStartLine - 2;
         strRange = control->GetTextRange(control->GetLineEndPosition(linesUntil),curPos);
     }
+    curLine -= linesUntil;
 
     TokenF* pToken = NULL;
     int chUntil = 0;
@@ -710,9 +760,13 @@ void ParserF::FindLineScopeLN(cbEditor* ed, int& lineStart, TokenFlat* &token, i
     if (res)
     {
         FindLineScope(curLine, lineStart, tokenKindMask, *pRes, pToken);
-        if (pToken && pToken->m_Name.IsEmpty())
+
+if (pToken)
+Manager::Get()->GetLogManager()->DebugLog(F(_T("FindLineScopeLN: Po FindLineScope lineStart=%d, curLine=%d, nToken->Name="),lineStart, curLine) + pToken->m_DisplayName);
+
+        if (pToken && pToken->m_Name.IsEmpty() && (pToken->m_TokenKind != tkBlockConstruct) && (pToken->m_TokenKind != tkAssociateConstruct))
         {
-            if (pToken->m_pParent && pToken->m_pParent->m_TokenKind & tokenKindMask)
+            if (pToken->m_pParent && (pToken->m_pParent->m_TokenKind & tokenKindMask))
             {
                 pToken = pToken->m_pParent;
                 lineStart = pToken->m_LineStart;
@@ -755,6 +809,9 @@ void ParserF::FindLineScopeLN(cbEditor* ed, int& lineStart, TokenFlat* &token, i
         chUntil = linesUntil;
     }
 
+if (pToken)
+Manager::Get()->GetLogManager()->DebugLog(_T("FindLineScopeLN: Netoli galo, nToken->Name=%s") + pToken->m_Name);
+
     if (lineStart == -1)
         return;
 
@@ -762,6 +819,9 @@ void ParserF::FindLineScopeLN(cbEditor* ed, int& lineStart, TokenFlat* &token, i
     {
         token = new TokenFlat(pToken);
         token->m_LineStart += chUntil;
+
+Manager::Get()->GetLogManager()->DebugLog(F(_T("FindLineScopeLN: Gale, Nustatyta m_LineStart=%d"),token->m_LineStart));
+
     }
 }
 
@@ -1107,7 +1167,7 @@ void ParserF::FindMatchTokensForJump(cbEditor* ed, bool onlyUseAssoc, bool onlyP
 
     if (!isAfterPercent)
     {
-        int tokKind = tkModule | tkFunction | tkProgram | tkSubroutine | tkPreprocessor | tkInterface | tkBlockData | tkType;
+        int tokKind = tkModule | tkFunction | tkProgram | tkSubroutine | tkPreprocessor | tkInterface | tkBlockData | tkType | tkVariable;
         if (onlyUseAssoc)
         {
             TokensArrayFlatClass tokensTmp;
@@ -1123,14 +1183,15 @@ void ParserF::FindMatchTokensForJump(cbEditor* ed, bool onlyUseAssoc, bool onlyP
             {
                 result.Add(new TokenFlat(resultTmp->Item(i)));
             }
-            FindMatchTokensDeclared(nameUnder, result, tokKind, false, tkInterface | tkModule); // take global procedures only
+            int noChildrenOf = tkInterface | tkModule | tkFunction | tkSubroutine | tkProgram;
+            FindMatchTokensDeclared(nameUnder, result, tokKind, false, noChildrenOf); // take global procedures only
         }
         else
         {
             FindMatchTokensDeclared(nameUnder, result, tokKind, false);
+            FindMatchVariablesInModules(nameUnder, result, false);
         }
         FindMatchDeclarationsInCurrentScope(nameUnder, ed, result, false, posEndOfWord);
-        FindMatchVariablesInModules(nameUnder, result, false);
     }
 }
 
@@ -1138,10 +1199,27 @@ void ParserF::FindMatchTokensForJump(cbEditor* ed, bool onlyUseAssoc, bool onlyP
 bool ParserF::FindMatchTokensForCodeCompletion(bool useSmartCC, bool onlyUseAssoc, bool onlyPublicNames, size_t maxMatch, const wxString& nameUnderCursor, cbEditor* ed,
                                                TokensArrayFlat& result, bool& isAfterPercent, int& tokKind)
 {
+
+Manager::Get()->GetLogManager()->DebugLog(_T("Iskviesta FindMatchTokensForCodeCompletion"));
+
+
     wxString curLine;
     wxArrayString firstWords;
     if (!FindWordsBefore(ed, 100, curLine, firstWords))  //get words on the line
         return false;
+
+    int lineStart = -1;
+    TokenFlat* tokFl = NULL;
+    FindLineScopeLN(ed, lineStart, tokFl, -1);
+    if (tokFl)
+    {
+        if (tokFl->m_TokenKind == tkAssociateConstruct)
+        {
+            Manager::Get()->GetLogManager()->DebugLog(_T("curLine yra =")+curLine);
+            ChangeAssociatedName(curLine, tokFl);
+        }
+        delete tokFl;
+    }
 
     isAfterPercent = false;
     if (!FindMatchTypeComponents(ed, curLine, result, true, onlyPublicNames, isAfterPercent))
@@ -1191,6 +1269,7 @@ bool ParserF::FindMatchTokensForCodeCompletion(bool useSmartCC, bool onlyUseAsso
             classVar = true;
         }
         FindUseAssociatedTokens(onlyPublicNames, ed, nameUnderCursor, true, result, tokKind, true);
+
         int noChildrenOf = tkInterface | tkModule | tkFunction | tkSubroutine | tkProgram;
         FindMatchTokensDeclared(nameUnderCursor, result, tokKind, true, noChildrenOf); // take global procedures only
 
@@ -2192,6 +2271,12 @@ void ParserF::FindUseAssociatedTokens(bool onlyPublicNames, cbEditor* ed, const 
     if (address.Count() < 2)
         return; // file only
 
+Manager::Get()->GetLogManager()->DebugLog(_T("FindUseAssociatedTokens address:"));
+for (size_t i=0; i<address.Count(); i++)
+{
+    Manager::Get()->GetLogManager()->DebugLog(_T("address=%s") + address.Item(i));
+}
+
 //    m_VisitedModules.Empty();
 
     wxString searchLw = search.Lower();
@@ -2202,22 +2287,31 @@ void ParserF::FindUseAssociatedTokens(bool onlyPublicNames, cbEditor* ed, const 
     if (!children)
         return;
 
-    TokensArrayF* pModuleChildren = 0;
+    std::vector<TokensArrayF*> vpChildren;
     TokensArrayF  useTokens;
     bool found = false;
     for (size_t j=1; j<address.Count(); j++)
     {
+        if (address.Item(j).IsEmpty())
+            break;
+
         found = false;
         for (size_t i=0; i<children->GetCount(); i++)
         {
-            if (children->Item(i)->m_TokenKind == tkUse)
+//            if (children->Item(i)->m_TokenKind == tkUse)
+//            {
+//                useTokens.Add(children->Item(i));
+//            }
+//            else if (children->Item(i)->m_Name.IsSameAs(address.Item(j)))
+
+            if (children->Item(i)->m_Name.IsSameAs(address.Item(j)))
             {
-                useTokens.Add(children->Item(i));
-            }
-            else if (children->Item(i)->m_Name.IsSameAs(address.Item(j)))
-            {
-                if (children->Item(i)->m_TokenKind == tkModule)
-                    pModuleChildren = &children->Item(i)->m_Children;
+
+                vpChildren.push_back(&children->Item(i)->m_Children);
+
+Manager::Get()->GetLogManager()->DebugLog(_T("ziuresim tarp vaiku=%s") + children->Item(i)->m_Name);
+//                if (children->Item(i)->m_TokenKind == tkModule)
+//                    pModuleChildren = &children->Item(i)->m_Children;
                 found = true;
                 children = &children->Item(i)->m_Children;
                 break;
@@ -2227,25 +2321,26 @@ void ParserF::FindUseAssociatedTokens(bool onlyPublicNames, cbEditor* ed, const 
             break;
     }
 
-    if (found)
+    for (size_t ichil=0; ichil<vpChildren.size(); ichil++)
     {
-        for (size_t i=0; i<children->GetCount(); i++)
+        TokensArrayF* pParChildren = vpChildren[ichil];
+        for (size_t i=0; i<pParChildren->GetCount(); i++)
         {
-            if (children->Item(i)->m_TokenKind == tkUse)
+            if (pParChildren->Item(i)->m_TokenKind == tkUse)
             {
-                useTokens.Add(children->Item(i));
+                useTokens.Add(pParChildren->Item(i));
             }
-            else if(children->Item(i)->m_TokenKind & tokenKindMask)
+            else if(pParChildren->Item(i)->m_TokenKind & tokenKindMask)
             {
-                if ((partialMatch && children->Item(i)->m_Name.StartsWith(searchLw)) ||
-                    (!partialMatch && children->Item(i)->m_Name.IsSameAs(searchLw)))
+                if ((partialMatch && pParChildren->Item(i)->m_Name.StartsWith(searchLw)) ||
+                    (!partialMatch && pParChildren->Item(i)->m_Name.IsSameAs(searchLw)))
                 {
-                    AddUniqueResult(result, children->Item(i));
+                    AddUniqueResult(result, pParChildren->Item(i));
                 }
             }
-            else if (children->Item(i)->m_TokenKind == tkInterfaceExplicit)
+            else if (pParChildren->Item(i)->m_TokenKind == tkInterfaceExplicit)
             {
-                TokensArrayF* pEICh = &children->Item(i)->m_Children;
+                TokensArrayF* pEICh = &pParChildren->Item(i)->m_Children;
                 if (pEICh)
                 {
                     for (size_t ie=0; ie<pEICh->GetCount(); ie++)
@@ -2264,38 +2359,75 @@ void ParserF::FindUseAssociatedTokens(bool onlyPublicNames, cbEditor* ed, const 
         }
     }
 
-    if (pModuleChildren && (children != pModuleChildren))
-    {
-        for (size_t i=0; i<pModuleChildren->GetCount(); i++)
-        {
-            if (pModuleChildren->Item(i)->m_TokenKind & tokenKindMask)
-            {
-                if ((partialMatch && pModuleChildren->Item(i)->m_Name.StartsWith(searchLw)) ||
-                    (!partialMatch && pModuleChildren->Item(i)->m_Name.IsSameAs(searchLw)))
-                {
-                    AddUniqueResult(result, pModuleChildren->Item(i));
-                }
-            }
-            else if (pModuleChildren->Item(i)->m_TokenKind == tkInterfaceExplicit)
-            {
-                TokensArrayF* pEICh = &pModuleChildren->Item(i)->m_Children;
-                if (pEICh)
-                {
-                    for (size_t ie=0; ie<pEICh->GetCount(); ie++)
-                    {
-                        if (pEICh->Item(ie)->m_TokenKind & tokenKindMask)
-                        {
-                            if ((partialMatch && pEICh->Item(ie)->m_Name.StartsWith(searchLw)) ||
-                                (!partialMatch && pEICh->Item(ie)->m_Name.IsSameAs(searchLw)))
-                            {
-                                AddUniqueResult(result, pEICh->Item(ie));
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
+//    if (found)
+//    {
+//        for (size_t i=0; i<children->GetCount(); i++)
+//        {
+//            if (children->Item(i)->m_TokenKind == tkUse)
+//            {
+//                useTokens.Add(children->Item(i));
+//            }
+//            else if(children->Item(i)->m_TokenKind & tokenKindMask)
+//            {
+//                if ((partialMatch && children->Item(i)->m_Name.StartsWith(searchLw)) ||
+//                    (!partialMatch && children->Item(i)->m_Name.IsSameAs(searchLw)))
+//                {
+//                    AddUniqueResult(result, children->Item(i));
+//                }
+//            }
+//            else if (children->Item(i)->m_TokenKind == tkInterfaceExplicit)
+//            {
+//                TokensArrayF* pEICh = &children->Item(i)->m_Children;
+//                if (pEICh)
+//                {
+//                    for (size_t ie=0; ie<pEICh->GetCount(); ie++)
+//                    {
+//                        if (pEICh->Item(ie)->m_TokenKind & tokenKindMask)
+//                        {
+//                            if ((partialMatch && pEICh->Item(ie)->m_Name.StartsWith(searchLw)) ||
+//                                (!partialMatch && pEICh->Item(ie)->m_Name.IsSameAs(searchLw)))
+//                            {
+//                                AddUniqueResult(result, pEICh->Item(ie));
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//    }
+
+//    if (pModuleChildren && (children != pModuleChildren))
+//    {
+//        for (size_t i=0; i<pModuleChildren->GetCount(); i++)
+//        {
+//            if (pModuleChildren->Item(i)->m_TokenKind & tokenKindMask)
+//            {
+//                if ((partialMatch && pModuleChildren->Item(i)->m_Name.StartsWith(searchLw)) ||
+//                    (!partialMatch && pModuleChildren->Item(i)->m_Name.IsSameAs(searchLw)))
+//                {
+//                    AddUniqueResult(result, pModuleChildren->Item(i));
+//                }
+//            }
+//            else if (pModuleChildren->Item(i)->m_TokenKind == tkInterfaceExplicit)
+//            {
+//                TokensArrayF* pEICh = &pModuleChildren->Item(i)->m_Children;
+//                if (pEICh)
+//                {
+//                    for (size_t ie=0; ie<pEICh->GetCount(); ie++)
+//                    {
+//                        if (pEICh->Item(ie)->m_TokenKind & tokenKindMask)
+//                        {
+//                            if ((partialMatch && pEICh->Item(ie)->m_Name.StartsWith(searchLw)) ||
+//                                (!partialMatch && pEICh->Item(ie)->m_Name.IsSameAs(searchLw)))
+//                            {
+//                                AddUniqueResult(result, pEICh->Item(ie));
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//    }
 
     recursiveDeep = 0;
     m_UseRenameArrays = false;
@@ -2307,6 +2439,9 @@ void ParserF::FindUseAssociatedTokens(bool onlyPublicNames, cbEditor* ed, const 
         BoolArray2D resCanBeSeen2D;
         TokensArrayFlatClass renTokCl;
         TokensArrayFlat* renamedTokens = renTokCl.GetTokens();
+
+Manager::Get()->GetLogManager()->DebugLog(_T("Ieskosim use assoc tokenu. useTokens.Item(i)=%s") + useTokens.Item(i)->m_Name);
+
         FindUseAssociatedTokens2(useTokens.Item(i), searchLw, resChildrenIdx, resCanBeSeen2D, tokenKindMask, partialMatch,
                                   changeDisplayName, onlyPublicNames, *renamedTokens, useWithRenameTok);
 
@@ -2701,7 +2836,9 @@ void ParserF::FindUseAssociatedTokens2(TokenF* useToken, const wxString &searchL
     if (recursiveDeep > 20)
         return;  // deep limit was reached
 
-    if (!useToken || useToken->m_TokenKind != tkUse)
+    if (!useToken)
+        return;
+    if (useToken->m_TokenKind != tkUse)
         return;
 
     int noChildrenOf = tkInterface | tkFunction | tkSubroutine | tkType;
@@ -3221,4 +3358,56 @@ void ParserF::FindMatchTokensInModuleAndUse2(const wxString& modName, const wxSt
         m_ChildrenIdxVisitedRen.push_back(childrenIdx);
     }
 }
+
+
+void ParserF::ChangeAssociatedName(wxString& line, TokenFlat* token)
+{
+
+Manager::Get()->GetLogManager()->DebugLog(_T("ChangeAssociatedName: Pradzioje"));
+
+    if (!token)
+        return;
+    if (token->m_TokenKind != tkAssociateConstruct)
+        return;
+
+    wxString args = token->m_Args.Lower();
+    std::map<wxString,wxString> assocMap;
+
+Manager::Get()->GetLogManager()->DebugLog(_T("ChangeAssociatedName: args=") + args);
+
+    ParserThreadF::SplitAssociateConstruct(args, assocMap);
+
+    //change names in the line
+    wxString lineLw = line.Lower();
+    line.Empty();
+    const wxString delim = _T(" ()[]{}&;,*./+-><=%\t\r\n");
+    size_t idx1 = 0;
+    wxString block;
+    bool wasDeli = false;
+    for(size_t i=0; i<lineLw.Len(); i++)
+    {
+        if (!wasDeli && delim.Find(lineLw.GetChar(i)) != wxNOT_FOUND)
+        {
+            block = lineLw.Mid(idx1,i-idx1);
+            wasDeli = true;
+            idx1 = i;
+            std::map<wxString,wxString>::iterator it = assocMap.find(block);
+            if (it != assocMap.end())
+                line << it->second;
+            else
+                line << block;
+        }
+        else if (wasDeli && delim.Find(lineLw.GetChar(i)) == wxNOT_FOUND)
+        {
+            line << lineLw.Mid(idx1,i-idx1);
+            wasDeli = false;
+            idx1 = i;
+        }
+    }
+    line << lineLw.Mid(idx1);
+
+Manager::Get()->GetLogManager()->DebugLog(_T("ChangeAssociatedName: line gale=") + line);
+
+}
+
 

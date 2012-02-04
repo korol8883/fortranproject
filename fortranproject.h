@@ -52,7 +52,6 @@ class FortranProject : public cbCodeCompletionPlugin
         void MakeCompleteCode();
 
 
-
         void EditorEventHook(cbEditor* editor, wxScintillaEvent& event);
 
         virtual int GetConfigurationGroup() const { return cgEditor; }
@@ -96,6 +95,8 @@ class FortranProject : public cbCodeCompletionPlugin
         void OnDebuggerFinished(CodeBlocksEvent& event);
         bool m_IsDebugging;
 
+        void OnGenerateMakefile(wxCommandEvent& event);
+
         bool m_InitDone;
 
         NativeParserF* m_pNativeParser;
@@ -108,6 +109,8 @@ class FortranProject : public cbCodeCompletionPlugin
         wxMenuItem*                        m_EditMenuSeparator;
         wxMenu*                            m_SearchMenu;
         wxMenu*                            m_ViewMenu;
+        wxMenu*                            m_ToolsMenu;
+        wxMenuItem*                        m_FortranToolsMenu;
 
         wxToolBar*                         m_pToolbar;
 

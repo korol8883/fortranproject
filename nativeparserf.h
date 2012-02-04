@@ -59,6 +59,7 @@ class NativeParserF : public wxEvtHandler
         void RereadOptions();
         JumpTracker* GetJumpTracker();
         FortranProject* GetFortranProject();
+        void GenMakefile();
 
     protected:
     private:

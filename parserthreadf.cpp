@@ -43,7 +43,7 @@ ParserThreadF::~ParserThreadF()
 
 void ParserThreadF::InitSecondEndPart()
 {
-    m_EndSecPart.insert(_T("associate"));
+    //m_EndSecPart.insert(_T("associate"));
     m_EndSecPart.insert(_T("do"));
     m_EndSecPart.insert(_T("enum"));
     m_EndSecPart.insert(_T("file"));
@@ -51,7 +51,7 @@ void ParserThreadF::InitSecondEndPart()
     m_EndSecPart.insert(_T("if"));
     m_EndSecPart.insert(_T("select"));
     m_EndSecPart.insert(_T("where"));
-    m_EndSecPart.insert(_T("block"));
+    //m_EndSecPart.insert(_T("block"));
     m_EndSecPart.insert(_T("critical"));
 }
 
@@ -99,13 +99,20 @@ bool ParserThreadF::Parse()
         {
             HandleType();
         }
-        else if (tok_low.Matches(_T("block")) && nex_low.Matches(_T("data")))
+        else if (tok_low.Matches(_T("block")))
         {
-            token = m_Tokens.GetToken();
-            tok_low = token.Lower();
-            next = m_Tokens.PeekToken();
-            nex_low = next.Lower();
-            HandleBlockData();
+            if (nex_low.Matches(_T("data")))
+            {
+                token = m_Tokens.GetToken();
+                tok_low = token.Lower();
+                next = m_Tokens.PeekToken();
+                nex_low = next.Lower();
+                HandleBlockData();
+            }
+            else
+            {
+                HandleBlockConstruct();
+            }
         }
         else if (tok_low.Matches(_T("blockdata")))
         {
@@ -118,6 +125,10 @@ bool ParserThreadF::Parse()
         else if (tok_low.Matches(_T("interface")))
         {
         	HandleInterface();
+        }
+        else if (tok_low.Matches(_T("associate")))
+        {
+        	HandleAssociateConstruct();
         }
         else if (tok_low.Matches(_T("end")))
         {
@@ -284,6 +295,7 @@ void ParserThreadF::HandleUse()
     }
 }
 
+
 UseTokenF* ParserThreadF::DoAddUseToken(const wxString& modName)
 {
     UseTokenF* newToken = new UseTokenF();
@@ -305,6 +317,7 @@ UseTokenF* ParserThreadF::DoAddUseToken(const wxString& modName)
 
 	return newToken;
 }
+
 
 void ParserThreadF::HandleModule()
 {
@@ -401,7 +414,8 @@ void ParserThreadF::HandleModule()
         {
             bool needDefault=true;
             TokensArrayF tokTmpArr;
-            CheckParseOneDeclaration(token, tok_low, next, nex_low, needDefault, tokTmpArr);
+            bool functionOnLine;
+            CheckParseOneDeclaration(token, tok_low, next, nex_low, needDefault, tokTmpArr, functionOnLine);
             if (needDefault)
             {
                 for (size_t i=0; i<tokTmpArr.Count(); i++)
@@ -569,8 +583,9 @@ void ParserThreadF::HandleType(bool& needDefault, TokenF* &newToken)
 }
 
 void ParserThreadF::CheckParseOneDeclaration(wxString& token, wxString& tok_low, wxString& next, wxString& next_low,
-                                             bool& needDefault, TokensArrayF& newTokenArr)
+                                             bool& needDefault, TokensArrayF& newTokenArr, bool& functionOnLine)
 {
+    functionOnLine = false;
     if ( tok_low.IsSameAs(_T("integer")) || tok_low.IsSameAs(_T("real"))
             || tok_low.IsSameAs(_T("doubleprecision")) || tok_low.IsSameAs(_T("character"))
             || tok_low.IsSameAs(_T("complex")) || tok_low.IsSameAs(_T("logical"))
@@ -592,6 +607,7 @@ void ParserThreadF::CheckParseOneDeclaration(wxString& token, wxString& tok_low,
             else
             {
                 // this line is function declaration line
+                functionOnLine = true;
             }
         }
 }
@@ -618,7 +634,7 @@ void ParserThreadF::ParseDeclarations(bool breakAtEnd, bool breakAtContains)
         {
         	HandleInterface(taDefKind);
         }
-        else if (IsEnd(m_LastTokenName, next.Lower()) && breakAtEnd)
+        else if (breakAtEnd && IsEnd(m_LastTokenName, next.Lower()))
         {
             m_Tokens.SkipToOneOfChars(";", true);
             break;
@@ -649,6 +665,10 @@ void ParserThreadF::ParseDeclarations(bool breakAtEnd, bool breakAtContains)
             {
                 taDefKind = taPublic;
             }
+        }
+        else if (m_LastTokenName.IsSameAs(_T("block")) && !next.Lower().IsSameAs(_T("data")))
+        {
+            HandleBlockConstruct();
         }
 
         bool found = ParseDeclarationsFirstPart(token, next);
@@ -689,6 +709,11 @@ bool ParserThreadF::ParseDeclarationsFirstPart(wxString& token, wxString& next)
         {
             token.Append(next);
             m_Tokens.GetToken();
+        }
+        else if (next_low.StartsWith(_T("*")))
+        {
+            token.Append(m_Tokens.GetToken());
+            token.Append(m_Tokens.GetTokenSameFortranLine());
         }
         found = true;
     }
@@ -901,6 +926,47 @@ void ParserThreadF::HandleFunction(TokenKindF kind, TokenAccessKind taKind)
     m_pLastParent = old_parent;
 }
 
+
+void ParserThreadF::HandleBlockConstruct()
+{
+    unsigned int defStartLine = m_Tokens.GetLineNumber();
+    TokenF* old_parent = m_pLastParent;
+    m_pLastParent = DoAddToken(tkBlockConstruct, wxEmptyString, wxEmptyString, defStartLine);
+
+    GoThroughBody();
+    m_pLastParent->AddLineEnd(m_Tokens.GetLineNumber());
+    m_pLastParent = old_parent;
+}
+
+
+void ParserThreadF::HandleAssociateConstruct()
+{
+    TokenF* old_parent = m_pLastParent;
+    wxString args = m_Tokens.PeekTokenSameFortranLine();
+
+    if (args.IsEmpty() || !args(0,1).Matches(_T("(")))
+        args = _T("()");
+    else
+        args = m_Tokens.GetTokenSameFortranLine();
+    m_pLastParent = DoAddToken(tkAssociateConstruct, wxEmptyString, args, wxEmptyString);
+
+//    std::map<wxString,wxString> assocMap;
+//    SplitAssociateConstruct(args, assocMap);
+//
+//    std::map<wxString,wxString>::iterator it;
+//    for ( it=assocMap.begin() ; it != assocMap.end(); ++it )
+//    {
+//        wxString sec = _T(" => ");
+//        sec << (*it).second;
+//        TokenF* tok = DoAddToken(tkVariable, (*it).first, sec, _T("AssociateContruct"));
+//    }
+
+    GoThroughBody();
+    m_pLastParent->AddLineEnd(m_Tokens.GetLineNumber());
+    m_pLastParent = old_parent;
+}
+
+
 void ParserThreadF::HandleInterface(TokenAccessKind taKind)
 {
     TokenF* old_parent = m_pLastParent;
@@ -1011,11 +1077,12 @@ void ParserThreadF::HandleInterface(TokenAccessKind taKind)
 
 void ParserThreadF::HandleBlockData()
 {
+    TokenF* old_parent = m_pLastParent;
     wxString token = m_Tokens.GetTokenSameLine();
     if (token.IsEmpty())
-        DoAddToken(tkBlockData, _T("BD_unnamed"));
+        m_pLastParent = DoAddToken(tkBlockData, _T("BD_unnamed"));
     else
-        DoAddToken(tkBlockData, token);
+        m_pLastParent = DoAddToken(tkBlockData, token);
 
     while (1)
     {
@@ -1024,7 +1091,9 @@ void ParserThreadF::HandleBlockData()
             break;
         wxString tok_low = token.Lower();
 
-        if (tok_low.Matches(_T("end")))
+        wxString next = m_Tokens.PeekToken();
+        wxString nex_low = next.Lower();
+        if (IsEnd(tok_low, nex_low))
         {
             m_Tokens.SkipToOneOfChars(";", true);
             break;
@@ -1034,6 +1103,8 @@ void ParserThreadF::HandleBlockData()
             HandleInclude();
         }
     }
+    m_pLastParent->AddLineEnd(m_Tokens.GetLineNumber());
+    m_pLastParent = old_parent;
 }
 
 void ParserThreadF::HandleInclude()
@@ -1148,6 +1219,39 @@ void ParserThreadF::GoThroughBody()
         else if (tok_low.Matches(_T("procedure")) && m_pLastParent->m_TokenKind == tkInterface)
         {
             HandleProcedureList();
+        }
+        else if (tok_low.Matches(_T("block")))
+        {
+            if (nex_low.Matches(_T("data")))
+            {
+                token = m_Tokens.GetToken();
+                tok_low = token.Lower();
+                next = m_Tokens.PeekToken();
+                nex_low = next.Lower();
+                HandleBlockData();
+            }
+            else
+            {
+                HandleBlockConstruct();
+            }
+        }
+        else if (tok_low.Matches(_T("blockdata")))
+        {
+            HandleBlockData();
+        }
+        else if (tok_low.Matches(_T("associate")))
+        {
+        	HandleAssociateConstruct();
+        }
+        else
+        {
+            bool needDefault = true;
+            TokensArrayF tokTmpArr;
+            bool functionOnLine;
+            CheckParseOneDeclaration(token, tok_low, next, nex_low, needDefault, tokTmpArr, functionOnLine);
+
+            if (!functionOnLine)
+                m_Tokens.SkipToOneOfChars(";", true);
         }
     }
 }
@@ -1296,7 +1400,10 @@ bool ParserThreadF::IsEnd(wxString tok_low, wxString nex_low)
           tok_low.Matches(_T("endmodule")) ||
           tok_low.Matches(_T("endtype")) ||
           tok_low.Matches(_T("endinterface")) ||
-          tok_low.Matches(_T("endprogram"))
+          tok_low.Matches(_T("endprogram")) ||
+          tok_low.Matches(_T("endblock")) ||
+          tok_low.Matches(_T("endblockdata")) ||
+          tok_low.Matches(_T("endassociate"))
            )
     {
         isend = true;
@@ -1322,5 +1429,47 @@ void ParserThreadF::ChangeTokenAccess(ModuleTokenF* modToken, TokenF* token)
     {
         if (token->m_TokenAccess != taProtected)
             token->m_TokenAccess = taPublic;
+    }
+}
+
+
+void ParserThreadF::SplitAssociateConstruct(const wxString& argLine, std::map<wxString,wxString>& assocMap)
+{
+    wxString args = argLine;
+    int pos = args.Find(')',true);
+    if (pos != wxNOT_FOUND)
+        args.Remove(pos);
+    args = args.AfterFirst('(');
+
+    int cnt = 0;
+    int sta = 0;
+    for(size_t i=0; i<args.Len(); i++)
+    {
+        if (args.GetChar(i) == '(')
+            cnt++;
+        else if (args.GetChar(i) == ')')
+            cnt--;
+
+        if ( (args.GetChar(i) == ',' && cnt == 0) ||
+             (i == args.Len()-1) )
+        {
+            wxString block;
+            if (args.GetChar(i) == ',')
+                block = args.Mid(sta, i-sta);
+            else
+                block = args.Mid(sta, i-sta+1);
+            sta = i + 1;
+            int sind = block.Find(_T("=>"));
+            if (sind != wxNOT_FOUND)
+            {
+                wxString assocName = block.Mid(0,sind).Trim(true).Trim(false);
+                wxString sourceExpr = block.Mid(sind+2).Trim(true).Trim(false);
+                assocMap.insert(std::pair<wxString,wxString>(assocName, sourceExpr));
+
+//Manager::Get()->GetLogManager()->DebugLog(_T("SplitAssociateConstruct: i mapa assocName=") + assocName);
+//Manager::Get()->GetLogManager()->DebugLog(_T("SplitAssociateConstruct: i mapa sourceExpr=") + sourceExpr);
+
+            }
+        }
     }
 }

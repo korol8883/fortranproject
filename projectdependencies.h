@@ -37,8 +37,11 @@ class ProjectDependencies
         unsigned short int GetFileWeight(wxString& fileName);
         void EnsureUpToDateObjs();
         bool HasInfiniteDependences();
+        size_t GetSizeFiles();
         static void RemoveModFiles(cbProject* pr, ProjectBuildTarget* bTarget, NativeParserF* nativeParser);
         static void RemoveModFilesWS(NativeParserF* nativeParser);
+        void GetUseFilesFile(const wxString& filename, wxArrayString& use);
+        void GetIncludeFilesFile(const wxString& filename, wxArrayString& includesFile);
 
     protected:
     private:

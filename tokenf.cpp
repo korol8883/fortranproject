@@ -70,6 +70,8 @@ wxString TokenF::GetTokenKindString()
         case tkInterfaceExplicit: return _("explicit interface");
         case tkProcedure: return _("procedure");
         case tkAccessList: return _("access list");
+        case tkBlockConstruct: return _("block construct");
+        case tkAssociateConstruct: return _("associate construct");
 	}
 	return _("other");
 }
@@ -96,6 +98,13 @@ TokensArrayClass::~TokensArrayClass()
 }
 
 //--------------------------------------------------------------------
+TokenFlat::TokenFlat():
+    TokenF()
+{
+    //ctor
+}
+
+
 
 TokenFlat::TokenFlat(const TokenF* tok)
 {

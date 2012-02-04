@@ -24,6 +24,7 @@ class ParserThreadF
         virtual ~ParserThreadF();
         bool Parse();
         void ParseDeclarations(bool breakAtEnd=false, bool breakAtContains=false);
+        static void SplitAssociateConstruct(const wxString& argLine, std::map<wxString,wxString>& assocMap);
     protected:
     private:
         TokenF* DoAddToken(TokenKindF kind, const wxString& name, const wxString& args=wxEmptyString, const wxString& typeDefinition=wxEmptyString);
@@ -49,6 +50,8 @@ class ParserThreadF
 		void HandleType(bool& needDefault, TokenF* &newToken);
 		void HandleType();
 		void HandleUse();
+		void HandleBlockConstruct();
+		void HandleAssociateConstruct();
 		void HandleInterface(TokenAccessKind taKind=taPublic);
 		void HandleBlockData();
 		void HandleInclude();
@@ -59,7 +62,8 @@ class ParserThreadF
 		bool IsEnd(wxString tok_low, wxString nex_low);
 		bool ParseDeclarationsFirstPart(wxString& token, wxString& next);
 		void ParseDeclarationsSecondPart(wxString& token, bool& needDefault, TokensArrayF& newTokenArr);
-		void CheckParseOneDeclaration(wxString& token, wxString& tok_low, wxString& next, wxString& next_low, bool& needDefault, TokensArrayF& newTokenArr);
+		void CheckParseOneDeclaration(wxString& token, wxString& tok_low, wxString& next, wxString& next_low,
+                                bool& needDefault, TokensArrayF& newTokenArr, bool& functionOnLine);
 		void ParseTypeBoundProcedures();
 		void MakeArrayStringLower(wxArrayString &arr, wxArrayString &arrLw);
 		void ChangeTokenAccess(ModuleTokenF* modToken, TokenF* token);

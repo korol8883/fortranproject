@@ -17,6 +17,7 @@
 #include "workspacebrowserf.h"
 #include "workspacebrowserbuilder.h"
 #include "parserf.h"
+#include "makefilegen.h"
 #include <projectloader_hooks.h>
 #include <wx/regex.h>
 #include <wx/log.h> // for wxSafeShowMessage()
@@ -28,6 +29,8 @@
 
 #include <wx/wfstream.h>
 #include <cctype>
+
+#include <wx/stopwatch.h>
 
 NativeParserF::NativeParserF(FortranProject* forproj)
     : m_pWorkspaceBrowser(0),
@@ -207,6 +210,9 @@ void NativeParserF::ReparseFile(const wxString& filename)
 
 void NativeParserF::ReparseProject(cbProject* project)
 {
+
+wxStopWatch sw;
+
     if (project && !Manager::IsAppShuttingDown())
     {
         for (FilesList::iterator it = project->GetFilesList().begin(); it != project->GetFilesList().end(); ++it)
@@ -215,6 +221,10 @@ void NativeParserF::ReparseProject(cbProject* project)
             ReparseFile(pf->file.GetFullPath());
         }
     }
+
+Manager::Get()->GetLogManager()->DebugLog(F(_T("NativeParserF::ReparseProject: Reparse poject took %d ms."), sw.Time()));
+
+
 }
 
 void NativeParserF::ForceReparseWorkspace()
@@ -783,4 +793,27 @@ JumpTracker* NativeParserF::GetJumpTracker()
 FortranProject* NativeParserF::GetFortranProject()
 {
     return m_pFortranProject;
+}
+
+void NativeParserF::GenMakefile()
+{
+    cbProject* project = Manager::Get()->GetProjectManager()->GetActiveProject();
+    if (!project)
+        return;
+
+    UpdateProjectFilesDependency(project);
+
+    wxString fn = project->GetFilename();
+    WSDependencyMap::iterator pos;
+    pos = m_WSDependency.find(fn);
+    if (pos == m_WSDependency.end())
+        return;
+
+    if (pos->second->GetSizeFiles() > 0)
+        MakefileGen::GenerateMakefile(project, pos->second, this);
+    else
+    {
+        Manager::Get()->GetLogManager()->Log(_T("Active project doesn't have Fortran files."));
+        cbMessageBox(_("Active project doesn't have Fortran files.\nMakefile is not generated."), _("Information"), wxICON_INFORMATION);
+    }
 }

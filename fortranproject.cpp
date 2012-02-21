@@ -604,6 +604,43 @@ void FortranProject::OnGotoDeclaration(wxCommandEvent& event)
 } // end of OnGotoDeclaration
 
 
+void FortranProject::CodeCompletePreprocessor()
+{
+    if (!IsAttached() || !m_InitDone)
+        return;
+
+    EditorManager* edMan = Manager::Get()->GetEditorManager();
+    cbEditor* ed = edMan->GetBuiltinActiveEditor();
+    if (!ed)
+        return;
+
+    cbStyledTextCtrl* control = ed->GetControl();
+    const int curPos = control->GetCurrentPos();
+    const int start = control->WordStartPosition(curPos, true);
+    const int end = control->WordEndPosition(curPos, true);
+
+    wxArrayString tokens;
+    tokens.Add(_T("include"));
+    tokens.Add(_T("if"));
+    tokens.Add(_T("ifdef"));
+    tokens.Add(_T("ifndef"));
+    tokens.Add(_T("elif"));
+    tokens.Add(_T("elifdef"));
+    tokens.Add(_T("elifndef"));
+    tokens.Add(_T("else"));
+    tokens.Add(_T("endif"));
+    tokens.Add(_T("define"));
+    tokens.Add(_T("undef"));
+    tokens.Add(_T("pragma"));
+    tokens.Add(_T("error"));
+    tokens.Add(_T("line"));
+    tokens.Sort();
+    ed->GetControl()->ClearRegisteredImages();
+    ed->GetControl()->AutoCompSetIgnoreCase(false);
+    ed->GetControl()->AutoCompShow(end - start, GetStringFromArray(tokens, _T(" ")));
+}
+
+
 void FortranProject::DoCodeComplete()
 {
     EditorManager* edMan = Manager::Get()->GetEditorManager();
@@ -611,7 +648,20 @@ void FortranProject::DoCodeComplete()
     if (!ed)
         return;
 
-    int style = ed->GetControl()->GetStyleAt(ed->GetControl()->GetCurrentPos());
+    cbStyledTextCtrl* control = ed->GetControl();
+    const int pos = control->GetCurrentPos();
+    const int lineIndentPos = control->GetLineIndentPosition(control->GetCurrentLine());
+    const wxChar lineFirstChar = control->GetCharAt(lineIndentPos);
+
+    if (lineFirstChar == _T('#'))
+    {
+        const int end = control->WordEndPosition(lineIndentPos + 1, true);
+        if (end >= pos)
+            CodeCompletePreprocessor();
+        return;
+    }
+
+    int style = control->GetStyleAt(control->GetCurrentPos());
     if (style != wxSCI_F_DEFAULT && style != wxSCI_F_WORD && style != wxSCI_F_WORD2 && style != wxSCI_F_WORD3
         && style != wxSCI_F_OPERATOR && style != wxSCI_F_IDENTIFIER && style != wxSCI_F_OPERATOR2)
         return;
@@ -1111,6 +1161,8 @@ void FortranProject::ShowCallTip()
         callTips.Add(s);
     }
 
+    int nCommasMax = 0;
+    unsigned int nCommasMaxIdx = 0;
     std::set< wxString, std::less<wxString> > unique_tips; // check against this before inserting a new tip in the list
     wxString definition;
     for (unsigned int i = 0; i < callTips.GetCount(); ++i)
@@ -1122,8 +1174,12 @@ void FortranProject::ShowCallTip()
         // allow only unique, non-empty callTips with equal or more commas than what the user has already typed
         if (unique_tips.find(callTips[i]) == unique_tips.end())  // unique
         {
+            int nCommas = 0;
+            if (!callTips[i].IsEmpty())
+                nCommas = m_pNativeParser->CountCommas(callTips[i], 1, false);
+
             if (!callTips[i].IsEmpty() && // non-empty
-            commas <= m_pNativeParser->CountCommas(callTips[i], 1, false) && // commas satisfied
+            commas <= nCommas && // commas satisfied
             empOk)
             {
                 unique_tips.insert(callTips[i]);
@@ -1134,12 +1190,37 @@ void FortranProject::ShowCallTip()
 
                 token = result->Item(i);
             }
+            if (nCommas > nCommasMax)
+            {
+                nCommasMaxIdx = i;
+                nCommasMax = nCommas;
+            }
         }
         else
         {
             isUnique = false;
         }
     }
+
+    if (count == 0 && callTips.GetCount() > 0)
+    {
+        if (!callTips[nCommasMaxIdx].IsEmpty())
+        {
+            int nCommas = m_pNativeParser->CountCommas(callTips[nCommasMaxIdx], 1, false);
+            int commasDif = commas - nCommas;
+            if (commasDif > 0)
+            {
+                definition << callTips[nCommasMaxIdx];
+                for (int i=0; i< commasDif; i++)
+                {
+                    definition << _T(", *???*");
+                }
+                definition << _T(" ");
+                count++;
+            }
+        }
+    }
+
     // only highlight current argument if only one calltip (scintilla doesn't support multiple highlighting ranges in calltips)
     if (count == 1 && (!isAfterPercent || ( isAfterPercent && result->GetCount() >= 2 && (result->Item(0)->m_TokenKind == tkProcedure) )))
     {

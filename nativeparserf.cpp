@@ -599,11 +599,13 @@ void NativeParserF::GetCallTips(const wxString& name, bool onlyUseAssoc, bool on
         if (!ed)
             return;
         m_Parser.FindUseAssociatedTokens(onlyPublicNames, ed, name, false, *result, tokKind, false);
-        m_Parser.FindMatchTokensDeclared(name, *result, tokKind, false, tkInterface | tkModule); // take global procedures only
+        int noChildrenOf = tkInterface | tkModule | tkFunction | tkSubroutine | tkProgram;
+        m_Parser.FindMatchTokensDeclared(name, *result, tokKind, false, noChildrenOf, false, true); // take global procedures only
     }
     else
     {
-        m_Parser.FindMatchTokensDeclared(name, *result, tokKind, false, 0, onlyPublicNames);
+        int noChildrenOf = tkInterface | tkFunction | tkSubroutine | tkProgram;
+        m_Parser.FindMatchTokensDeclared(name, *result, tokKind, false, noChildrenOf, onlyPublicNames);
     }
     int resCount = result->GetCount();
 
@@ -814,6 +816,6 @@ void NativeParserF::GenMakefile()
     else
     {
         Manager::Get()->GetLogManager()->Log(_T("Active project doesn't have Fortran files."));
-        cbMessageBox(_("Active project doesn't have Fortran files.\nMakefile is not generated."), _("Information"), wxICON_INFORMATION);
+        cbMessageBox(_("Active project doesn't have Fortran files.\nMakefile was not generated."), _("Information"), wxICON_INFORMATION);
     }
 }

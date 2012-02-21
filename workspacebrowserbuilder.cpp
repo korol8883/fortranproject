@@ -254,7 +254,6 @@ void WorkspaceBrowserBuilder::DeleteTopRootChildren()
 bool WorkspaceBrowserBuilder::HasChildren(TokenF* tokenParent, int tokenKindMask)
 {
     bool has = false;
-
     for (size_t j=0; j < tokenParent->m_Children.GetCount(); ++j)
     {
         TokenF* tok1 = tokenParent->m_Children.Item(j);
@@ -411,6 +410,14 @@ bool WorkspaceBrowserBuilder::AddChildrenNodes(wxTreeCtrl* tree, wxTreeItemId pa
 
     int childKM = tkFunction | tkProgram | tkSubroutine | tkPreprocessor | tkInterface | tkInterfaceExplicit | tkBlockData |
                     tkType | tkVariable | tkProcedure | tkAccessList;
+
+    if (!m_Options.showLocalVariables && (parToken->m_TokenKind == tkSubroutine || parToken->m_TokenKind == tkFunction || parToken->m_TokenKind == tkProgram))
+    {
+        childKM = childKM ^ tkVariable;
+        if (tokenKindMask & tkVariable)
+            tokenKindMask = tokenKindMask ^ tkVariable;
+    }
+
     for (size_t i=0; i< pTokens->GetCount(); ++i)
     {
         TokenF* token = pTokens->Item(i);

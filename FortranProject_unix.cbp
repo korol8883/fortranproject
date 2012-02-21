@@ -50,6 +50,8 @@
 		<Unit filename="fortranproject.h" />
 		<Unit filename="fpoptionsdlg.cpp" />
 		<Unit filename="fpoptionsdlg.h" />
+		<Unit filename="includedb.cpp" />
+		<Unit filename="includedb.h" />
 		<Unit filename="jumptracker.cpp" />
 		<Unit filename="jumptracker.h" />
 		<Unit filename="keywordsparserf.cpp" />

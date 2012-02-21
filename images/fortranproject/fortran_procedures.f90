@@ -2851,7 +2851,21 @@ end function
 function norm2 (...)
 end function
 
-subroutine execute_command_line(...)
+subroutine execute_command_line(COMMAND [, WAIT, EXITSTAT, CMDSTAT, CMDMSG ]) 
+    ! Runs a shell command, synchronously or asynchronously.
+    ! If WAIT is present and has the value false, the execution of the command is asynchronous 
+    ! if the system supports it; otherwise, the command is executed synchronously. 
+    ! The three last arguments allow the user to get status information. 
+    ! After synchronous execution, EXITSTAT contains the integer exit code of the command, as returned by system. 
+    ! CMDSTAT is set to zero if the command line was executed (whatever its exit status was). 
+    ! CMDMSG is assigned an error message if an error has occurred.
+    ! Standard:
+    !    Fortran 2008 and later
+    character(len=*), intent(in) :: COMMAND ! command line to be executed.
+    logical, intent(in), optional :: WAIT ! Do perform execution synchronously?
+    integer, intent(inout), optional :: EXITSTAT ! Exit status if synchronous execution is performed.
+    integer, intent(out), optional :: CMDSTAT 
+    character(len=*), intent(inout), optional :: CMDMSG
 end subroutine
 
 function findloc (...)
@@ -2877,4 +2891,10 @@ end subroutine
 
 subroutine atomic_ref (...)
 end subroutine
+
+function rank(A)
+    ! Determine the rank of a data object.
+    integer :: rank
+    type(any_type) :: A ! data object
+end function
 

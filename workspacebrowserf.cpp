@@ -79,6 +79,7 @@ WorkspaceBrowserF::WorkspaceBrowserF(wxWindow* parent, NativeParserF* np, Parser
 
     m_BrowserOptions.visibleBottomTree = cfg->ReadBool(_T("/visible_bottom_tree"), true);
     m_BrowserOptions.sortAlphabetically = cfg->ReadBool(_T("/browser_sort_alphabetically"), true);
+    m_BrowserOptions.showLocalVariables = cfg->ReadBool(_T("/browser_show_local_variables"), true);
 
 	wxXmlResource::Get()->LoadPanel(this, parent, _T("pnlWBF"));
     m_Search = XRCCTRL(*this, "cmbSearch", wxComboBox);
@@ -534,6 +535,7 @@ void WorkspaceBrowserF::RereadOptions()
     {
         m_BrowserOptions.visibleBottomTree = cfg->ReadBool(_("/visible_bottom_tree"), true);
         m_BrowserOptions.sortAlphabetically = cfg->ReadBool(_("/browser_sort_alphabetically"), true);
+        m_BrowserOptions.showLocalVariables = cfg->ReadBool(_T("/browser_show_local_variables"), true);
         UpdateView();
     }
 }

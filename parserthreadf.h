@@ -11,6 +11,7 @@
 #include "tokenizerf.h"
 #include "usetokenf.h"
 #include "moduletokenf.h"
+#include "includedb.h"
 #include <set>
 
 
@@ -20,7 +21,8 @@ class ParserThreadF
         ParserThreadF(const wxString& bufferOrFilename,
 							 TokensArrayF* tokens,
 							 FortranSourceForm fsForm,
-							 bool isBuffer=false);
+							 bool isBuffer=false,
+							 IncludeDB* includeDB=NULL);
         virtual ~ParserThreadF();
         bool Parse();
         void ParseDeclarations(bool breakAtEnd=false, bool breakAtContains=false);
@@ -36,6 +38,8 @@ class ParserThreadF
 		TokensArrayF* m_pTokens;
 		TokenF* m_pLastParent;
 		wxString m_Filename;
+		wxArrayString m_IncludeList;
+		IncludeDB* m_pIncludeDB;
 
 		wxString m_LastTokenName;
 
@@ -63,7 +67,7 @@ class ParserThreadF
 		bool ParseDeclarationsFirstPart(wxString& token, wxString& next);
 		void ParseDeclarationsSecondPart(wxString& token, bool& needDefault, TokensArrayF& newTokenArr);
 		void CheckParseOneDeclaration(wxString& token, wxString& tok_low, wxString& next, wxString& next_low,
-                                bool& needDefault, TokensArrayF& newTokenArr, bool& functionOnLine);
+                                bool& needDefault, TokensArrayF& newTokenArr);
 		void ParseTypeBoundProcedures();
 		void MakeArrayStringLower(wxArrayString &arr, wxArrayString &arrLw);
 		void ChangeTokenAccess(ModuleTokenF* modToken, TokenF* token);

@@ -81,6 +81,7 @@ class FortranProject : public cbCodeCompletionPlugin
 //        void OnEditorOpen(CodeBlocksEvent& event);
 //        void OnEditorClose(CodeBlocksEvent& event);
         void OnCodeCompleteTimer(wxTimerEvent& event);
+        void CodeCompletePreprocessor();
         void DoCodeComplete();
         void OnValueTooltip(CodeBlocksEvent& event);
         void WriteToLog(const wxString& text);

@@ -16,16 +16,17 @@
 #include "ccsmartfilter.h"
 #include <vector>
 
-#include <logmanager.h>
+//#include <logmanager.h>
 
 ParserF::ParserF()
 {
     m_pTokens = new TokensArrayF();
     m_Done = false;
 
-    recursiveDeep = 0;
+    m_RecursiveDeep = 0;
     m_UseRenameArrays = false;
     m_RenameDeep = 0;
+    m_IncludeDeep = 0;
 }
 
 ParserF::~ParserF()
@@ -38,7 +39,7 @@ ParserF::~ParserF()
 bool ParserF::Parse(const wxString& filename, FortranSourceForm fsForm)
 {
     wxCriticalSectionLocker locker(s_CritSect);
-    ParserThreadF* thread = new ParserThreadF(UnixFilename(filename),m_pTokens, fsForm);
+    ParserThreadF* thread = new ParserThreadF(UnixFilename(filename), m_pTokens, fsForm, false, &m_IncludeDB);
     bool res = thread->Parse();
     delete thread;
     return res;
@@ -89,6 +90,8 @@ bool ParserF::RemoveFile(const wxString& filename)
         else
             ++i;
     }
+    wxFileName fn(filename);
+    m_IncludeDB.RemoveFile(fn.GetFullName());
     m_Done = true;
 	return true;
 }
@@ -194,7 +197,8 @@ bool ParserF::FindMatchTokenInSameModule(const TokenFlat& procedureToken, const 
     return false;
 }
 
-size_t ParserF::FindMatchTokensDeclared(const wxString& search, TokensArrayFlat& result, int tokenKindMask, bool partialMatch, int noChildrenOf, bool onlyPublicNames)
+size_t ParserF::FindMatchTokensDeclared(const wxString& search, TokensArrayFlat& result, int tokenKindMask, bool partialMatch, int noChildrenOf,
+                                        bool onlyPublicNames, bool noIncludeFiles)
 {
     wxString searchLw = search.Lower();
 
@@ -204,7 +208,13 @@ size_t ParserF::FindMatchTokensDeclared(const wxString& search, TokensArrayFlat&
     {
         for (size_t i=0; i<m_pTokens->GetCount(); i++)
         {
-            if (m_pTokens->Item(i)->m_Children.GetCount() > 0)
+            if (noIncludeFiles)
+            {
+                wxFileName fn(m_pTokens->Item(i)->m_Filename);
+                if (m_IncludeDB.IsIncludeFile(fn.GetFullName()))
+                    continue;
+            }
+            if ( m_pTokens->Item(i)->m_Children.GetCount() > 0)
             {
                 FindMatchChildrenDeclared(m_pTokens->Item(i)->m_Children, searchLw, result, tokenKindMask, partialMatch, noChildrenOf, onlyPublicNames);
             }
@@ -214,7 +224,13 @@ size_t ParserF::FindMatchTokensDeclared(const wxString& search, TokensArrayFlat&
     {
         for (size_t i=0; i<m_pTokens->GetCount(); i++)
         {
-            if (m_pTokens->Item(i)->m_Name.IsSameAs(search) && (m_pTokens->Item(i)->m_TokenKind & tokenKindMask))
+            if (noIncludeFiles)
+            {
+                wxFileName fn(m_pTokens->Item(i)->m_Filename);
+                if (m_IncludeDB.IsIncludeFile(fn.GetFullName()))
+                    continue;
+            }
+            if ((m_pTokens->Item(i)->m_TokenKind & tokenKindMask) && m_pTokens->Item(i)->m_Name.IsSameAs(search))
             {
                 result.Add(new TokenFlat(m_pTokens->Item(i)));
             }
@@ -227,41 +243,36 @@ size_t ParserF::FindMatchTokensDeclared(const wxString& search, TokensArrayFlat&
     return result.GetCount();
 }
 
-void ParserF::FindMatchChildrenDeclared(TokensArrayF &children, wxString search, TokensArrayFlat& result, int tokenKindMask,
+void ParserF::FindMatchChildrenDeclared(TokensArrayF& children, wxString search, TokensArrayFlat& result, int tokenKindMask,
                                         bool partialMatch, int noChildrenOf, bool onlyPublicNames)
 {
-    if (partialMatch)
+    for (size_t i=0; i<children.GetCount(); i++)
     {
-        for (size_t i=0; i<children.GetCount(); i++)
+        if ((partialMatch && (children.Item(i)->m_TokenKind & tokenKindMask) && children.Item(i)->m_Name.StartsWith(search)) ||
+            (!partialMatch && (children.Item(i)->m_TokenKind & tokenKindMask) && children.Item(i)->m_Name.IsSameAs(search)))
         {
-            if (children.Item(i)->m_Name.StartsWith(search) && (children.Item(i)->m_TokenKind & tokenKindMask))
+            if (!onlyPublicNames || (children.Item(i)->m_TokenAccess != taPrivate) )
             {
-                if (!onlyPublicNames || (children.Item(i)->m_TokenAccess != taPrivate) )
-                {
-                    result.Add(new TokenFlat(children.Item(i)));
-                }
-            }
-            if (children.Item(i)->m_Children.GetCount() > 0 && !(children.Item(i)->m_TokenKind & noChildrenOf))
-            {
-                FindMatchChildrenDeclared(children.Item(i)->m_Children, search, result, tokenKindMask, partialMatch, noChildrenOf, onlyPublicNames);
+                result.Add(new TokenFlat(children.Item(i)));
             }
         }
-    }
-    else
-    {
-        for (size_t i=0; i<children.GetCount(); i++)
+        else if (children.Item(i)->m_TokenKind == tkInclude)
         {
-            if (children.Item(i)->m_Name.IsSameAs(search) && (children.Item(i)->m_TokenKind & tokenKindMask))
+            if (m_IncludeDeep > 5)
+                continue;
+            TokensArrayF includedTokens;
+            AddIncludeFileChildren(children.Item(i), includedTokens);
+            if (includedTokens.GetCount() > 0)
             {
-                if (!onlyPublicNames || (children.Item(i)->m_TokenAccess != taPrivate) )
-                {
-                    result.Add(new TokenFlat(children.Item(i)));
-                }
+                m_IncludeDeep++;
+                FindMatchChildrenDeclared(includedTokens, search, result, tokenKindMask, partialMatch, noChildrenOf, onlyPublicNames);
+                m_IncludeDeep--;
             }
-            if (children.Item(i)->m_Children.GetCount() > 0 && !(children.Item(i)->m_TokenKind & noChildrenOf))
-            {
-                FindMatchChildrenDeclared(children.Item(i)->m_Children, search, result, tokenKindMask, partialMatch, noChildrenOf, onlyPublicNames);
-            }
+        }
+
+        if (children.Item(i)->m_Children.GetCount() > 0 && !(children.Item(i)->m_TokenKind & noChildrenOf))
+        {
+            FindMatchChildrenDeclared(children.Item(i)->m_Children, search, result, tokenKindMask, partialMatch, noChildrenOf, onlyPublicNames);
         }
     }
 }
@@ -595,8 +606,6 @@ void ParserF::FindMatchDeclarationsInCurrentScope(const wxString& search, cbEdit
     TokenFlat* tokFl = NULL;
     FindLineScopeLN(ed, lineStart, tokFl, endPos);
 
-Manager::Get()->GetLogManager()->DebugLog(F(_T("FindMatchDeclarationsInCurrentScope: Po FindLineScopeLN lineStart=%d"),lineStart));
-
     wxString searchLw = search.Lower();
 
     if (tokFl)
@@ -680,9 +689,6 @@ Manager::Get()->GetLogManager()->DebugLog(F(_T("FindMatchDeclarationsInCurrentSc
             }
         }
     }
-
-Manager::Get()->GetLogManager()->DebugLog(_T("FindMatchDeclarationsInCurrentScope: paciame gale"));
-
     return;
 }
 
@@ -761,9 +767,6 @@ void ParserF::FindLineScopeLN(cbEditor* ed, int& lineStart, TokenFlat* &token, i
     {
         FindLineScope(curLine, lineStart, tokenKindMask, *pRes, pToken);
 
-if (pToken)
-Manager::Get()->GetLogManager()->DebugLog(F(_T("FindLineScopeLN: Po FindLineScope lineStart=%d, curLine=%d, nToken->Name="),lineStart, curLine) + pToken->m_DisplayName);
-
         if (pToken && pToken->m_Name.IsEmpty() && (pToken->m_TokenKind != tkBlockConstruct) && (pToken->m_TokenKind != tkAssociateConstruct))
         {
             if (pToken->m_pParent && (pToken->m_pParent->m_TokenKind & tokenKindMask))
@@ -809,9 +812,6 @@ Manager::Get()->GetLogManager()->DebugLog(F(_T("FindLineScopeLN: Po FindLineScop
         chUntil = linesUntil;
     }
 
-if (pToken)
-Manager::Get()->GetLogManager()->DebugLog(_T("FindLineScopeLN: Netoli galo, nToken->Name=%s") + pToken->m_Name);
-
     if (lineStart == -1)
         return;
 
@@ -819,9 +819,6 @@ Manager::Get()->GetLogManager()->DebugLog(_T("FindLineScopeLN: Netoli galo, nTok
     {
         token = new TokenFlat(pToken);
         token->m_LineStart += chUntil;
-
-Manager::Get()->GetLogManager()->DebugLog(F(_T("FindLineScopeLN: Gale, Nustatyta m_LineStart=%d"),token->m_LineStart));
-
     }
 }
 
@@ -929,6 +926,8 @@ void ParserF::Clear()
     ClearPassedTokensArray2D(m_PassedTokensVisited);
     ClearArrOfSizeT2D(m_ChildrenIdxVisited);
     ClearBoolArray3D(m_CanBeSeenVisited);
+
+    m_IncludeDB.Clear();
 
     m_Done = true;
 }
@@ -1091,7 +1090,7 @@ void ParserF::FindMatchTokensForToolTip(const wxString& nameUnder, int posEndOfW
             int noChildrenOf = tkInterface | tkModule | tkFunction | tkSubroutine | tkProgram;
             tokKind = tokKind | tkVariable;
             FindUseAssociatedTokens(onlyPublicNames, ed, nameUnder, false, result, tokKind, false);
-            FindMatchTokensDeclared(nameUnder, result, tokKind, false, noChildrenOf); // take global procedures only
+            FindMatchTokensDeclared(nameUnder, result, tokKind, false, noChildrenOf, false, true); // take global procedures only
         }
         else
         {
@@ -1184,7 +1183,7 @@ void ParserF::FindMatchTokensForJump(cbEditor* ed, bool onlyUseAssoc, bool onlyP
                 result.Add(new TokenFlat(resultTmp->Item(i)));
             }
             int noChildrenOf = tkInterface | tkModule | tkFunction | tkSubroutine | tkProgram;
-            FindMatchTokensDeclared(nameUnder, result, tokKind, false, noChildrenOf); // take global procedures only
+            FindMatchTokensDeclared(nameUnder, result, tokKind, false, noChildrenOf, false, true); // take global procedures only
         }
         else
         {
@@ -1199,10 +1198,6 @@ void ParserF::FindMatchTokensForJump(cbEditor* ed, bool onlyUseAssoc, bool onlyP
 bool ParserF::FindMatchTokensForCodeCompletion(bool useSmartCC, bool onlyUseAssoc, bool onlyPublicNames, size_t maxMatch, const wxString& nameUnderCursor, cbEditor* ed,
                                                TokensArrayFlat& result, bool& isAfterPercent, int& tokKind)
 {
-
-Manager::Get()->GetLogManager()->DebugLog(_T("Iskviesta FindMatchTokensForCodeCompletion"));
-
-
     wxString curLine;
     wxArrayString firstWords;
     if (!FindWordsBefore(ed, 100, curLine, firstWords))  //get words on the line
@@ -1215,7 +1210,6 @@ Manager::Get()->GetLogManager()->DebugLog(_T("Iskviesta FindMatchTokensForCodeCo
     {
         if (tokFl->m_TokenKind == tkAssociateConstruct)
         {
-            Manager::Get()->GetLogManager()->DebugLog(_T("curLine yra =")+curLine);
             ChangeAssociatedName(curLine, tokFl);
         }
         delete tokFl;
@@ -1271,7 +1265,7 @@ Manager::Get()->GetLogManager()->DebugLog(_T("Iskviesta FindMatchTokensForCodeCo
         FindUseAssociatedTokens(onlyPublicNames, ed, nameUnderCursor, true, result, tokKind, true);
 
         int noChildrenOf = tkInterface | tkModule | tkFunction | tkSubroutine | tkProgram;
-        FindMatchTokensDeclared(nameUnderCursor, result, tokKind, true, noChildrenOf); // take global procedures only
+        FindMatchTokensDeclared(nameUnderCursor, result, tokKind, true, noChildrenOf, false, true); // take global procedures only
 
         if (allowVariables || classVar)
         {
@@ -2241,7 +2235,7 @@ void ParserF::GetCallTipHighlight(const wxString& calltip, int commasWas, int& s
             ++nest;
         else if (c == ')')
             --nest;
-        else if (c == ',' && nest == 0)
+        else if (c == ',' && nest <= 0)
         {
             ++commas;
             if (commas == commasWas)
@@ -2271,18 +2265,10 @@ void ParserF::FindUseAssociatedTokens(bool onlyPublicNames, cbEditor* ed, const 
     if (address.Count() < 2)
         return; // file only
 
-Manager::Get()->GetLogManager()->DebugLog(_T("FindUseAssociatedTokens address:"));
-for (size_t i=0; i<address.Count(); i++)
-{
-    Manager::Get()->GetLogManager()->DebugLog(_T("address=%s") + address.Item(i));
-}
-
 //    m_VisitedModules.Empty();
 
     wxString searchLw = search.Lower();
-
     wxCriticalSectionLocker locker(s_CritSect);
-
     TokensArrayF* children = FindFileTokens(address.Item(0));
     if (!children)
         return;
@@ -2306,10 +2292,8 @@ for (size_t i=0; i<address.Count(); i++)
 
             if (children->Item(i)->m_Name.IsSameAs(address.Item(j)))
             {
-
                 vpChildren.push_back(&children->Item(i)->m_Children);
 
-Manager::Get()->GetLogManager()->DebugLog(_T("ziuresim tarp vaiku=%s") + children->Item(i)->m_Name);
 //                if (children->Item(i)->m_TokenKind == tkModule)
 //                    pModuleChildren = &children->Item(i)->m_Children;
                 found = true;
@@ -2321,6 +2305,9 @@ Manager::Get()->GetLogManager()->DebugLog(_T("ziuresim tarp vaiku=%s") + childre
             break;
     }
 
+    bool found_full_adress = (vpChildren.size() == address.size()-1);
+    size_t sizeChildren = vpChildren.size();
+    int numInclude = 0;
     for (size_t ichil=0; ichil<vpChildren.size(); ichil++)
     {
         TokensArrayF* pParChildren = vpChildren[ichil];
@@ -2330,7 +2317,19 @@ Manager::Get()->GetLogManager()->DebugLog(_T("ziuresim tarp vaiku=%s") + childre
             {
                 useTokens.Add(pParChildren->Item(i));
             }
-            else if(pParChildren->Item(i)->m_TokenKind & tokenKindMask)
+            else if (pParChildren->Item(i)->m_TokenKind == tkInclude && numInclude < 20)
+            {
+                TokensArrayF* includedTokens = new TokensArrayF();
+                AddIncludeFileChildren(pParChildren->Item(i), *includedTokens);
+                vpChildren.push_back(includedTokens);
+                numInclude++;
+            }
+            else if ((ichil == sizeChildren-1) && found_full_adress &&
+                     pParChildren->Item(i)->m_TokenKind == tkVariable)
+            {
+                //don't take locally declared variables
+            }
+            else if (pParChildren->Item(i)->m_TokenKind & tokenKindMask)
             {
                 if ((partialMatch && pParChildren->Item(i)->m_Name.StartsWith(searchLw)) ||
                     (!partialMatch && pParChildren->Item(i)->m_Name.IsSameAs(searchLw)))
@@ -2356,6 +2355,14 @@ Manager::Get()->GetLogManager()->DebugLog(_T("ziuresim tarp vaiku=%s") + childre
                     }
                 }
             }
+        }
+    }
+    if (numInclude > 0)
+    {
+        size_t origSize = vpChildren.size() - numInclude;
+        for (size_t ichil=origSize; ichil<vpChildren.size(); ichil++)
+        {
+            delete vpChildren[ichil];
         }
     }
 
@@ -2429,9 +2436,10 @@ Manager::Get()->GetLogManager()->DebugLog(_T("ziuresim tarp vaiku=%s") + childre
 //        }
 //    }
 
-    recursiveDeep = 0;
+    m_RecursiveDeep = 0;
     m_UseRenameArrays = false;
     m_RenameDeep = 0;
+    m_IncludeDeep = 0;
 
     for (size_t i=0; i<useTokens.Count(); i++)
     {
@@ -2439,8 +2447,6 @@ Manager::Get()->GetLogManager()->DebugLog(_T("ziuresim tarp vaiku=%s") + childre
         BoolArray2D resCanBeSeen2D;
         TokensArrayFlatClass renTokCl;
         TokensArrayFlat* renamedTokens = renTokCl.GetTokens();
-
-Manager::Get()->GetLogManager()->DebugLog(_T("Ieskosim use assoc tokenu. useTokens.Item(i)=%s") + useTokens.Item(i)->m_Name);
 
         FindUseAssociatedTokens2(useTokens.Item(i), searchLw, resChildrenIdx, resCanBeSeen2D, tokenKindMask, partialMatch,
                                   changeDisplayName, onlyPublicNames, *renamedTokens, useWithRenameTok);
@@ -2763,9 +2769,10 @@ void ParserF::FindTokensForUse(const wxString& search, wxArrayString& firstWords
     int tokenKindMask = tkSubroutine | tkFunction | tkInterface | tkOther | tkVariable | tkType;
     int noChildrenOf = tokenKindMask;
     TokensArrayFlat* useWithRenameTok = NULL;
-    recursiveDeep = 0;
+    m_RecursiveDeep = 0;
     m_UseRenameArrays = false;
     m_RenameDeep = 0;
+    m_IncludeDeep = 0;
 
     ArrOfSizeT* resChildrenIdx = NULL;
     BoolArray2D* resCanBeSeen2D = NULL;
@@ -2833,7 +2840,7 @@ void ParserF::AddUniqueResult(TokensArrayFlat& result, const TokenFlat* token)
 void ParserF::FindUseAssociatedTokens2(TokenF* useToken, const wxString &searchLw, ArrOfSizeT &resChildrenIdx, BoolArray2D &resCanBeSeen2D, int tokenKindMask, bool partialMatch,
                                       bool changeDisplayName, bool onlyPublicNames, TokensArrayFlat &renamedTokens, TokensArrayFlat* useWithRenameTok)
 {
-    if (recursiveDeep > 20)
+    if (m_RecursiveDeep > 20)
         return;  // deep limit was reached
 
     if (!useToken)
@@ -2846,7 +2853,7 @@ void ParserF::FindUseAssociatedTokens2(TokenF* useToken, const wxString &searchL
     if (uTok->GetModuleNature() == mnIntrinsic)
         return;
 
-    recursiveDeep++;
+    m_RecursiveDeep++;
 
     ArrOfSizeT* childrenIdx = NULL;
     BoolArray2D* canBeSeen2D = NULL;
@@ -2875,7 +2882,7 @@ void ParserF::FindUseAssociatedTokens2(TokenF* useToken, const wxString &searchL
     }
     if (!childrenIdx || !canBeSeen2D)
     {
-        recursiveDeep--;
+        m_RecursiveDeep--;
         return;
     }
 
@@ -3153,7 +3160,7 @@ void ParserF::FindUseAssociatedTokens2(TokenF* useToken, const wxString &searchL
             resCanBeSeen2D.push_back(canSeeTmp);
         }
     }
-    recursiveDeep--;
+    m_RecursiveDeep--;
 }
 
 
@@ -3169,15 +3176,39 @@ void ParserF::FindMatchTokensInModuleAndUse2(const wxString& modName, const wxSt
         return;
 
     TokensArrayF useTokens;
-    for (size_t i=0; i<children->GetCount(); i++)
+
+    std::vector<TokensArrayF*> vpChildren;
+    vpChildren.push_back(children);
+    int numInclude = 0;
+    for (size_t ichil=0; ichil<vpChildren.size(); ichil++)
     {
-        if (children->Item(i)->m_TokenKind == tkUse)
+        TokensArrayF* pParChildren = vpChildren[ichil];
+
+        for (size_t i=0; i<pParChildren->GetCount(); i++)
         {
-            useTokens.Add(children->Item(i));
+            if (pParChildren->Item(i)->m_TokenKind == tkUse)
+            {
+                useTokens.Add(pParChildren->Item(i));
+            }
+            else if (pParChildren->Item(i)->m_TokenKind == tkInclude && numInclude < 20)
+            {
+                TokensArrayF* includedTokens = new TokensArrayF();
+                AddIncludeFileChildren(pParChildren->Item(i), *includedTokens);
+                vpChildren.push_back(includedTokens);
+                numInclude++;
+            }
+            else if (pParChildren->Item(i)->m_TokenKind == tkSubroutine || pParChildren->Item(i)->m_TokenKind == tkFunction)
+            {
+                break; // 'use' statments must be located above procedures
+            }
         }
-        else if (children->Item(i)->m_TokenKind == tkSubroutine || children->Item(i)->m_TokenKind == tkFunction)
+    }
+    if (numInclude > 0)
+    {
+        size_t origSize = vpChildren.size() - numInclude;
+        for (size_t ichil=origSize; ichil<vpChildren.size(); ichil++)
         {
-            break; // 'use' statments must be located above procedures
+            delete vpChildren[ichil];
         }
     }
 
@@ -3362,9 +3393,6 @@ void ParserF::FindMatchTokensInModuleAndUse2(const wxString& modName, const wxSt
 
 void ParserF::ChangeAssociatedName(wxString& line, TokenFlat* token)
 {
-
-Manager::Get()->GetLogManager()->DebugLog(_T("ChangeAssociatedName: Pradzioje"));
-
     if (!token)
         return;
     if (token->m_TokenKind != tkAssociateConstruct)
@@ -3372,9 +3400,6 @@ Manager::Get()->GetLogManager()->DebugLog(_T("ChangeAssociatedName: Pradzioje"))
 
     wxString args = token->m_Args.Lower();
     std::map<wxString,wxString> assocMap;
-
-Manager::Get()->GetLogManager()->DebugLog(_T("ChangeAssociatedName: args=") + args);
-
     ParserThreadF::SplitAssociateConstruct(args, assocMap);
 
     //change names in the line
@@ -3405,9 +3430,37 @@ Manager::Get()->GetLogManager()->DebugLog(_T("ChangeAssociatedName: args=") + ar
         }
     }
     line << lineLw.Mid(idx1);
-
-Manager::Get()->GetLogManager()->DebugLog(_T("ChangeAssociatedName: line gale=") + line);
-
 }
 
+
+void ParserF::AddIncludeFileChildren(const TokenF* include, TokensArrayF& tokens)
+{
+    if (include->m_TokenKind != tkInclude)
+        return;
+
+    bool withExt = (include->m_Name.Find('.',true) != wxNOT_FOUND);
+
+    for (size_t i=0; i<m_pTokens->GetCount(); i++)
+    {
+        if (m_pTokens->Item(i)->m_TokenKind != tkFile)
+            continue;
+
+        #ifdef __WXMSW__
+            wxString ffname = m_pTokens->Item(i)->m_Filename.AfterLast('\\');
+        #else
+            wxString ffname = m_pTokens->Item(i)->m_Filename.AfterLast('/');
+        #endif
+
+        if ( (withExt && ffname.IsSameAs(include->m_Name)) ||
+             (!withExt && ffname.BeforeFirst('.').IsSameAs(include->m_Name)) )
+        {
+            tokens.Alloc(tokens.GetCount() + m_pTokens->Item(i)->m_Children.GetCount());
+            for (size_t j=0; j<m_pTokens->Item(i)->m_Children.GetCount(); j++)
+            {
+                tokens.Add(m_pTokens->Item(i)->m_Children.Item(j));
+            }
+            break;
+        }
+    }
+}
 

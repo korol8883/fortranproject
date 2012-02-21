@@ -12,13 +12,13 @@
 #include <wx/file.h>
 #include "tokenf.h"
 #include "tokenizerf.h"
+#include "includedb.h"
 #include "cbeditor.h"
 #include <set>
 #include <vector>
 #include "farrays.h"
 
 typedef std::vector<FortranSourceForm> ArrayOfFortranSourceForm;
-typedef std::set<wxString> StringSet;
 
 
 class ParserF
@@ -33,7 +33,7 @@ class ParserF
         TokensArrayF* GetTokens(){return m_pTokens;};
         bool FindTypeBoundProcedures(const TokenFlat& interToken, const wxArrayString& searchArr, TokensArrayFlat& resTokenArr);
         bool FindMatchTokenInSameModule(const TokenFlat& procedureToken, const wxString& search, TokensArrayFlat& result, int tokenKindMask, int noChildrenOf);
-        size_t FindMatchTokensDeclared(const wxString& search, TokensArrayFlat& result, int tokenKindMask, bool partialMatch=false, int noChildrenOf=0, bool onlyPublicNames=false);
+        size_t FindMatchTokensDeclared(const wxString& search, TokensArrayFlat& result, int tokenKindMask, bool partialMatch=false, int noChildrenOf=0, bool onlyPublicNames=false, bool noIncludeFiles=false);
         void FindMatchChildrenDeclared(TokensArrayF &m_Children, wxString search, TokensArrayFlat& result, int tokenKindMask, bool partialMatch=false, int noChildrenOf=0, bool onlyPublicNames=false);
         size_t FindMatchTokens(wxString filename, wxString search, TokensArrayF& result);
         void Clear();
@@ -91,8 +91,10 @@ class ParserF
         void FindTokensForUse(const wxString& search, wxArrayString& firstWords, TokensArrayFlat& result, int& tokKind, bool onlyPublicNames);
         void AddUniqueResult(TokensArrayFlat& result, const TokenF* token);
         void AddUniqueResult(TokensArrayFlat& result, const TokenFlat* token);
+        void AddIncludeFileChildren(const TokenF* include, TokensArrayF& tokens);
 
         TokensArrayF* m_pTokens;
+        IncludeDB m_IncludeDB;
         bool m_Done;
         bool m_ExtDone;
         StringSet m_FortranExtFree;
@@ -101,7 +103,7 @@ class ParserF
         wxString m_Buff;
         std::vector<int> m_LineStarts;
 
-        int recursiveDeep;
+        int m_RecursiveDeep;
         //size_t maxResultCount;
         //bool reachedResultCountLimit;
 
@@ -112,6 +114,8 @@ class ParserF
 
         bool m_UseRenameArrays;
         int m_RenameDeep;
+
+        int m_IncludeDeep;
 
         wxArrayString m_VisitedModulesRen;
         PassedTokensArray2D m_PassedTokensVisitedRen;

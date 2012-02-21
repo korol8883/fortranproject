@@ -49,6 +49,7 @@ FPOptionsDlg::FPOptionsDlg(wxWindow* parent, NativeParserF* np, FortranProject* 
     XRCCTRL(*this, "chkFloatSB", wxCheckBox)->SetValue(cfg->ReadBool(_T("/as_floating_window"), false));
     XRCCTRL(*this, "chkBottomTree", wxCheckBox)->SetValue(cfg->ReadBool(_T("/visible_bottom_tree"), true));
     XRCCTRL(*this, "chkSortSB", wxCheckBox)->SetValue(cfg->ReadBool(_T("/browser_sort_alphabetically"), true));
+    XRCCTRL(*this, "chkLocVarSB", wxCheckBox)->SetValue(cfg->ReadBool(_T("/browser_show_local_variables"), true));
 
     XRCCTRL(*this, "chkKL_1", wxCheckBox)->SetValue(cfg->ReadBool(_T("/lexer_keywords_set1"), true));
     XRCCTRL(*this, "chkKL_2", wxCheckBox)->SetValue(cfg->ReadBool(_T("/lexer_keywords_set2"), true));
@@ -159,6 +160,7 @@ void FPOptionsDlg::OnApply()
     cfg->Write(_T("/as_floating_window"), (bool)XRCCTRL(*this, "chkFloatSB", wxCheckBox)->GetValue());
     cfg->Write(_T("/visible_bottom_tree"), (bool)XRCCTRL(*this, "chkBottomTree", wxCheckBox)->GetValue());
     cfg->Write(_T("/browser_sort_alphabetically"), (bool)XRCCTRL(*this, "chkSortSB", wxCheckBox)->GetValue());
+    cfg->Write(_T("/browser_show_local_variables"), (bool)XRCCTRL(*this, "chkLocVarSB", wxCheckBox)->GetValue());
 
     cfg->Write(_T("/lexer_keywords_set1"), (bool)XRCCTRL(*this, "chkKL_1", wxCheckBox)->GetValue());
     cfg->Write(_T("/lexer_keywords_set2"), (bool)XRCCTRL(*this, "chkKL_2", wxCheckBox)->GetValue());

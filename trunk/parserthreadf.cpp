@@ -8,12 +8,17 @@
 #include "usetokenf.h"
 #include <set>
 
+//#include <logmanager.h>
+
 ParserThreadF::ParserThreadF(const wxString& bufferOrFilename,
 							 TokensArrayF* tokens,
-							 FortranSourceForm fsForm, bool isBuffer)
+							 FortranSourceForm fsForm,
+							 bool isBuffer,
+							 IncludeDB* includeDB)
 	:
 	m_pTokens(tokens),
-	m_pLastParent(0L)
+	m_pLastParent(0L),
+	m_pIncludeDB(includeDB)
 {
     m_InterfaceOperator = 0;
     m_InterfaceAssignment = 0;
@@ -135,7 +140,20 @@ bool ParserThreadF::Parse()
             // something is wrong with code or parser
             m_Tokens.SkipToOneOfChars(";", true);
         }
+        else
+        {
+            bool needDefault = true;
+            TokensArrayF tokTmpArr;
+            CheckParseOneDeclaration(token, tok_low, next, nex_low, needDefault, tokTmpArr);
+        }
 	}
+
+    if (!m_Filename.IsEmpty())
+    {
+        //update IncludeDB
+        wxFileName fn(m_Filename);
+        m_pIncludeDB->SetInclude(fn.GetFullName(), m_IncludeList);
+    }
 	return true;
 }
 
@@ -414,8 +432,7 @@ void ParserThreadF::HandleModule()
         {
             bool needDefault=true;
             TokensArrayF tokTmpArr;
-            bool functionOnLine;
-            CheckParseOneDeclaration(token, tok_low, next, nex_low, needDefault, tokTmpArr, functionOnLine);
+            CheckParseOneDeclaration(token, tok_low, next, nex_low, needDefault, tokTmpArr);
             if (needDefault)
             {
                 for (size_t i=0; i<tokTmpArr.Count(); i++)
@@ -583,9 +600,8 @@ void ParserThreadF::HandleType(bool& needDefault, TokenF* &newToken)
 }
 
 void ParserThreadF::CheckParseOneDeclaration(wxString& token, wxString& tok_low, wxString& next, wxString& next_low,
-                                             bool& needDefault, TokensArrayF& newTokenArr, bool& functionOnLine)
+                                             bool& needDefault, TokensArrayF& newTokenArr)
 {
-    functionOnLine = false;
     if ( tok_low.IsSameAs(_T("integer")) || tok_low.IsSameAs(_T("real"))
             || tok_low.IsSameAs(_T("doubleprecision")) || tok_low.IsSameAs(_T("character"))
             || tok_low.IsSameAs(_T("complex")) || tok_low.IsSameAs(_T("logical"))
@@ -603,11 +619,6 @@ void ParserThreadF::CheckParseOneDeclaration(wxString& token, wxString& tok_low,
                 {
                     ParseDeclarationsSecondPart(token, needDefault, newTokenArr);
                 }
-            }
-            else
-            {
-                // this line is function declaration line
-                functionOnLine = true;
             }
         }
 }
@@ -1118,6 +1129,7 @@ void ParserThreadF::HandleInclude()
     {
         token = token.Mid(1,token.Len()-2).Trim().Trim(false);
         DoAddToken(tkInclude, token);
+        m_IncludeList.Add(token);
     }
 }
 
@@ -1247,11 +1259,7 @@ void ParserThreadF::GoThroughBody()
         {
             bool needDefault = true;
             TokensArrayF tokTmpArr;
-            bool functionOnLine;
-            CheckParseOneDeclaration(token, tok_low, next, nex_low, needDefault, tokTmpArr, functionOnLine);
-
-            if (!functionOnLine)
-                m_Tokens.SkipToOneOfChars(";", true);
+            CheckParseOneDeclaration(token, tok_low, next, nex_low, needDefault, tokTmpArr);
         }
     }
 }

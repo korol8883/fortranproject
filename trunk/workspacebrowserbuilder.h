@@ -35,6 +35,7 @@ struct BrowserOptions
     BrowserDisplayFilter displayFilter; // default: bdfWorkspace
     bool visibleBottomTree;
     bool sortAlphabetically;
+    bool showLocalVariables;
 };
 
 class TreeDataF : public wxTreeItemData

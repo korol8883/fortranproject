@@ -488,7 +488,7 @@ void ProjectDependencies::GetUseFilesFile(const wxString& filename, wxArrayStrin
                 StringIntMap::const_iterator it;
                 for (it = m_FileIndexMap.begin(); it != m_FileIndexMap.end(); ++it)
                 {
-                    if (it->second == fidx)
+                    if (it->second == (int) fidx)
                     {
                         useFiles.Add(it->first);
                         break;
@@ -517,7 +517,7 @@ void ProjectDependencies::GetIncludeFilesFile(const wxString& filename, wxArrayS
                 StringIntMap::const_iterator it;
                 for (it = m_FileIndexMap.begin(); it != m_FileIndexMap.end(); ++it)
                 {
-                    if (it->second == fidx)
+                    if (it->second == (int) fidx)
                     {
                         includeFiles.Add(it->first);
                         break;

@@ -55,7 +55,7 @@
 								<style>wxSP_LIVE_UPDATE</style>
 								<object class="wxTreeCtrl" name="treeAll" />
 								<object class="wxTreeCtrl" name="treeMembers">
-									<style>wxTR_HAS_BUTTONS|wxTR_NO_LINES|wxTR_HIDE_ROOT</style>
+									<style>wxTR_HAS_BUTTONS|wxTR_LINES_AT_ROOT|wxTR_HIDE_ROOT</style>
 								</object>
 							</object>
 							<flag>wxALL|wxEXPAND|wxALIGN_LEFT|wxALIGN_TOP</flag>

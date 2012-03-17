@@ -31,7 +31,8 @@ ParserThreadF::ParserThreadF(const wxString& bufferOrFilename,
         {
             m_Filename = bufferOrFilename;
             m_Tokens.Init(m_Filename, fsForm);
-            m_pLastParent = DoAddToken(tkFile, bufferOrFilename);
+            wxFileName fn(bufferOrFilename);
+            m_pLastParent = DoAddToken(tkFile, fn.GetFullName());
         }
     }
     else

@@ -241,7 +241,22 @@ void MakefileGen::GenerateMakefile(cbProject* project, ProjectDependencies* proj
         compStr << compiler->GetPrograms().C;
         compStr << _T("\n");
     }
+    else
+        compStr << _T("\n");
     mfile.Write(compStr);
+
+    wxString idir = _T("IDIR = ");
+    const wxArrayString& idirs = project->GetIncludeDirs();
+    for(size_t i=0; i<idirs.size(); i++)
+    {
+        idir << _T("-I") << idirs.Item(i) << _T(" ");
+    }
+    const wxArrayString& idirst = buildTarget->GetIncludeDirs();
+    for(size_t i=0; i<idirst.size(); i++)
+    {
+        idir << _T("-I") << idirst.Item(i) << _T(" ");
+    }
+    mfile.Write(idir + _T("\n"));
 
     wxString cflags = _T("CFLAGS = ");
     const wxArrayString& copt = project->GetCompilerOptions();
@@ -265,15 +280,15 @@ void MakefileGen::GenerateMakefile(cbProject* project, ProjectDependencies* proj
     }
 
     if (CompilerFactory::CompilerInheritsFrom(buildTarget->GetCompilerID(), _T("g95")))
-        cflags << _T(" -fmod=$(OBJS_DIR) -c");
+        cflags << _T(" -fmod=$(OBJS_DIR) $(IDIR)");
     else if (CompilerFactory::CompilerInheritsFrom(buildTarget->GetCompilerID(), _T("ifclin")))
-        cflags << _T(" -module $(OBJS_DIR) -c");
+        cflags << _T(" -module $(OBJS_DIR) $(IDIR)");
     else if (CompilerFactory::CompilerInheritsFrom(buildTarget->GetCompilerID(), _T("ifcwin")))
-        cflags << _T(" /nologo /module:$(OBJS_DIR) /c");
+        cflags << _T(" /nologo /module:$(OBJS_DIR) $(IDIR)");
     else if (CompilerFactory::CompilerInheritsFrom(buildTarget->GetCompilerID(), _T("pgfortran")))
-        cflags << _T(" -module $(OBJS_DIR) -c");
+        cflags << _T(" -module $(OBJS_DIR) $(IDIR)");
     else //gfortran
-        cflags << _T(" -J$(OBJS_DIR) -c");
+        cflags << _T(" -J$(OBJS_DIR) $(IDIR)");
 
     mfile.Write(cflags + _T("\n"));
 
@@ -289,6 +304,40 @@ void MakefileGen::GenerateMakefile(cbProject* project, ProjectDependencies* proj
         lflags << lopt_t.Item(i) << _T(" ");
     }
     mfile.Write(lflags + _T("\n"));
+
+    wxString libs = _T("LIBS = ");
+    const wxArrayString& ldirs = project->GetLibDirs();
+    for(size_t i=0; i<ldirs.size(); i++)
+    {
+        libs << _T("-L") << ldirs.Item(i) << _T(" ");
+    }
+    const wxArrayString& ldirst = buildTarget->GetLibDirs();
+    for(size_t i=0; i<ldirst.size(); i++)
+    {
+        libs << _T("-L") << ldirst.Item(i) << _T(" ");
+    }
+    const wxArrayString& lbsarr = project->GetLinkLibs();
+    for(size_t i=0; i<lbsarr.size(); i++)
+    {
+        wxString lnam;
+        if (lbsarr.Item(i).StartsWith(_T("lib")))
+            lnam = lbsarr.Item(i).Mid(3);
+        else
+            lnam = lbsarr.Item(i);
+        libs << _T("-l") << lnam << _T(" ");
+    }
+    const wxArrayString& lbsarrt = buildTarget->GetLinkLibs();
+    for(size_t i=0; i<lbsarrt.size(); i++)
+    {
+        wxString lnam;
+        if (lbsarrt.Item(i).StartsWith(_T("lib")))
+            lnam = lbsarrt.Item(i).Mid(3);
+        else
+            lnam = lbsarrt.Item(i);
+        libs << _T("-l") << lnam << _T(" ");
+    }
+    mfile.Write(libs + _T("\n"));
+
 
     wxString vpath;
 //    vpath << _T("\nOPSYS = $(shell uname -s)\n");
@@ -336,8 +385,8 @@ void MakefileGen::GenerateMakefile(cbProject* project, ProjectDependencies* proj
         lstr << _T(" $(OBJS_") << src_ext.Item(i) << _T(")");
     }
     lstr << _T("\n\t@mkdir -p $(EXE_DIR)");
-    lstr << _T("\n\t$(FC) $(LFLAGS)");
-    lstr << _T(" $(OBJS) -o $(EXE_DIR)$(EXE)\n");
+    lstr << _T("\n\t$(FC)");
+    lstr << _T(" -o $(EXE_DIR)$(EXE) $(OBJS) $(LFLAGS) $(LIBS)\n");
     mfile.Write(lstr);
 
     for (size_t i=0; i<src_ext.Count(); i++)
@@ -354,15 +403,15 @@ void MakefileGen::GenerateMakefile(cbProject* project, ProjectDependencies* proj
         cstr << _T("\n$(OBJS_") << src_ext.Item(i) << _T("):\n");
         cstr << _T("\t@mkdir -p $(OBJS_DIR)\n");
         if (CompilerFactory::CompilerInheritsFrom(buildTarget->GetCompilerID(), _T("ifcwin")))
-            cstr << _T("\t$(FC) $(CFLAGS) ") << sdir << _T("$(@:.o=.") << ext << _T(")") << _T(" /object: $(OBJS_DIR)$@\n");
+            cstr << _T("\t$(FC) $(CFLAGS) /c ") << sdir << _T("$(@:.o=.") << ext << _T(")") << _T(" /object: $(OBJS_DIR)$@\n");
         else
-            cstr << _T("\t$(FC) $(CFLAGS) ") << sdir << _T("$(@:.o=.") << ext << _T(")") << _T(" -o $(OBJS_DIR)$@\n");
+            cstr << _T("\t$(FC) $(CFLAGS) -c ") << sdir << _T("$(@:.o=.") << ext << _T(")") << _T(" -o $(OBJS_DIR)$@\n");
 
         mfile.Write(cstr);
     }
 
     wxString clean;
-    clean << _T("clean :\n");
+    clean << _T("\nclean :\n");
 	clean << _T("\trm -f $(OBJS_DIR)*.*\n");
 	clean << _T("\trm -f $(EXE_DIR)$(EXE)\n");
     mfile.Write(clean);

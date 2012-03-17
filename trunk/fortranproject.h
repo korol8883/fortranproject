@@ -108,10 +108,8 @@ class FortranProject : public cbCodeCompletionPlugin
         cbEditor*                          m_pCodeCompletionLastEditor;
         wxMenu*                            m_EditMenu;
         wxMenuItem*                        m_EditMenuSeparator;
-        wxMenu*                            m_SearchMenu;
         wxMenu*                            m_ViewMenu;
-        wxMenu*                            m_ToolsMenu;
-        wxMenuItem*                        m_FortranToolsMenu;
+        wxMenu*                            m_FortranToolsMenu;
 
         wxToolBar*                         m_pToolbar;
 

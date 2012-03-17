@@ -56,6 +56,8 @@ BEGIN_EVENT_TABLE(WorkspaceBrowserF, wxPanel)
     EVT_TEXT_ENTER(XRCID("cmbSearch"), WorkspaceBrowserF::OnSearch)
     EVT_COMBOBOX(XRCID("cmbSearch"), WorkspaceBrowserF::OnSearch)
 
+    EVT_BUTTON(XRCID("btnHome"), WorkspaceBrowserF::OnMakeVisible)
+
     EVT_MENU(idMenuJumpToImplementation, WorkspaceBrowserF::OnJumpTo)
     EVT_MENU(idMenuRefreshTree, WorkspaceBrowserF::OnRefreshTree)
     EVT_MENU(idMenuForceReparse, WorkspaceBrowserF::OnForceReparse)
@@ -80,6 +82,7 @@ WorkspaceBrowserF::WorkspaceBrowserF(wxWindow* parent, NativeParserF* np, Parser
     m_BrowserOptions.visibleBottomTree = cfg->ReadBool(_T("/visible_bottom_tree"), true);
     m_BrowserOptions.sortAlphabetically = cfg->ReadBool(_T("/browser_sort_alphabetically"), true);
     m_BrowserOptions.showLocalVariables = cfg->ReadBool(_T("/browser_show_local_variables"), true);
+    m_BrowserOptions.showIncludeSeparately = cfg->ReadBool(_T("/browser_show_include_files_separately"), true);
 
 	wxXmlResource::Get()->LoadPanel(this, parent, _T("pnlWBF"));
     m_Search = XRCCTRL(*this, "cmbSearch", wxComboBox);
@@ -536,6 +539,7 @@ void WorkspaceBrowserF::RereadOptions()
         m_BrowserOptions.visibleBottomTree = cfg->ReadBool(_("/visible_bottom_tree"), true);
         m_BrowserOptions.sortAlphabetically = cfg->ReadBool(_("/browser_sort_alphabetically"), true);
         m_BrowserOptions.showLocalVariables = cfg->ReadBool(_T("/browser_show_local_variables"), true);
+        m_BrowserOptions.showIncludeSeparately = cfg->ReadBool(_T("/browser_show_include_files_separately"), true);
         UpdateView();
     }
 }
@@ -546,3 +550,10 @@ void WorkspaceBrowserF::DeleteAllItems()
     m_TreeBottom->DeleteAllItems();
 }
 
+void WorkspaceBrowserF::OnMakeVisible(wxCommandEvent& event)
+{
+    if (m_pBrowserBuilder)
+    {
+        m_pBrowserBuilder->MakeVisibleCurrent();
+    }
+}

@@ -21,15 +21,29 @@
 									<flag>wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL</flag>
 								</object>
 								<object class="sizeritem">
-									<object class="wxChoice" name="cmbView">
-										<content>
-											<item>Current file&apos;s symbols</item>
-											<item>Active project&apos;s symbols</item>
-											<item>All local symbols (workspace)</item>
-										</content>
-										<selection>2</selection>
+									<object class="wxBoxSizer">
+										<object class="sizeritem">
+											<object class="wxChoice" name="cmbView">
+												<content>
+													<item>Current file&apos;s symbols</item>
+													<item>Active project&apos;s symbols</item>
+													<item>All local symbols (workspace)</item>
+												</content>
+												<selection>2</selection>
+											</object>
+											<flag>wxEXPAND|wxALIGN_LEFT|wxALIGN_TOP</flag>
+											<option>1</option>
+										</object>
+										<object class="sizeritem">
+											<object class="wxBitmapButton" name="btnHome">
+												<bitmap>images/fprojectmakevisible16.png</bitmap>
+												<default>1</default>
+												<tooltip>Make current item visible</tooltip>
+											</object>
+											<flag>wxALL|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
+										</object>
 									</object>
-									<flag>wxEXPAND|wxALIGN_LEFT|wxALIGN_TOP</flag>
+									<flag>wxALL|wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
 									<option>1</option>
 								</object>
 								<object class="sizeritem">
@@ -39,10 +53,16 @@
 									<flag>wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL</flag>
 								</object>
 								<object class="sizeritem">
-									<object class="wxComboBox" name="cmbSearch">
-										<style>wxCB_DROPDOWN</style>
+									<object class="wxBoxSizer">
+										<object class="sizeritem">
+											<object class="wxComboBox" name="cmbSearch">
+												<style>wxCB_DROPDOWN</style>
+											</object>
+											<flag>wxALL|wxEXPAND|wxALIGN_LEFT|wxALIGN_TOP</flag>
+											<option>1</option>
+										</object>
 									</object>
-									<flag>wxALL|wxEXPAND|wxALIGN_LEFT|wxALIGN_TOP</flag>
+									<flag>wxALL|wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
 									<option>1</option>
 								</object>
 							</object>

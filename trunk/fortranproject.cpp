@@ -91,7 +91,6 @@ int idMenuCodeComplete     = wxNewId();
 int idMenuShowCallTip      = wxNewId();
 int idMenuGotoDeclaration  = wxNewId();
 int idViewSymbolsBrowser   = wxNewId();
-int idMenuFortranTools     = wxNewId();
 int idMenuGenerateMakefile = wxNewId();
 
 BEGIN_EVENT_TABLE(FortranProject, cbCodeCompletionPlugin)
@@ -137,9 +136,8 @@ void FortranProject::OnAttach()
 {
     m_EditMenu = 0;
     m_EditMenuSeparator = 0;
-    m_SearchMenu = 0;
     m_ViewMenu = 0;
-    m_ToolsMenu = 0;
+    m_FortranToolsMenu = 0;
 
     m_pNativeParser = new NativeParserF(this);
     m_pNativeParser->CreateWorkspaceBrowser();
@@ -209,18 +207,15 @@ void FortranProject::OnRelease(bool appShutDown)
         {
             m_EditMenu->Delete(m_EditMenuSeparator);
         }
-        if (m_SearchMenu)
-        {
-            m_SearchMenu->Delete(idMenuGotoDeclaration);
-        }
         if (m_ViewMenu)
         {
             m_ViewMenu->Delete(idViewSymbolsBrowser);
         }
     }
-    if (m_ToolsMenu && m_FortranToolsMenu)
+    if (m_FortranToolsMenu)
     {
-        m_ToolsMenu->Destroy(m_FortranToolsMenu);
+        m_FortranToolsMenu->Delete(idMenuGotoDeclaration);
+        m_FortranToolsMenu->Delete(idMenuGenerateMakefile);
     }
 } // end of OnRelease
 
@@ -382,8 +377,7 @@ void FortranProject::BuildMenu(wxMenuBar* menuBar)
     if (!IsAttached())
         return;
 
-
-// No code completion if CodeCompletion plugin is active
+    // No code completion if CodeCompletion plugin is active
     cbPlugin* ccplug = Manager::Get()->GetPluginManager()->FindPluginByName(_T("CodeCompletion"));
 
     int pos = menuBar->FindMenu(_("&Edit"));
@@ -399,15 +393,6 @@ void FortranProject::BuildMenu(wxMenuBar* menuBar)
     }
     else
         Manager::Get()->GetLogManager()->DebugLog(_T("FortranProject: Could not find Edit menu!"));
-
-    pos = menuBar->FindMenu(_("Sea&rch"));
-    if (pos != wxNOT_FOUND)
-    {
-        m_SearchMenu = menuBar->GetMenu(pos);
-        m_SearchMenu->Append(idMenuGotoDeclaration, _("Jump to declaration\tCtrl-."));
-    }
-    else
-        Manager::Get()->GetLogManager()->DebugLog(_T("FortranProject: Could not find Search menu!"));
 
     // add the fsymbolsbrowser window in the "View" menu
     int idx = menuBar->FindMenu(_("&View"));
@@ -435,16 +420,28 @@ void FortranProject::BuildMenu(wxMenuBar* menuBar)
     else
         Manager::Get()->GetLogManager()->DebugLog(_T("FortranProject: Could not find View menu!"));
 
-    pos = menuBar->FindMenu(_("&Tools"));
-    if (pos != wxNOT_FOUND)
+
+    pos = menuBar->FindMenu(_("&Fortran"));
+    if (pos == wxNOT_FOUND)
     {
-        m_ToolsMenu = menuBar->GetMenu(pos);
-        wxMenu* fortranMenu = new wxMenu();
-        fortranMenu->Append(idMenuGenerateMakefile, _("Generate Makefile"));
-        m_FortranToolsMenu = m_ToolsMenu->Append(idMenuFortranTools, _("Fortran"), fortranMenu);
+        pos = menuBar->FindMenu(_("&Tools"));
+        if (pos != wxNOT_FOUND)
+        {
+            m_FortranToolsMenu = new wxMenu();
+            menuBar->Insert(pos, m_FortranToolsMenu, _("&Fortran"));
+        }
+        else
+            Manager::Get()->GetLogManager()->DebugLog(_T("FortranProject: Could not find Tools menu!"));
     }
     else
-        Manager::Get()->GetLogManager()->DebugLog(_T("FortranProject: Could not find Tools menu!"));
+    {
+        m_FortranToolsMenu = menuBar->GetMenu(pos);
+    }
+    if (m_FortranToolsMenu)
+    {
+        m_FortranToolsMenu->Append(idMenuGotoDeclaration, _("Jump to declaration\tCtrl-."));
+        m_FortranToolsMenu->Append(idMenuGenerateMakefile, _T("Generate Makefile"));
+    }
 }
 
 
@@ -1187,7 +1184,6 @@ void FortranProject::ShowCallTip()
                     definition << _T('\n'); // add new-line, except for the first line
                 definition << callTips[i];
                 ++count;
-
                 token = result->Item(i);
             }
             if (nCommas > nCommasMax)
@@ -1217,6 +1213,7 @@ void FortranProject::ShowCallTip()
                 }
                 definition << _T(" ");
                 count++;
+                token = result->Item(nCommasMaxIdx);
             }
         }
     }

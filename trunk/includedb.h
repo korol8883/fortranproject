@@ -32,6 +32,7 @@ class IncludeDB
         void RemoveFile(const wxString& name);
         bool IsIncludeFile(const wxString& name);
         void Clear();
+        bool IsEmpty();
     private:
         StringStringSetPMap m_IncludeFiles;
 };

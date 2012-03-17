@@ -20,7 +20,8 @@ enum SpecialFolder
     sfToken         = 0x0001, // token node
     sfRoot          = 0x0002, // root node
     sfGFuncs        = 0x0004, // global funcs node
-    sfOthers       = 0x0010, // preprocessor symbols node
+    sfOthers        = 0x0010, // preprocessor symbols node
+    sfFile          = 0x0020, // file node
 };
 
 enum BrowserDisplayFilter
@@ -36,6 +37,7 @@ struct BrowserOptions
     bool visibleBottomTree;
     bool sortAlphabetically;
     bool showLocalVariables;
+    bool showIncludeSeparately;
 };
 
 class TreeDataF : public wxTreeItemData
@@ -68,7 +70,7 @@ class WorkspaceBrowserBuilder
         wxImageList* GetImageList();
 		int GetTokenKindImageIdx(TokenF* token);
 		void MarkSymbol(const wxString& filename, int line);
-
+        void MakeVisibleCurrent();
 
 		bool m_AtWork;
 
@@ -91,6 +93,7 @@ class WorkspaceBrowserBuilder
         void MarkChildSymbol(wxTreeCtrl* tree, wxTreeItemId& root, int line, bool mark=true);
         bool MarkGlobalSymbol(wxTreeCtrl* tree, wxTreeItemId& root, const wxString& filename, int line);
         bool IsLineInGlobals(const wxString& file, int line);
+        void AddIncludeFiles(wxTreeCtrl* tree, wxTreeItemId parent);
 
         ParserF* m_pParser;
         wxTreeCtrl* m_pTreeTop;

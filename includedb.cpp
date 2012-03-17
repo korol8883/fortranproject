@@ -100,3 +100,8 @@ void IncludeDB::Clear()
         m_IncludeFiles.erase(it++);
     }
 }
+
+bool IncludeDB::IsEmpty()
+{
+    return m_IncludeFiles.empty();
+}

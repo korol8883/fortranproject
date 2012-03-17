@@ -822,7 +822,6 @@ void ParserF::FindLineScopeLN(cbEditor* ed, int& lineStart, TokenFlat* &token, i
     }
 }
 
-
 TokensArrayF* ParserF::FindFileTokens(const wxString& filename)
 {
     wxString fn = UnixFilename(filename);
@@ -836,6 +835,21 @@ TokensArrayF* ParserF::FindFileTokens(const wxString& filename)
         }
     }
     return children;
+}
+
+TokenF* ParserF::FindFile(const wxString& filename)
+{
+    wxString fn = UnixFilename(filename);
+    TokenF* fileToken=0;
+    for (size_t i=0; i<m_pTokens->GetCount(); i++)
+    {
+        if (m_pTokens->Item(i)->m_TokenKind == tkFile && (m_pTokens->Item(i)->m_Filename.IsSameAs(fn)))
+        {
+            fileToken = m_pTokens->Item(i);
+            break;
+        }
+    }
+    return fileToken;
 }
 
 TokenF* ParserF::FindModuleToken(const wxString& moduleName)
@@ -3462,5 +3476,19 @@ void ParserF::AddIncludeFileChildren(const TokenF* include, TokensArrayF& tokens
             break;
         }
     }
+}
+
+bool ParserF::IsIncludeFile(wxString fileName)
+{
+    bool isInclude = false;
+    wxFileName fn(fileName);
+    if (m_IncludeDB.IsIncludeFile(fn.GetFullName()))
+        isInclude = true;
+    return isInclude;
+}
+
+bool ParserF::HasIncludeFiles()
+{
+    return !m_IncludeDB.IsEmpty();
 }
 

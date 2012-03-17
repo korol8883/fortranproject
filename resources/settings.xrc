@@ -330,6 +330,14 @@
 											<border>8</border>
 											<option>1</option>
 										</object>
+										<object class="sizeritem">
+											<object class="wxCheckBox" name="chkInclSepar">
+												<label>Show &apos;include&apos; files separately</label>
+											</object>
+											<flag>wxBOTTOM|wxLEFT|wxRIGHT|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL</flag>
+											<border>8</border>
+											<option>1</option>
+										</object>
 									</object>
 									<flag>wxALL|wxEXPAND|wxALIGN_LEFT|wxALIGN_TOP</flag>
 									<border>8</border>

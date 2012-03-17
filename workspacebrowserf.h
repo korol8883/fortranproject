@@ -46,7 +46,7 @@ class WorkspaceBrowserF : public wxPanel
         void OnChangeSort(wxCommandEvent& event);
         void OnChangeMode(wxCommandEvent& event);
 
-
+        void OnMakeVisible(wxCommandEvent& event);
         void OnSearch(wxCommandEvent& event);
         size_t FindMatchTokens(wxString search, TokensArrayF& result);
 

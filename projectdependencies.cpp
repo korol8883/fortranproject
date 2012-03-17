@@ -476,6 +476,7 @@ void ProjectDependencies::GetUseFilesFile(const wxString& filename, wxArrayStrin
         return;
     size_t fileIndex = m_FileIndexMap[filename];
     StringSet* useModules = m_pUseModules[fileIndex];
+    std::set<size_t> fidxSet;
     StringSet::iterator pos;
     for (pos = useModules->begin(); pos != useModules->end(); ++pos)
     {
@@ -483,7 +484,7 @@ void ProjectDependencies::GetUseFilesFile(const wxString& filename, wxArrayStrin
         if (m_ModuleFileIdxMap.count(modName) == 1)
         {
             size_t fidx = m_ModuleFileIdxMap[modName];
-            if (fidx != fileIndex)
+            if (fidx != fileIndex && fidxSet.count(fidx) == 0)
             {
                 StringIntMap::const_iterator it;
                 for (it = m_FileIndexMap.begin(); it != m_FileIndexMap.end(); ++it)
@@ -491,6 +492,7 @@ void ProjectDependencies::GetUseFilesFile(const wxString& filename, wxArrayStrin
                     if (it->second == (int) fidx)
                     {
                         useFiles.Add(it->first);
+                        fidxSet.insert(fidx);
                         break;
                     }
                 }
@@ -505,6 +507,7 @@ void ProjectDependencies::GetIncludeFilesFile(const wxString& filename, wxArrayS
         return;
     size_t fileIndex = m_FileIndexMap[filename];
     StringSet* incls = m_pIncludes[fileIndex];
+    std::set<size_t> fidxSet;
     StringSet::iterator pos;
     for (pos = incls->begin(); pos != incls->end(); ++pos)
     {
@@ -512,7 +515,7 @@ void ProjectDependencies::GetIncludeFilesFile(const wxString& filename, wxArrayS
         if (m_IncludeFileIdxMap.count(incName) == 1)
         {
             size_t fidx = m_IncludeFileIdxMap[incName];
-            if (fidx != fileIndex)
+            if (fidx != fileIndex && fidxSet.count(fidx) == 0)
             {
                 StringIntMap::const_iterator it;
                 for (it = m_FileIndexMap.begin(); it != m_FileIndexMap.end(); ++it)
@@ -520,6 +523,7 @@ void ProjectDependencies::GetIncludeFilesFile(const wxString& filename, wxArrayS
                     if (it->second == (int) fidx)
                     {
                         includeFiles.Add(it->first);
+                        fidxSet.insert(fidx);
                         break;
                     }
                 }

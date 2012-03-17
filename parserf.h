@@ -65,6 +65,9 @@ class ParserF
         void GetPossitionOfDummyArgument(const wxString& args, const wxString& arg, int& start, int& end);
         void GetCallTipHighlight(const wxString& calltip, int commasWas, int& start, int& end);
         void FindUseAssociatedTokens(bool onlyPublicNames, cbEditor* ed, const wxString& search, bool partialMatch, TokensArrayFlat& result, int tokenKindMask, bool changeDisplayName, TokensArrayFlat* useWithRenameTok=NULL);
+        bool IsIncludeFile(wxString fileName);
+        bool HasIncludeFiles();
+        TokenF* FindFile(const wxString& filename);
     protected:
     private:
         void FindMatchChildren(TokensArrayF &m_Children, wxString search, TokensArrayF& result, bool exact=false);

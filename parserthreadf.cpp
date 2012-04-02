@@ -85,9 +85,14 @@ bool ParserThreadF::Parse()
         {
             HandleUse();
         }
-        else if (tok_low.Matches(_T("module")) && !nex_low.Matches(_T("procedure")))
+        else if (tok_low.Matches(_T("module")) && !nex_low.Matches(_T("procedure"))
+                  && !nex_low.Matches(_T("function"))  && !nex_low.Matches(_T("subroutine")))
         {
             HandleModule();
+        }
+        else if (tok_low.Matches(_T("submodule")) && !nex_low.Matches(_T("procedure")))
+        {
+            HandleSubmodule();
         }
         else if (tok_low.Matches(_T("program")))
         {
@@ -492,6 +497,98 @@ void ParserThreadF::HandleModule()
 
 }
 
+void ParserThreadF::HandleSubmodule()
+{
+    TokenF* old_parent = m_pLastParent;
+    unsigned int defStartLine = m_Tokens.GetLineNumber();
+    wxString ancestorModule;
+    wxString parentSubmodule;
+    wxString submName;
+
+    wxString token = m_Tokens.GetTokenSameFortranLine();
+
+    if (!token.IsEmpty() && token(0,1).Matches(_T("(")))
+    {
+        token = token.Mid(1).BeforeFirst(')');
+        int i = token.Find(':');
+        if (i != wxNOT_FOUND)
+        {
+            ancestorModule = token.Mid(0,i).Trim().Trim(false);
+            if (i+1 < int(token.Length()))
+                parentSubmodule = token.Mid(i+1).Trim().Trim(false);
+        }
+        else
+            ancestorModule = token.Trim().Trim(false);
+
+        token = m_Tokens.GetTokenSameFortranLine();
+        if (!token.IsEmpty())
+            submName = token;
+        else
+            submName = _T("unnamed");
+    }
+    else if(token.IsEmpty())
+        submName = _T("unnamed");
+    else
+        submName = token;
+
+    SubmoduleTokenF* pSubmodToken = DoAddSubmoduleToken(submName, ancestorModule, parentSubmodule, defStartLine);
+    m_pLastParent = pSubmodToken;
+
+    while (1)
+    {
+        token = m_Tokens.GetToken();
+        if (token.IsEmpty())
+            break;
+        wxString tok_low = token.Lower();
+
+        wxString next = m_Tokens.PeekToken();
+        wxString nex_low = next.Lower();
+        if ( ((m_Tokens.GetLineNumber() == m_Tokens.GetPeekedLineNumber()) && IsEnd(tok_low, nex_low)) ||
+             ((m_Tokens.GetLineNumber() != m_Tokens.GetPeekedLineNumber()) && IsEnd(tok_low, _T(""))) )
+        {
+            m_Tokens.SkipToOneOfChars(";", true);
+            break;
+        }
+        else if (tok_low.Matches(_T("type")) && !nex_low(0,1).Matches(_T("(")))
+        {
+            HandleType();
+        }
+        else if (tok_low.Matches(_T("subroutine")))
+        {
+            HandleFunction(tkSubroutine);
+        }
+        else if (tok_low.Matches(_T("function")))
+        {
+            HandleFunction(tkFunction);
+        }
+        else if (tok_low.Matches(_T("use")))
+        {
+            HandleUse();
+        }
+        else if (tok_low.Matches(_T("interface")))
+        {
+        	HandleInterface();
+        }
+        else if (tok_low.Matches(_T("include")))
+        {
+            HandleInclude();
+        }
+        else if (tok_low.Matches(_T("module")) && nex_low.Matches(_T("procedure")))
+        {
+            m_Tokens.GetToken();
+            HandleSubmoduleProcedure();
+        }
+        else
+        {
+            bool needDefault=true;
+            TokensArrayF tokTmpArr;
+            CheckParseOneDeclaration(token, tok_low, next, nex_low, needDefault, tokTmpArr);
+        }
+    }
+    pSubmodToken->AddLineEnd(m_Tokens.GetLineNumber());
+    m_pLastParent = old_parent;
+}
+
 ModuleTokenF* ParserThreadF::DoAddModuleToken(const wxString& modName)
 {
     ModuleTokenF* newToken = new ModuleTokenF();
@@ -510,6 +607,44 @@ ModuleTokenF* ParserThreadF::DoAddModuleToken(const wxString& modName)
         m_pLastParent->AddChild(newToken);
     else
         m_pTokens->Add(newToken);
+
+	return newToken;
+}
+
+SubmoduleTokenF* ParserThreadF::DoAddSubmoduleToken(const wxString& submName, const wxString& ancestorModule,
+                                                 const wxString& parentSubmodule, unsigned int defStartLine)
+{
+    SubmoduleTokenF* newToken = new SubmoduleTokenF();
+	newToken->m_Name = ancestorModule.Lower();
+    newToken->m_Name << _T(":") << submName.Lower();
+	newToken->m_TokenKind = tkSubmodule;
+	newToken->m_pParent = m_pLastParent;
+	newToken->m_Filename = m_Tokens.GetFilename();
+	newToken->m_DisplayName = submName;
+	newToken->m_DisplayName << _T(" (") << ancestorModule;
+	if (!parentSubmodule.IsEmpty())
+        newToken->m_DisplayName << _T(":") << parentSubmodule;
+    newToken->m_DisplayName << _T(")");
+	newToken->m_TypeDefinition = wxEmptyString;
+
+	newToken->m_LineStart = defStartLine;
+	newToken->m_DefinitionLength = 1;
+
+	newToken->m_AncestorModuleName = ancestorModule.Lower();
+	newToken->m_ParentSubmoduleName = parentSubmodule.Lower();
+
+    if (m_pLastParent)
+        m_pLastParent->AddChild(newToken);
+    else
+        m_pTokens->Add(newToken);
+//
+//    TokenF* oldParent = m_pLastParent;
+//    m_pLastParent = newToken;
+//    wxString useName = ancestorModule.Lower();
+//    useName << _T(":") << parentSubmodule.Lower();
+//    UseTokenF* pUseTok = DoAddUseToken(useName);
+//    pUseTok->SetModuleNature(mnNonIntrinsic);
+//    m_pLastParent = oldParent;
 
 	return newToken;
 }
@@ -886,6 +1021,21 @@ void ParserThreadF::ParseDeclarationsSecondPart(wxString& token, bool& needDefau
 }
 
 
+void ParserThreadF::HandleSubmoduleProcedure()
+{
+    wxString token;
+    token = m_Tokens.GetTokenSameFortranLine();
+
+    TokenF* old_parent = m_pLastParent;
+    m_pLastParent = DoAddToken(tkProcedure, token);
+
+    GoThroughBody();
+
+    m_pLastParent->AddLineEnd(m_Tokens.GetLineNumber());
+    m_pLastParent = old_parent;
+}
+
+
 void ParserThreadF::HandleFunction(TokenKindF kind, TokenAccessKind taKind)
 {
     wxString token;
@@ -961,17 +1111,6 @@ void ParserThreadF::HandleAssociateConstruct()
     else
         args = m_Tokens.GetTokenSameFortranLine();
     m_pLastParent = DoAddToken(tkAssociateConstruct, wxEmptyString, args, wxEmptyString);
-
-//    std::map<wxString,wxString> assocMap;
-//    SplitAssociateConstruct(args, assocMap);
-//
-//    std::map<wxString,wxString>::iterator it;
-//    for ( it=assocMap.begin() ; it != assocMap.end(); ++it )
-//    {
-//        wxString sec = _T(" => ");
-//        sec << (*it).second;
-//        TokenF* tok = DoAddToken(tkVariable, (*it).first, sec, _T("AssociateContruct"));
-//    }
 
     GoThroughBody();
     m_pLastParent->AddLineEnd(m_Tokens.GetLineNumber());
@@ -1407,6 +1546,7 @@ bool ParserThreadF::IsEnd(wxString tok_low, wxString nex_low)
           tok_low.Matches(_T("endsubroutine")) ||
           tok_low.Matches(_T("endfunction")) ||
           tok_low.Matches(_T("endmodule")) ||
+          tok_low.Matches(_T("endsubmodule")) ||
           tok_low.Matches(_T("endtype")) ||
           tok_low.Matches(_T("endinterface")) ||
           tok_low.Matches(_T("endprogram")) ||

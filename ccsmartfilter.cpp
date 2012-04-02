@@ -80,6 +80,20 @@ void CCSmartFilter::GetTokenKind(wxArrayString& words, int& kindFilter, bool& al
     {
         kindFilter = tkType;
     }
+    else if ((woCount == 2 && wordLastLw.IsSameAs(_T("allocate")) && wordLw.IsSameAs('('))
+             || (woCount == 5 && wordLastLw.IsSameAs(_T("allocate")) && wordLw.IsSameAs(':')))
+    {
+        if (woCount == 2 && wordLw.IsSameAs('('))
+        {
+            kindFilter = tkType;
+            allowVariables = true;
+        }
+        else // (woCount == 5 && wordLw.IsSameAs(':'))
+        {
+            kindFilter = tkVariable;
+            allowVariables = true;
+        }
+    }
     else if (wordLw.IsSameAs('(') || wordLw.IsSameAs(','))
     {
         kindFilter = tkFunction | tkInterface | tkOther;

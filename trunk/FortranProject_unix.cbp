@@ -73,6 +73,7 @@
 		<Unit filename="resources/fortranprojecttoolbar.xrc" />
 		<Unit filename="resources/settings.xrc" />
 		<Unit filename="resources/workspacebrowserf.xrc" />
+		<Unit filename="submoduletokenf.h" />
 		<Unit filename="tokenf.cpp" />
 		<Unit filename="tokenf.h" />
 		<Unit filename="tokenizerf.cpp" />

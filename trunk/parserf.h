@@ -75,15 +75,17 @@ class ParserF
         void FindChildrenOfToken(TokensArrayF &children, const wxString &nameToken, TokensArrayF& result,  int tokenKindMask, bool partialMatch);
         size_t GetFileIndex(const wxString& filename);
         TokensArrayF* FindFileTokens(const wxString& filename);
-        TokenF* FindModuleToken(const wxString& moduleName);
+        TokenF* FindModuleSubmoduleToken(const wxString& moduleName);
         void ObtainUDModulesToken(TokenF* token, StringSet* fileUseModules, StringSet* fileDeclaredModules, StringSet* fileIncludes);
         bool FindLineScope(unsigned int line, int& lineStart, int tokenKindMask, TokensArrayF& children, TokenF* &pToken);
         void FindLineScopeLN(cbEditor* ed, int& lineStart, TokenFlat* &token, int endPos);
         bool CutBlocks(const wxChar& ch, wxString& line);
         bool GetTypeOfComponent(const wxString& nameType, const wxString& nameComponent, wxString& nameTypeComponent);
+        bool GetTypeOfComponent(TokenF* pT, const wxString& nameComponent, wxString& nameTypeComponent);
         bool GetTypeOfChild(TokenF* pT, const wxString& nameComponent, wxString& nameTypeComponent);
         TokenF* GetType(const wxString& nameType);
-        void FindUseAssociatedTokens(TokenF* useToken, const wxString& searchLw, TokensArrayFlat& result, int tokenKindMask, bool partialMatch, bool changeDisplayName, bool onlyPublicNames, TokensArrayFlat* useWithRenameTok=NULL);
+        TokenF* GetTypeInFile(const wxString& fileName, const unsigned int line, const wxString& nameType);
+        //void FindUseAssociatedTokens(TokenF* useToken, const wxString& searchLw, TokensArrayFlat& result, int tokenKindMask, bool partialMatch, bool changeDisplayName, bool onlyPublicNames, TokensArrayFlat* useWithRenameTok=NULL);
         void FindMatchTokensInModuleAndUse(const wxString &modName, const wxString& searchLw, TokensArrayFlat& result, int tokenKindMask, int noChildrenOf, bool partialMatch, bool onlyPublicNames, bool changeDisplayName, TokensArrayFlat* useWithRenameTok);
         void FindUseAssociatedTokens2(TokenF* useToken, const wxString &searchLw, ArrOfSizeT &resChildrenIdx, BoolArray2D &resCanBeSeen2D, int tokenKindMask, bool partialMatch, bool changeDisplayName,
                                       bool onlyPublicNames, TokensArrayFlat& renamedTokens, TokensArrayFlat* useWithRenameTok);
@@ -95,6 +97,7 @@ class ParserF
         void AddUniqueResult(TokensArrayFlat& result, const TokenF* token);
         void AddUniqueResult(TokensArrayFlat& result, const TokenFlat* token);
         void AddIncludeFileChildren(const TokenF* include, TokensArrayF& tokens);
+        void GetSubmoduleHostTokens(TokenF* subModToken, std::vector<TokensArrayF*> &vpChildren);
 
         TokensArrayF* m_pTokens;
         IncludeDB m_IncludeDB;
@@ -119,6 +122,7 @@ class ParserF
         int m_RenameDeep;
 
         int m_IncludeDeep;
+        int m_SubmodDeep;
 
         wxArrayString m_VisitedModulesRen;
         PassedTokensArray2D m_PassedTokensVisitedRen;

@@ -10,6 +10,7 @@
 TokenF::TokenF()
 	: m_LineStart(0),
 	m_LineEnd(0),
+	m_TokenAccess(taPublic),
 	m_Pass(true),
 	m_pParent(0L)
 {
@@ -72,6 +73,7 @@ wxString TokenF::GetTokenKindString()
         case tkAccessList: return _("access list");
         case tkBlockConstruct: return _("block construct");
         case tkAssociateConstruct: return _("associate construct");
+        case tkSubmodule: return _("submodule");
 	}
 	return _("other");
 }

@@ -599,7 +599,7 @@ void NativeParserF::GetCallTips(const wxString& name, bool onlyUseAssoc, bool on
         if (!ed)
             return;
         m_Parser.FindUseAssociatedTokens(onlyPublicNames, ed, name, false, *result, tokKind, false);
-        int noChildrenOf = tkInterface | tkModule | tkFunction | tkSubroutine | tkProgram;
+        int noChildrenOf = tkInterface | tkModule | tkSubmodule | tkFunction | tkSubroutine | tkProgram;
         m_Parser.FindMatchTokensDeclared(name, *result, tokKind, false, noChildrenOf, false, true); // take global procedures only
     }
     else
@@ -607,8 +607,29 @@ void NativeParserF::GetCallTips(const wxString& name, bool onlyUseAssoc, bool on
         int noChildrenOf = tkInterface | tkFunction | tkSubroutine | tkProgram;
         m_Parser.FindMatchTokensDeclared(name, *result, tokKind, false, noChildrenOf, onlyPublicNames);
     }
-    int resCount = result->GetCount();
 
+    int tokkindFS = tkFunction | tkSubroutine;
+    int resCount = result->GetCount();
+    for (int i=resCountOld; i<resCount; ++i)
+    {
+        if (result->Item(i)->m_ParentTokenKind == tkSubmodule && (result->Item(i)->m_TokenKind & tokkindFS))
+        {
+            for (int j=i+1; j<resCount; ++j)
+            {
+                if (result->Item(j)->m_ParentTokenKind == tkInterfaceExplicit &&
+                    result->Item(j)->m_TokenKind == result->Item(i)->m_TokenKind &&
+                    result->Item(j)->m_Name.IsSameAs(result->Item(i)->m_Name) )
+                {
+                    result->RemoveAt(i);
+                    resCount--;
+                    i--;
+                    break;
+                }
+            }
+        }
+    }
+
+    resCount = result->GetCount();
     for (int i=resCountOld; i<resCount; ++i)
     {
         if (result->Item(i)->m_TokenKind == tkInterface)

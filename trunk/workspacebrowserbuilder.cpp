@@ -117,6 +117,9 @@ WorkspaceBrowserBuilder::WorkspaceBrowserBuilder(ParserF* parser, wxTreeCtrl* tr
     bmp = cbLoadBitmap(prefix2 + _T("interface_subroutine_private.png"), wxBITMAP_TYPE_PNG);
     m_pImlist->Add(bmp);
     m_ImgNr["interface_subroutine_private"] = 28;
+    bmp = cbLoadBitmap(prefix2 + _T("class.png"), wxBITMAP_TYPE_PNG);
+    m_pImlist->Add(bmp);
+    m_ImgNr["submodule"] = 29;
 
     m_ImgNr["none"] = -1;
 
@@ -543,7 +546,7 @@ bool WorkspaceBrowserBuilder::SelectNode(wxTreeItemId node)
 				wxTreeItemId rootOthers = m_pTreeBottom->AppendItem(root, _("Others"), m_ImgNr["others_folder"]);
 
                 TokenF* pToken = data->m_pToken;
-                AddChildrenNodes(m_pTreeBottom, rootFuncs, pToken, tkFunction | tkSubroutine);
+                AddChildrenNodes(m_pTreeBottom, rootFuncs, pToken, tkFunction | tkSubroutine | tkProcedure);
                 AddChildrenNodes(m_pTreeBottom, rootOthers, pToken, tkType | tkInterface | tkInterfaceExplicit | tkAccessList | tkVariable);
 
                 m_pTreeBottom->Expand(rootFuncs);
@@ -636,7 +639,7 @@ void WorkspaceBrowserBuilder::ExpandTop()
 
     CreateSpecialFolders();
     wxTreeItemId root = m_pTreeTop->GetRootItem();
-    AddTreeChildren(m_pTreeTop, root, tkModule);
+    AddTreeChildren(m_pTreeTop, root, tkModule | tkSubmodule);
 }
 
 void WorkspaceBrowserBuilder::ExpandTopNode(wxTreeItemId node)
@@ -723,14 +726,14 @@ void WorkspaceBrowserBuilder::SelectItem(TokenF* token)
                         m_pTreeBottom->SelectItem(item);
                 }
             }
-            else if (token->m_TokenKind == tkModule)
+            else if (token->m_TokenKind == tkModule || token->m_TokenKind == tkSubmodule)
             {
                 item = FindItemByName(m_pTreeTop, token->m_DisplayName);
                 if (item.IsOk())
-                    m_pTreeBottom->SelectItem(item);
+                    m_pTreeTop->SelectItem(item);
             }
         }
-        else if (token->m_pParent->m_TokenKind == tkModule)
+        else if (token->m_pParent->m_TokenKind == tkModule || token->m_pParent->m_TokenKind == tkSubmodule)
         {
             item = FindItemByName(m_pTreeTop, token->m_pParent->m_DisplayName);
             if (item.IsOk())
@@ -884,6 +887,8 @@ int WorkspaceBrowserBuilder::GetTokenKindImageIdx(TokenF* token)
                 else
                     return m_ImgNr["access_list_public"];
             }
+
+        case tkSubmodule: return m_ImgNr["submodule"];
 
         default: return m_ImgNr["none"];
     }
@@ -1435,7 +1440,7 @@ void WorkspaceBrowserBuilder::AddIncludeFiles(wxTreeCtrl* tree, wxTreeItemId par
         return;
 
     int tokenKindMask = tkModule | tkFunction | tkProgram | tkSubroutine | tkInterface | tkInterfaceExplicit | tkBlockData |
-                    tkType | tkVariable | tkProcedure | tkAccessList | tkCommonblock;
+                    tkType | tkVariable | tkProcedure | tkAccessList | tkCommonblock | tkSubmodule;
 
     bool sorted = m_Options.sortAlphabetically;
     switch (m_Options.displayFilter)

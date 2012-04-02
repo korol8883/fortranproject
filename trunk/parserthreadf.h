@@ -11,6 +11,7 @@
 #include "tokenizerf.h"
 #include "usetokenf.h"
 #include "moduletokenf.h"
+#include "submoduletokenf.h"
 #include "includedb.h"
 #include <set>
 
@@ -33,6 +34,7 @@ class ParserThreadF
         TokenF* DoAddToken(TokenKindF kind, const wxString& name, const wxString& args, const unsigned int defStartLine);
         UseTokenF* DoAddUseToken(const wxString& modName);
         ModuleTokenF* DoAddModuleToken(const wxString& modName);
+        SubmoduleTokenF* DoAddSubmoduleToken(const wxString& submName, const wxString& ancestorModule, const wxString& parentSubmodule, unsigned int defStartLine);
 
 		Tokenizerf m_Tokens;
 		TokensArrayF* m_pTokens;
@@ -50,6 +52,7 @@ class ParserThreadF
 
         void InitSecondEndPart();
 		void HandleModule();
+		void HandleSubmodule();
 		void HandleFunction(TokenKindF, TokenAccessKind taKind=taPublic);
 		void HandleType(bool& needDefault, TokenF* &newToken);
 		void HandleType();
@@ -66,6 +69,7 @@ class ParserThreadF
 		bool IsEnd(wxString tok_low, wxString nex_low);
 		bool ParseDeclarationsFirstPart(wxString& token, wxString& next);
 		void ParseDeclarationsSecondPart(wxString& token, bool& needDefault, TokensArrayF& newTokenArr);
+		void HandleSubmoduleProcedure();
 		void CheckParseOneDeclaration(wxString& token, wxString& tok_low, wxString& next, wxString& next_low,
                                 bool& needDefault, TokensArrayF& newTokenArr);
 		void ParseTypeBoundProcedures();

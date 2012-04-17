@@ -98,6 +98,8 @@ class FortranProject : public cbCodeCompletionPlugin
 
         void OnGenerateMakefile(wxCommandEvent& event);
 
+        void RegisterFileExtensions();
+
         bool m_InitDone;
 
         NativeParserF* m_pNativeParser;

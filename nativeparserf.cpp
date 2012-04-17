@@ -840,3 +840,8 @@ void NativeParserF::GenMakefile()
         cbMessageBox(_("Active project doesn't have Fortran files.\nMakefile was not generated."), _("Information"), wxICON_INFORMATION);
     }
 }
+
+void NativeParserF::GetFortranFileExts(StringSet& fileExts)
+{
+    m_Parser.GetFortranFileExts(fileExts);
+}

@@ -1006,24 +1006,7 @@ bool ParserF::IsFileFortran(const wxString& filename, FortranSourceForm& fsForm)
 {
     if (!m_ExtDone)
     {
-        ConfigManager* cfg = Manager::Get()->GetConfigManager(_T("fortran_project"));
-
-        wxString extl = cfg->Read(_T("/extension_fixed"), _T("for, f77, f, fpp"));
-        wxStringTokenizer tkz(extl, _T(" ;,*.\t\r\n"), wxTOKEN_STRTOK);
-        while ( tkz.HasMoreTokens() )
-        {
-            wxString token = tkz.GetNextToken();
-            m_FortranExtFixed.insert(token);
-        }
-
-        extl = cfg->Read(_T("/extension_free"), _T("f90, f95, f03, f2k"));
-        tkz.SetString(extl, _T(" ;,*.\t\r\n"), wxTOKEN_STRTOK);
-        while ( tkz.HasMoreTokens() )
-        {
-            wxString token = tkz.GetNextToken();
-            m_FortranExtFree.insert(token);
-        }
-
+        RereadFileExtensions();
         m_ExtDone = true;
     }
 
@@ -3503,3 +3486,44 @@ void ParserF::GetSubmoduleHostTokens(TokenF* subModToken, std::vector<TokensArra
     if (modTok->m_TokenKind == tkSubmodule)
         GetSubmoduleHostTokens(modTok, vpChildren);
 }
+
+void ParserF::RereadFileExtensions()
+{
+    ConfigManager* cfg = Manager::Get()->GetConfigManager(_T("fortran_project"));
+    if (!cfg)
+        return;
+
+    m_FortranExtFixed.clear();
+    wxString extl = cfg->Read(_T("/extension_fixed"), _T("for, f77, f, fpp"));
+    wxStringTokenizer tkz(extl, _T(" ;,*.\t\r\n"), wxTOKEN_STRTOK);
+    while ( tkz.HasMoreTokens() )
+    {
+        wxString token = tkz.GetNextToken();
+        m_FortranExtFixed.insert(token);
+    }
+
+    m_FortranExtFree.clear();
+    extl = cfg->Read(_T("/extension_free"), _T("f90, f95, f03, f2k"));
+    tkz.SetString(extl, _T(" ;,*.\t\r\n"), wxTOKEN_STRTOK);
+    while ( tkz.HasMoreTokens() )
+    {
+        wxString token = tkz.GetNextToken();
+        m_FortranExtFree.insert(token);
+    }
+}
+
+void ParserF::GetFortranFileExts(StringSet& fileExts)
+{
+    RereadFileExtensions();
+    fileExts.clear();
+    StringSet::iterator it;
+    for( it = m_FortranExtFixed.begin(); it != m_FortranExtFixed.end(); ++it )
+    {
+        fileExts.insert(*it);
+    }
+    for( it = m_FortranExtFree.begin(); it != m_FortranExtFree.end(); ++it )
+    {
+        fileExts.insert(*it);
+    }
+}
+

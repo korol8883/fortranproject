@@ -1,10 +1,10 @@
-<?xml version="1.0" ?>
-<resource>
+<?xml version="1.0" encoding="utf-8" ?>
+<resource xmlns="http://www.wxwidgets.org/wxxrc">
 	<object class="wxPanel" name="pnlWBF">
 		<object class="wxBoxSizer">
 			<orient>wxVERTICAL</orient>
 			<object class="sizeritem">
-				<object class="wxPanel" name="MainPanel">
+				<object class="wxPanel" name="WBFMainPanel">
 					<object class="wxBoxSizer">
 						<orient>wxVERTICAL</orient>
 						<object class="sizeritem">
@@ -23,7 +23,7 @@
 								<object class="sizeritem">
 									<object class="wxBoxSizer">
 										<object class="sizeritem">
-											<object class="wxChoice" name="cmbView">
+											<object class="wxChoice" name="cmbViewWBF">
 												<content>
 													<item>Current file&apos;s symbols</item>
 													<item>Active project&apos;s symbols</item>
@@ -55,7 +55,7 @@
 								<object class="sizeritem">
 									<object class="wxBoxSizer">
 										<object class="sizeritem">
-											<object class="wxComboBox" name="cmbSearch">
+											<object class="wxComboBox" name="cmbSearchWBF">
 												<style>wxCB_DROPDOWN</style>
 											</object>
 											<flag>wxALL|wxEXPAND|wxALIGN_LEFT|wxALIGN_TOP</flag>
@@ -70,11 +70,11 @@
 							<border>4</border>
 						</object>
 						<object class="sizeritem">
-							<object class="wxSplitterWindow" name="splitterWin">
+							<object class="wxSplitterWindow" name="splitterWinWBF">
 								<minsize>64</minsize>
 								<style>wxSP_LIVE_UPDATE</style>
-								<object class="wxTreeCtrl" name="treeAll" />
-								<object class="wxTreeCtrl" name="treeMembers">
+								<object class="wxTreeCtrl" name="treeAllWBF" />
+								<object class="wxTreeCtrl" name="treeMembersWBF">
 									<style>wxTR_HAS_BUTTONS|wxTR_LINES_AT_ROOT|wxTR_HIDE_ROOT</style>
 								</object>
 							</object>

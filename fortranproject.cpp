@@ -1535,6 +1535,7 @@ void FortranProject::RereadOptions()
     {
         RemoveLogWindow(false);
     }
+    RegisterFileExtensions();
 }
 
 void FortranProject::WriteToLog(const wxString& text)
@@ -1630,5 +1631,14 @@ void FortranProject::OnGenerateMakefile(wxCommandEvent& event)
     m_pNativeParser->GenMakefile();
 }
 
+void FortranProject::RegisterFileExtensions()
+{
+    PluginManager* plugman = Manager::Get()->GetPluginManager();
+    if (!plugman)
+        return;
+    StringSet fileExts;
+    m_pNativeParser->GetFortranFileExts(fileExts);
+    plugman->RegisterCCFileExts(_T("FortranProject"), fileExts);
+}
 
 

@@ -68,6 +68,7 @@ class ParserF
         bool IsIncludeFile(wxString fileName);
         bool HasIncludeFiles();
         TokenF* FindFile(const wxString& filename);
+        void GetFortranFileExts(StringSet& fileExts);
     protected:
     private:
         void FindMatchChildren(TokensArrayF &m_Children, wxString search, TokensArrayF& result, bool exact=false);
@@ -98,6 +99,7 @@ class ParserF
         void AddUniqueResult(TokensArrayFlat& result, const TokenFlat* token);
         void AddIncludeFileChildren(const TokenF* include, TokensArrayF& tokens);
         void GetSubmoduleHostTokens(TokenF* subModToken, std::vector<TokensArrayF*> &vpChildren);
+        void RereadFileExtensions();
 
         TokensArrayF* m_pTokens;
         IncludeDB m_IncludeDB;

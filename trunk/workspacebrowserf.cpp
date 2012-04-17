@@ -44,24 +44,24 @@ int idMenuBottomTree = wxNewId();
 
 BEGIN_EVENT_TABLE(WorkspaceBrowserF, wxPanel)
     // m_TreeBottom
-	EVT_TREE_ITEM_ACTIVATED(XRCID("treeMembers"), WorkspaceBrowserF::OnTreeItemDoubleClick)
-    EVT_TREE_ITEM_RIGHT_CLICK(XRCID("treeMembers"), WorkspaceBrowserF::OnTreeItemRightClick)
+	EVT_TREE_ITEM_ACTIVATED(XRCID("treeMembersWBF"), WorkspaceBrowserF::OnTreeItemDoubleClick)
+    EVT_TREE_ITEM_RIGHT_CLICK(XRCID("treeMembersWBF"), WorkspaceBrowserF::OnTreeItemRightClick)
     // m_TreeTop
-	EVT_TREE_ITEM_ACTIVATED(XRCID("treeAll"), WorkspaceBrowserF::OnTreeItemDoubleClick)
-    EVT_TREE_ITEM_RIGHT_CLICK(XRCID("treeAll"), WorkspaceBrowserF::OnTreeItemRightClick)
-    EVT_TREE_SEL_CHANGED(XRCID("treeAll"), WorkspaceBrowserF::OnTreeItemSelected)
-    EVT_TREE_ITEM_EXPANDING(XRCID("treeAll"), WorkspaceBrowserF::OnTreeItemExpanding)
-    EVT_TREE_ITEM_COLLAPSING(XRCID("treeAll"), WorkspaceBrowserF::OnTreeItemCollapsing)
+	EVT_TREE_ITEM_ACTIVATED(XRCID("treeAllWBF"), WorkspaceBrowserF::OnTreeItemDoubleClick)
+    EVT_TREE_ITEM_RIGHT_CLICK(XRCID("treeAllWBF"), WorkspaceBrowserF::OnTreeItemRightClick)
+    EVT_TREE_SEL_CHANGED(XRCID("treeAllWBF"), WorkspaceBrowserF::OnTreeItemSelected)
+    EVT_TREE_ITEM_EXPANDING(XRCID("treeAllWBF"), WorkspaceBrowserF::OnTreeItemExpanding)
+    EVT_TREE_ITEM_COLLAPSING(XRCID("treeAllWBF"), WorkspaceBrowserF::OnTreeItemCollapsing)
 
-    EVT_TEXT_ENTER(XRCID("cmbSearch"), WorkspaceBrowserF::OnSearch)
-    EVT_COMBOBOX(XRCID("cmbSearch"), WorkspaceBrowserF::OnSearch)
+    EVT_TEXT_ENTER(XRCID("cmbSearchWBF"), WorkspaceBrowserF::OnSearch)
+    EVT_COMBOBOX(XRCID("cmbSearchWBF"), WorkspaceBrowserF::OnSearch)
 
     EVT_BUTTON(XRCID("btnHome"), WorkspaceBrowserF::OnMakeVisible)
 
     EVT_MENU(idMenuJumpToImplementation, WorkspaceBrowserF::OnJumpTo)
     EVT_MENU(idMenuRefreshTree, WorkspaceBrowserF::OnRefreshTree)
     EVT_MENU(idMenuForceReparse, WorkspaceBrowserF::OnForceReparse)
-    EVT_CHOICE(XRCID("cmbView"), WorkspaceBrowserF::OnViewScope)
+    EVT_CHOICE(XRCID("cmbViewWBF"), WorkspaceBrowserF::OnViewScope)
     EVT_BUTTON(XRCID("btnSearch"), WorkspaceBrowserF::OnSearch)
 
     EVT_MENU(idMenuDoNotSort, WorkspaceBrowserF::OnChangeSort)
@@ -85,30 +85,30 @@ WorkspaceBrowserF::WorkspaceBrowserF(wxWindow* parent, NativeParserF* np, Parser
     m_BrowserOptions.showIncludeSeparately = cfg->ReadBool(_T("/browser_show_include_files_separately"), true);
 
 	wxXmlResource::Get()->LoadPanel(this, parent, _T("pnlWBF"));
-    m_Search = XRCCTRL(*this, "cmbSearch", wxComboBox);
+    m_Search = XRCCTRL(*this, "cmbSearchWBF", wxComboBox);
 
     if (platform::windows)
 		m_Search->SetWindowStyle(wxTE_PROCESS_ENTER); // it's a must on windows to catch EVT_TEXT_ENTER
 
-	m_TreeTop = XRCCTRL(*this, "treeAll", wxTreeCtrl);
-	m_TreeBottom = XRCCTRL(*this, "treeMembers", wxTreeCtrl);
+	m_TreeTop = XRCCTRL(*this, "treeAllWBF", wxTreeCtrl);
+	m_TreeBottom = XRCCTRL(*this, "treeMembersWBF", wxTreeCtrl);
 
     int filter = cfg->ReadInt(_T("/browser_display_filter"), bdfWorkspace);
-    XRCCTRL(*this, "cmbView", wxChoice)->SetSelection(filter);
+    XRCCTRL(*this, "cmbViewWBF", wxChoice)->SetSelection(filter);
     m_BrowserOptions.displayFilter = (BrowserDisplayFilter)filter;
 
     // if the classbrowser is put under the control of a wxFlatNotebook,
     // somehow the main panel is like "invisible" :/
     // so we force the correct color for the panel here...
-    XRCCTRL(*this, "MainPanel", wxPanel)->SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_BTNFACE));
+    XRCCTRL(*this, "WBFMainPanel", wxPanel)->SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_BTNFACE));
 }
 
 // class destructor
 WorkspaceBrowserF::~WorkspaceBrowserF()
 {
-    int pos = XRCCTRL(*this, "splitterWin", wxSplitterWindow)->GetSashPosition();
+    int pos = XRCCTRL(*this, "splitterWinWBF", wxSplitterWindow)->GetSashPosition();
     Manager::Get()->GetConfigManager(_T("fortran_project"))->Write(_T("/splitter_pos"), pos);
-    int filter = XRCCTRL(*this, "cmbView", wxChoice)->GetSelection();
+    int filter = XRCCTRL(*this, "cmbViewWBF", wxChoice)->GetSelection();
     Manager::Get()->GetConfigManager(_T("fortran_project"))->Write(_T("/browser_display_filter"), filter);
 
     if (m_pBrowserBuilder)
@@ -120,7 +120,7 @@ WorkspaceBrowserF::~WorkspaceBrowserF()
 void WorkspaceBrowserF::UpdateSash()
 {
     int pos = Manager::Get()->GetConfigManager(_T("fortran_project"))->ReadInt(_T("/splitter_pos"), 250);
-    XRCCTRL(*this, "splitterWin", wxSplitterWindow)->SetSashPosition(pos, false);
+    XRCCTRL(*this, "splitterWinWBF", wxSplitterWindow)->SetSashPosition(pos, false);
 }
 
 void WorkspaceBrowserF::UpdateView()
@@ -450,7 +450,7 @@ void WorkspaceBrowserF::BuildTree()
         m_pBrowserBuilder = new WorkspaceBrowserBuilder(m_pParser, m_TreeTop, m_TreeBottom);
     }
 
-    wxSplitterWindow* splitter = XRCCTRL(*this, "splitterWin", wxSplitterWindow);
+    wxSplitterWindow* splitter = XRCCTRL(*this, "splitterWinWBF", wxSplitterWindow);
     if (m_BrowserOptions.visibleBottomTree)
     {
         splitter->SplitHorizontally(m_TreeTop, m_TreeBottom);

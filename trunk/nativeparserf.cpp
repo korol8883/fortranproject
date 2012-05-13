@@ -738,8 +738,11 @@ void NativeParserF::BreakUpInLines(wxString& str, const wxString& original_str, 
             str << _T('\n');
             copy_start = last_comma + 1;
         }
-        else if (pos == original_str.Length() - 1)
+
+        if (pos == original_str.Length() - 1)
+        {
             str << original_str.Mid(copy_start); // rest of the string
+        }
         ++pos;
     }
 }

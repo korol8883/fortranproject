@@ -1433,7 +1433,7 @@ bool ParserF::FindWordsBefore(cbEditor* ed, int numberOfWords, wxString &curLine
                     break;
                 }
             }
-            firstWords.Add(line.Mid(idx_start, idx_end-idx_start+1));
+            firstWords.Add(line.Mid(idx_start, idx_end-idx_start+1).Lower());
             idx = idx_start - 1;
         }
     }

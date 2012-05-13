@@ -1270,7 +1270,7 @@ void FortranProject::OnValueTooltip(CodeBlocksEvent& event)
 {
     event.Skip();
 
-    if (!IsAttached() || !m_InitDone)
+    if (!IsAttached() || !m_InitDone || wxGetKeyState(WXK_CONTROL))
         return;
 
     EditorBase* base = event.GetEditor();

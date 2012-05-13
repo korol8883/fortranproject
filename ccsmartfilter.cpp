@@ -19,8 +19,8 @@ void CCSmartFilter::GetTokenKind(wxArrayString& words, int& kindFilter, bool& al
     int woCount = words.GetCount();
     if (woCount > 0)
     {
-        wordLw = words.Item(0).Lower();
-        wordLastLw = words.Item(woCount-1).Lower();
+        wordLw = words.Item(0);
+        wordLastLw = words.Item(woCount-1);
     }
     if (woCount > 1)
     {
@@ -112,6 +112,18 @@ void CCSmartFilter::GetTokenKind(wxArrayString& words, int& kindFilter, bool& al
     else if (wordLw.IsSameAs(';'))
     {
         kindFilter = tkOther;
+        allowVariables = true;
+    }
+    else if (woCount >= 3 && wordLw.IsSameAs(':') && words.Item(1).IsSameAs(_T(":")) &&
+              ((words.Item(woCount-1).IsSameAs(_T("type")) && words.Item(woCount-2).IsSameAs('('))  ||
+               (words.Item(woCount-1).IsSameAs(_T("class")) && words.Item(woCount-2).IsSameAs('(')) ||
+                words.Item(woCount-1).IsSameAs(_T("integer")) ||
+                words.Item(woCount-1).IsSameAs(_T("real"))    ||
+                words.Item(woCount-1).IsSameAs(_T("logical")) ||
+                words.Item(woCount-1).IsSameAs(_T("complex")) ||
+                words.Item(woCount-1).IsSameAs(_T("character")) ))
+    {
+        kindFilter = tkVariable;
         allowVariables = true;
     }
     else if (wordLw.IsSameAs(':'))

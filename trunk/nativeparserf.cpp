@@ -110,7 +110,7 @@ void NativeParserF::RemoveWorkspaceBrowser()
 
 void NativeParserF::UpdateWorkspaceBrowser()
 {
-    if (m_pWorkspaceBrowser && !Manager::isappShuttingDown())
+    if (m_pWorkspaceBrowser && !Manager::IsAppShuttingDown())
     {
         wxCriticalSectionLocker locker(s_CritSect);
 
@@ -755,7 +755,7 @@ void NativeParserF::GetCallTipHighlight(const wxString& calltip, int commasWas, 
 
 void NativeParserF::MarkCurrentSymbol()
 {
-    if (!m_pWorkspaceBrowser || Manager::isappShuttingDown())
+    if (!m_pWorkspaceBrowser || Manager::IsAppShuttingDown())
     {
         return;
     }

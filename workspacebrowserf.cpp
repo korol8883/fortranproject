@@ -471,7 +471,7 @@ void WorkspaceBrowserF::BuildTree()
 
 void WorkspaceBrowserF::OnTreeItemSelected(wxTreeEvent& event)
 {
-    if (Manager::isappShuttingDown())
+    if (Manager::IsAppShuttingDown())
         return;
 
     if (m_pBrowserBuilder)

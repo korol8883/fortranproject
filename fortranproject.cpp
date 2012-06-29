@@ -1604,7 +1604,7 @@ void FortranProject::CheckEnableToolbar()
 
 void FortranProject::JumpToLine(const LineAddress& adr)
 {
-    if (!IsAttached() || Manager::isappShuttingDown())
+    if (!IsAttached() || Manager::IsAppShuttingDown())
         return;
 
     EditorManager* edMan = Manager::Get()->GetEditorManager();

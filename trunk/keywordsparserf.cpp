@@ -18,7 +18,8 @@
 #include <logmanager.h>
 
 
-KeywordsParserF::KeywordsParserF()
+KeywordsParserF::KeywordsParserF():
+    m_Parser(false)
 {
     m_IsDone = false;
     wxString filename = ConfigManager::GetDataFolder() + _T("/images/fortranproject/fortran_procedures.f90");
@@ -41,6 +42,15 @@ KeywordsParserF::KeywordsParserF()
         else if (pTokens->Item(i)->m_TokenKind == tkFunction)
         {
             m_FuncSet.insert(pTokens->Item(i)->m_Name);
+        }
+        else if (pTokens->Item(i)->m_TokenKind == tkModule && pTokens->Item(i)->m_Name.IsSameAs(_T("openmp")))
+        {
+            TokensArrayF* pOMPMod = &pTokens->Item(i)->m_Children;
+            for (size_t j=0; j<pOMPMod->GetCount(); j++)
+            {
+                if (pOMPMod->Item(j)->m_TokenKind == tkVariable)
+                    m_OpenMPKeywords.Add(pOMPMod->Item(j)->m_DisplayName);
+            }
         }
     }
     MakeOtherKeywordSet();

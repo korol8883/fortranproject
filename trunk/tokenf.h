@@ -16,7 +16,7 @@
 
 WX_DEFINE_ARRAY_SIZE_T(size_t, ArrOfSizeT);
 
-static wxCriticalSection s_CritSect;
+extern wxCriticalSection s_CritSect;
 
 class TokenF;
 WX_DEFINE_ARRAY(TokenF*, TokensArrayF);

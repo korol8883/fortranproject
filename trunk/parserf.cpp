@@ -16,17 +16,36 @@
 #include "ccsmartfilter.h"
 #include <vector>
 
-//#include <logmanager.h>
+#include <logmanager.h>
 
-ParserF::ParserF()
+#include "workspaceparserthread.h"
+
+static wxCriticalSection s_CurrentBTokensCritSect;
+
+ParserF::ParserF(bool withIntrinsicModules)
 {
     m_pTokens = new TokensArrayF();
+    m_pIntrinsicModuleTokens = NULL;
+    m_pIncludeDB = new IncludeDB();
     m_Done = false;
+    m_ExtDone = false;
 
     m_RecursiveDeep = 0;
     m_UseRenameArrays = false;
     m_RenameDeep = 0;
     m_IncludeDeep = 0;
+    m_SubmodDeep = 0;
+
+    m_pTokensNew = NULL;
+    m_pIncludeDBNew = NULL;
+    m_pCurrentBufferTokens = NULL;
+    m_pCurrentBufferTokensNew = NULL;
+
+    if (withIntrinsicModules)
+    {
+        m_pIntrinsicModuleTokens = new TokensArrayF();
+        ParseIntrinsicModules();
+    }
 }
 
 ParserF::~ParserF()
@@ -34,14 +53,38 @@ ParserF::~ParserF()
     //dtor
     Clear();
     delete m_pTokens;
+    if (m_pIntrinsicModuleTokens)
+        delete m_pIntrinsicModuleTokens;
+    delete m_pIncludeDB;
+
+    if (m_pTokensNew)
+        delete m_pTokensNew;
+    if (m_pIncludeDBNew)
+        delete m_pIncludeDBNew;
+
+    if (m_pCurrentBufferTokens)
+        delete m_pCurrentBufferTokens;
+
+    if (m_pCurrentBufferTokensNew)
+        delete m_pCurrentBufferTokensNew;
 }
 
 bool ParserF::Parse(const wxString& filename, FortranSourceForm fsForm)
 {
     wxCriticalSectionLocker locker(s_CritSect);
-    ParserThreadF* thread = new ParserThreadF(UnixFilename(filename), m_pTokens, fsForm, false, &m_IncludeDB);
+    wxString fn = UnixFilename(filename);
+    ParserThreadF* thread = new ParserThreadF(fn, m_pTokens, fsForm, false, m_pIncludeDB);
     bool res = thread->Parse();
     delete thread;
+
+    if (m_pCurrentBufferTokens &&
+        (m_pCurrentBufferTokens->size() > 0) &&
+        m_pCurrentBufferTokens->Item(0)->m_Filename.IsSameAs(fn) )
+    {
+        ClearTokens(m_pCurrentBufferTokens);
+        delete m_pCurrentBufferTokens;
+        m_pCurrentBufferTokens = NULL;
+    }
     return res;
 }
 
@@ -91,14 +134,9 @@ bool ParserF::RemoveFile(const wxString& filename)
             ++i;
     }
     wxFileName fn(filename);
-    m_IncludeDB.RemoveFile(fn.GetFullName());
+    m_pIncludeDB->RemoveFile(fn.GetFullName());
     m_Done = true;
 	return true;
-}
-
-bool ParserF::Done()
-{
-    return m_Done;
 }
 
 bool ParserF::FindTypeBoundProcedures(const TokenFlat& interToken, const wxArrayString& searchArr, TokensArrayFlat& resTokenArr)
@@ -204,39 +242,35 @@ size_t ParserF::FindMatchTokensDeclared(const wxString& search, TokensArrayFlat&
 
     wxCriticalSectionLocker locker(s_CritSect);
 
-    if (partialMatch)
+    TokensArrayF* pTok;
+    for (size_t j=0; j<2; j++)
     {
-        for (size_t i=0; i<m_pTokens->GetCount(); i++)
+        if (j == 0)
+            pTok = m_pTokens;
+        else if (j == 1)
         {
-            if (noIncludeFiles)
-            {
-                wxFileName fn(m_pTokens->Item(i)->m_Filename);
-                if (m_IncludeDB.IsIncludeFile(fn.GetFullName()))
-                    continue;
-            }
-            if ( m_pTokens->Item(i)->m_Children.GetCount() > 0)
-            {
-                FindMatchChildrenDeclared(m_pTokens->Item(i)->m_Children, searchLw, result, tokenKindMask, partialMatch, noChildrenOf, onlyPublicNames);
-            }
+            if (!m_pIntrinsicModuleTokens)
+                continue;
+            pTok = m_pIntrinsicModuleTokens;
         }
-    }
-    else
-    {
-        for (size_t i=0; i<m_pTokens->GetCount(); i++)
+
+        for (size_t i=0; i<pTok->GetCount(); i++)
         {
             if (noIncludeFiles)
             {
-                wxFileName fn(m_pTokens->Item(i)->m_Filename);
-                if (m_IncludeDB.IsIncludeFile(fn.GetFullName()))
+                wxFileName fn(pTok->Item(i)->m_Filename);
+                if (m_pIncludeDB->IsIncludeFile(fn.GetFullName()))
                     continue;
             }
-            if ((m_pTokens->Item(i)->m_TokenKind & tokenKindMask) && m_pTokens->Item(i)->m_Name.IsSameAs(search))
+            if ( (pTok->Item(i)->m_TokenKind & tokenKindMask) &&
+                ((!partialMatch && pTok->Item(i)->m_Name.IsSameAs(search)) ||
+                (partialMatch && pTok->Item(i)->m_Name.StartsWith(search))) )
             {
-                result.Add(new TokenFlat(m_pTokens->Item(i)));
+                result.Add(new TokenFlat(pTok->Item(i)));
             }
-            if (m_pTokens->Item(i)->m_Children.GetCount() > 0)
+            if (pTok->Item(i)->m_Children.GetCount() > 0)
             {
-                FindMatchChildrenDeclared(m_pTokens->Item(i)->m_Children, searchLw, result, tokenKindMask, partialMatch, noChildrenOf, onlyPublicNames);
+                FindMatchChildrenDeclared(pTok->Item(i)->m_Children, searchLw, result, tokenKindMask, partialMatch, noChildrenOf, onlyPublicNames);
             }
         }
     }
@@ -835,12 +869,21 @@ TokensArrayF* ParserF::FindFileTokens(const wxString& filename)
 {
     wxString fn = UnixFilename(filename);
     TokensArrayF* children=0;
-    for (size_t i=0; i<m_pTokens->GetCount(); i++)
+    if (m_pCurrentBufferTokens &&
+        (m_pCurrentBufferTokens->size() > 0) &&
+        m_pCurrentBufferTokens->Item(0)->m_Filename.IsSameAs(fn) )
     {
-        if (m_pTokens->Item(i)->m_TokenKind == tkFile && (m_pTokens->Item(i)->m_Filename.IsSameAs(fn)))
+        children = &m_pCurrentBufferTokens->Item(0)->m_Children;
+    }
+    else
+    {
+        for (size_t i=0; i<m_pTokens->GetCount(); i++)
         {
-            children = &m_pTokens->Item(i)->m_Children;
-            break;
+            if (m_pTokens->Item(i)->m_TokenKind == tkFile && (m_pTokens->Item(i)->m_Filename.IsSameAs(fn)))
+            {
+                children = &m_pTokens->Item(i)->m_Children;
+                break;
+            }
         }
     }
     return children;
@@ -882,6 +925,27 @@ TokenF* ParserF::FindModuleSubmoduleToken(const wxString& moduleName)
             }
             if (found)
                 break;
+        }
+    }
+    if (!found && m_pIntrinsicModuleTokens)
+    {
+        for (size_t i=0; i<m_pIntrinsicModuleTokens->GetCount(); i++)
+        {
+            if (m_pIntrinsicModuleTokens->Item(i)->m_TokenKind == tkFile)
+            {
+                TokensArrayF* children = &m_pIntrinsicModuleTokens->Item(i)->m_Children;
+                for (size_t j=0; j<children->GetCount(); j++)
+                {
+                    if (children->Item(j)->m_TokenKind == tkModule && children->Item(j)->m_Name.IsSameAs(moduleNameLw))
+                    {
+                        module = children->Item(j);
+                        found = true;
+                        break;
+                    }
+                }
+                if (found)
+                    break;
+            }
         }
     }
     return module;
@@ -938,19 +1002,30 @@ void ParserF::Clear()
     m_Done = false;
     wxCriticalSectionLocker locker(s_CritSect);
 
-    for (size_t i=0; i<m_pTokens->GetCount(); i++)
-    {
-        m_pTokens->Item(i)->Clear();
-        delete m_pTokens->Item(i);
-    }
-    m_pTokens->Clear();
+    if (m_pTokens)
+        ClearTokens(m_pTokens);
+
+    if (m_pIntrinsicModuleTokens)
+        ClearTokens(m_pIntrinsicModuleTokens);
 
     m_VisitedModules.Clear();
     ClearPassedTokensArray2D(m_PassedTokensVisited);
     ClearArrOfSizeT2D(m_ChildrenIdxVisited);
     ClearBoolArray3D(m_CanBeSeenVisited);
 
-    m_IncludeDB.Clear();
+    if (m_pIncludeDB)
+        m_pIncludeDB->Clear();
+
+    if (m_pTokensNew)
+        ClearTokens(m_pTokensNew);
+    if (m_pIncludeDBNew)
+        m_pIncludeDBNew->Clear();
+
+    if (m_pCurrentBufferTokens)
+        ClearTokens(m_pCurrentBufferTokens);
+
+    if (m_pCurrentBufferTokensNew)
+        ClearTokens(m_pCurrentBufferTokensNew);
 
     m_Done = true;
 }
@@ -1357,8 +1432,8 @@ bool ParserF::FindWordsBefore(cbEditor* ed, int numberOfWords, wxString &curLine
     int lineCur = control->LineFromPosition(pos);
     int lineStartPos = control->PositionFromLine(lineCur);
     curLine = control->GetTextRange(lineStartPos,pos);
-    if (curLine.Find('!') != wxNOT_FOUND)
-        return false; // we are in comments
+//    if (curLine.Find('!') != wxNOT_FOUND)
+//        return false; // we are in comments
     wxString line = curLine;
 
     for (int i=lineCur-1; i>=0; i--)
@@ -2835,8 +2910,8 @@ void ParserF::FindUseAssociatedTokens2(TokenF* useToken, const wxString &searchL
 
     int noChildrenOf = tkInterface | tkFunction | tkSubroutine | tkType;
     UseTokenF* uTok = static_cast<UseTokenF*>(useToken);
-    if (uTok->GetModuleNature() == mnIntrinsic)
-        return;
+//    if (uTok->GetModuleNature() == mnIntrinsic)
+//        return;
 
     m_RecursiveDeep++;
 
@@ -3453,14 +3528,14 @@ bool ParserF::IsIncludeFile(wxString fileName)
 {
     bool isInclude = false;
     wxFileName fn(fileName);
-    if (m_IncludeDB.IsIncludeFile(fn.GetFullName()))
+    if (m_pIncludeDB->IsIncludeFile(fn.GetFullName()))
         isInclude = true;
     return isInclude;
 }
 
 bool ParserF::HasIncludeFiles()
 {
-    return !m_IncludeDB.IsEmpty();
+    return !m_pIncludeDB->IsEmpty();
 }
 
 void ParserF::GetSubmoduleHostTokens(TokenF* subModToken, std::vector<TokensArrayF*> &vpChildren)
@@ -3527,3 +3602,133 @@ void ParserF::GetFortranFileExts(StringSet& fileExts)
     }
 }
 
+void ParserF::SetNewTokens(TokensArrayF* pTokens)
+{
+    if (m_pTokensNew)
+    {
+        ClearTokens(m_pTokensNew);
+        delete m_pTokensNew;
+    }
+    m_pTokensNew = pTokens;
+}
+
+void ParserF::SetNewIncludeDB(IncludeDB* pIncludeDB)
+{
+    if (m_pIncludeDBNew)
+        delete m_pIncludeDBNew;
+    m_pIncludeDBNew = pIncludeDB;
+}
+
+void ParserF::ClearTokens(TokensArrayF* pTokens)
+{
+    if (!pTokens)
+        return;
+
+    for (size_t i=0; i<pTokens->GetCount(); i++)
+    {
+        pTokens->Item(i)->Clear();
+        delete pTokens->Item(i);
+    }
+    pTokens->Clear();
+}
+
+void ParserF::ConnectToNewTokens()
+{
+    wxCriticalSectionLocker cslocker(s_CritSect);
+    wxMutexLocker mlocker(s_NewTokensMutex);
+    if (m_pTokens)
+    {
+        ClearTokens(m_pTokens);
+        delete m_pTokens;
+    }
+    m_pTokens = m_pTokensNew;
+    m_pTokensNew = NULL;
+    if (m_pIncludeDB)
+    {
+        m_pIncludeDB->Clear();
+        delete m_pIncludeDB;
+    }
+    m_pIncludeDB = m_pIncludeDBNew;
+    m_pIncludeDBNew = NULL;
+}
+
+void ParserF::SetNewCurrentTokens(TokensArrayF* pTokens)
+{
+    // function called from secondary thread (bufferparserthread)
+    wxCriticalSectionLocker locker(s_CurrentBTokensCritSect);
+    if (m_pCurrentBufferTokensNew)
+    {
+        ClearTokens(m_pCurrentBufferTokensNew);
+        delete m_pCurrentBufferTokensNew;
+    }
+    m_pCurrentBufferTokensNew = pTokens;
+}
+
+void ParserF::ConnectToNewCurrentTokens()
+{
+    wxCriticalSectionLocker locker(s_CurrentBTokensCritSect);
+    if (m_pCurrentBufferTokens)
+    {
+        ClearTokens(m_pCurrentBufferTokens);
+        delete m_pCurrentBufferTokens;
+    }
+    m_pCurrentBufferTokens = m_pCurrentBufferTokensNew;
+    m_pCurrentBufferTokensNew = NULL;
+}
+
+void ParserF::ParseIntrinsicModules()
+{
+    if (!m_pIntrinsicModuleTokens)
+        return;
+    int dispCase = 0;
+    ConfigManager* cfg = Manager::Get()->GetConfigManager(_T("fortran_project"));
+    if (cfg)
+        dispCase = cfg->ReadInt(_T("/keywords_case"), 0);
+
+    wxString filename = ConfigManager::GetDataFolder() + _T("/images/fortranproject/fortran_intrinsic_modules.f90");
+    if (!wxFileExists(filename))
+    {
+        Manager::Get()->GetLogManager()->Log(_T("FortranProject plugin error: file ")+filename+_T(" was not found."));
+        return;
+    }
+    wxString fn = UnixFilename(filename);
+    ParserThreadF* thread = new ParserThreadF(fn, m_pIntrinsicModuleTokens, fsfFree);
+    thread->Parse();
+    delete thread;
+
+    ChangeCaseChildren(m_pIntrinsicModuleTokens->Item(0)->m_Children, dispCase);
+}
+
+void ParserF::ChangeCaseChildren(TokensArrayF &children, int dispCase)
+{
+    for (size_t i=0; i<children.GetCount(); i++)
+    {
+        wxString* dn = &children.Item(i)->m_DisplayName;
+        switch (dispCase)
+        {
+            case 0:
+            {
+                break;
+            }
+            case 1:
+            {
+                *dn = dn->MakeUpper();
+                break;
+            }
+            case 2:
+            {
+                *dn = dn->Mid(0,1).MakeUpper() + dn->Mid(1).MakeLower();
+                break;
+            }
+            default :
+            {
+                *dn = dn->MakeLower();
+                break;
+            }
+        }
+        if (children.Item(i)->m_Children.GetCount() > 0)
+        {
+            ChangeCaseChildren(children.Item(i)->m_Children, dispCase);
+        }
+    }
+}

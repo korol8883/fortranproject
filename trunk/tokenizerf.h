@@ -50,6 +50,7 @@ class Tokenizerf
 		unsigned int GetLineStartIndex(unsigned int indexInLine);
 		unsigned int GetLineEndIndex(unsigned int indexInLine);
 		void SetDetailedParsing(bool detPars);
+		void SetFilename(const wxString& filename);
 	protected:
 		void BaseInit();
 		wxString DoGetToken();

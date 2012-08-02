@@ -30,6 +30,7 @@ class KeywordsParserF
         void GetCallTips(const wxString& name, wxArrayString& callTips, TokensArrayFlat* result);
         void GetTokensForToolTip(const wxString& name, TokensArrayFlat& result);
         ParserF* GetParser(){ return &m_Parser; };
+        const wxArrayString* GetKeywordsOpenMP(){ return &m_OpenMPKeywords; };
 
     protected:
     private:
@@ -41,6 +42,8 @@ class KeywordsParserF
         StringSet m_SubrSet;
         StringSet m_FuncSet;
         StringSet m_OtherKeywordSet;
+
+        wxArrayString m_OpenMPKeywords;
 };
 
 #endif // KEYWORDSPARSERF_H

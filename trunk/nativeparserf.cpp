@@ -18,6 +18,7 @@
 #include "workspacebrowserbuilder.h"
 #include "parserf.h"
 #include "makefilegen.h"
+#include "bufferparserthread.h"
 #include <projectloader_hooks.h>
 #include <wx/regex.h>
 #include <wx/log.h> // for wxSafeShowMessage()
@@ -32,10 +33,24 @@
 
 #include <wx/stopwatch.h>
 
+static wxCriticalSection s_CurrentBufferCritSect;
+
+
+int idWSPThreadEvent        = wxNewId();
+int idBPThreadEvent         = wxNewId();
+int idWorkspaceReparseTimer = wxNewId();
+BEGIN_EVENT_TABLE(NativeParserF, wxEvtHandler)
+    EVT_COMMAND(idWSPThreadEvent, wxEVT_COMMAND_ENTER, NativeParserF::OnUpdateWorkspaceBrowser)
+    EVT_COMMAND(idBPThreadEvent, wxEVT_COMMAND_ENTER, NativeParserF::OnUpdateCurrentFileTokens)
+    EVT_TIMER(idWorkspaceReparseTimer, NativeParserF::OnReparseWorkspaceTimer)
+END_EVENT_TABLE()
+
 NativeParserF::NativeParserF(FortranProject* forproj)
     : m_pWorkspaceBrowser(0),
       m_WorkspaceBrowserIsFloating(false),
-      m_pFortranProject(forproj)
+      m_pFortranProject(forproj),
+      m_WorkspaceReparseTimer(this, idWorkspaceReparseTimer),
+      m_ThreadPool(this, wxNewId(), 1, 2 * 1024 * 1024)
 {
 }
 
@@ -179,8 +194,6 @@ void NativeParserF::RemoveFileFromParser(const wxString& filename)
 
 void NativeParserF::ParseProject(cbProject* project)
 {
-    ParserF* parser = &m_Parser;
-
     wxArrayString files;
     FortranSourceForm fsForm;
     ArrayOfFortranSourceForm fileForms;
@@ -197,7 +210,7 @@ void NativeParserF::ParseProject(cbProject* project)
     }
     if (!files.IsEmpty())
     {
-        parser->BatchParse(files, fileForms);
+        m_Parser.BatchParse(files, fileForms);
     }
 }
 
@@ -210,8 +223,7 @@ void NativeParserF::ReparseFile(const wxString& filename)
 
 void NativeParserF::ReparseProject(cbProject* project)
 {
-
-wxStopWatch sw;
+    wxStopWatch sw;
 
     if (project && !Manager::IsAppShuttingDown())
     {
@@ -222,9 +234,7 @@ wxStopWatch sw;
         }
     }
 
-Manager::Get()->GetLogManager()->DebugLog(F(_T("NativeParserF::ReparseProject: Reparse poject took %d ms."), sw.Time()));
-
-
+    Manager::Get()->GetLogManager()->DebugLog(F(_T("NativeParserF::ReparseProject: Reparse poject took %d ms."), sw.Time()));
 }
 
 void NativeParserF::ForceReparseWorkspace()
@@ -232,14 +242,61 @@ void NativeParserF::ForceReparseWorkspace()
     if (Manager::IsAppShuttingDown())
         return;
 
-    m_pWorkspaceBrowser->DeleteAllItems();
-    m_Parser.Clear();
+    m_WorkspaceReparseTimer.Start(500, wxTIMER_ONE_SHOT);
+}
+
+void NativeParserF::OnReparseWorkspaceTimer(wxTimerEvent& event)
+{
+    if (Manager::IsAppShuttingDown())
+        return;
+
+    if (s_WorkspaceParserMutex.TryLock() == wxMUTEX_NO_ERROR)
+    {
+        MakeWSFileList();
+        s_WorkspaceParserMutex.Unlock();
+
+        WorkspaceParserThread* thread = new WorkspaceParserThread(this, idWSPThreadEvent);
+        m_ThreadPool.AddTask(thread, true);
+    }
+}
+
+void NativeParserF::MakeWSFileList()
+{
+    FortranSourceForm fsForm;
+    m_WSFiles.clear();
+    m_WSFileForms.clear();
 
     ProjectsArray* projects = Manager::Get()->GetProjectManager()->GetProjects();
     for (size_t i = 0; i < projects->GetCount(); ++i)
     {
-        AddParser(projects->Item(i));
+        cbProject* proj = projects->Item(i);
+
+        for (FilesList::iterator it = proj->GetFilesList().begin(); it != proj->GetFilesList().end(); ++it)
+        {
+            ProjectFile* pf = *it;
+
+            if (IsFileFortran(pf->relativeFilename, fsForm))
+            {
+                m_WSFiles.Add(pf->file.GetFullPath());
+                m_WSFileForms.push_back(fsForm);
+            }
+        }
     }
+}
+
+wxArrayString* NativeParserF::GetWSFiles()
+{
+    return &m_WSFiles;
+}
+
+ArrayOfFortranSourceForm* NativeParserF::GetWSFileForms()
+{
+    return &m_WSFileForms;
+}
+
+void NativeParserF::OnUpdateWorkspaceBrowser(wxCommandEvent& event)
+{
+    m_Parser.ConnectToNewTokens();
     UpdateWorkspaceBrowser();
 }
 
@@ -248,11 +305,7 @@ void NativeParserF::OnProjectActivated(cbProject* prj)
     if (!m_pWorkspaceBrowser)
         return;
 
-    ParserF* parser = &m_Parser;
-    if (parser)
-    {
-        UpdateWorkspaceBrowser();
-    }
+    UpdateWorkspaceBrowser();
 }
 
 void NativeParserF::OnEditorActivated(EditorBase* editor)
@@ -481,8 +534,7 @@ void NativeParserF::CountCommasInEditor(int& commasAll, int& commasUntilPos, wxS
     cbEditor* ed = Manager::Get()->GetEditorManager()->GetBuiltinActiveEditor();
     if(!ed)
         return;
-    if(!m_Parser.Done())
-        return;
+
     cbStyledTextCtrl* control = ed->GetControl();
     if (!control)
         return;
@@ -646,7 +698,7 @@ void NativeParserF::GetCallTips(const wxString& name, bool onlyUseAssoc, bool on
     }
 }
 
-void NativeParserF::GetCallTipsForGenericTypeBoundProc(TokensArrayFlat* result, wxArrayString& callTips)
+void NativeParserF::GetCallTipsForGenericTypeBoundProc(TokensArrayFlat* result, wxArrayString& callTips, wxArrayInt& idxFuncSub)
 {
     if (result->GetCount() >= 3 && result->Item(0)->m_TokenKind == tkInterface)
     {
@@ -665,51 +717,52 @@ void NativeParserF::GetCallTipsForGenericTypeBoundProc(TokensArrayFlat* result, 
             tokensTmp->Add(new TokenFlat(result->Item(i)));
             tokensTmp->Add(new TokenFlat(result->Item(i+1)));
             GetCallTipsForTypeBoundProc(tokensTmp, callTips);
+            idxFuncSub.Add(i+1);
         }
     }
 }
 
 void NativeParserF::GetCallTipsForTypeBoundProc(TokensArrayFlat* result, wxArrayString& callTips)
 {
-    if (result->GetCount() > 0 && result->Item(0)->m_TokenKind == tkProcedure)
+    if (result->GetCount() != 2)
+        return;
+    if (!(result->Item(0)->m_TokenKind == tkProcedure))
+        return;
+
+    int tokKind = tkFunction | tkSubroutine;
+    if (!(result->Item(1)->m_TokenKind & tokKind))
+        return;
+
+    if (result->Item(0)->m_Pass)
     {
-        if (result->GetCount() != 2)
-            return;
-        int tokKind = tkFunction | tkSubroutine;
-        if (!(result->Item(1)->m_TokenKind & tokKind))
-            return;
-
-        if (result->Item(0)->m_Pass)
-        {
-            wxString pass_arg = result->Item(0)->m_Args;
-            wxString args = result->Item(1)->m_Args;
-            int start = 0;
-            int end = 0;
-            if (!pass_arg.IsEmpty())
-                m_Parser.GetPossitionOfDummyArgument(args, pass_arg, start, end);
-            else
-                GetCallTipHighlight(args, 0, start, end);
-            if (end <= start)
-                return; // was not found?
-
-            wxString fpart = args.Mid(0,start);
-            int compos = fpart.Find(',',true);
-            if (compos != wxNOT_FOUND)
-                fpart = fpart.Mid(0,compos+1);
-
-            wxString spart = args.Mid(start);
-            compos = spart.Find(',');
-            if (compos != wxNOT_FOUND)
-                spart = spart.Mid(compos+1).Trim(false);
-            else
-                spart = args.Mid(end).Trim(false);
-
-            callTips.Add(fpart.Append(spart));
-        }
+        wxString pass_arg = result->Item(0)->m_Args;
+        wxString args = result->Item(1)->m_Args;
+        int start = 0;
+        int end = 0;
+        if (!pass_arg.IsEmpty())
+            m_Parser.GetPossitionOfDummyArgument(args, pass_arg, start, end);
         else
-        {
-            callTips.Add(result->Item(1)->m_Args);
-        }
+            GetCallTipHighlight(args, 0, start, end);
+        if (end <= start)
+            return; // was not found?
+
+        wxString fpart = args.Mid(0,start);
+        int compos = fpart.Find(',',true);
+        if (compos != wxNOT_FOUND)
+            fpart = fpart.Mid(0,compos+1);
+
+        wxString spart = args.Mid(start);
+        compos = spart.Find(',');
+        if (compos != wxNOT_FOUND)
+            spart = spart.Mid(compos+1).Trim(false);
+        else
+            spart = args.Mid(end).Trim(false);
+
+        callTips.Add(fpart.Append(spart));
+    }
+    else
+    {
+        callTips.Add(result->Item(1)->m_Args);
     }
 }
 
@@ -738,11 +791,8 @@ void NativeParserF::BreakUpInLines(wxString& str, const wxString& original_str, 
             str << _T('\n');
             copy_start = last_comma + 1;
         }
-
-        if (pos == original_str.Length() - 1)
-        {
+        else if (pos == original_str.Length() - 1)
             str << original_str.Mid(copy_start); // rest of the string
-        }
         ++pos;
     }
 }
@@ -847,4 +897,38 @@ void NativeParserF::GenMakefile()
 void NativeParserF::GetFortranFileExts(StringSet& fileExts)
 {
     m_Parser.GetFortranFileExts(fileExts);
+}
+
+void NativeParserF::GetCurrentBuffer(wxString& buffer, wxString& filename)
+{
+    wxCriticalSectionLocker locker(s_CurrentBufferCritSect);
+    buffer   = m_CurrentEditorBuffer;
+    filename = m_CurrentEditorFilename;
+}
+
+void NativeParserF::ReparseCurrentEditor()
+{
+    cbEditor* ed = Manager::Get()->GetEditorManager()->GetBuiltinActiveEditor();
+    if(!ed)
+        return;
+    cbStyledTextCtrl* control = ed->GetControl();
+    if (!control)
+        return;
+
+    {
+        wxCriticalSectionLocker locker(s_CurrentBufferCritSect);
+        m_CurrentEditorBuffer = control->GetText();
+        m_CurrentEditorFilename = ed->GetFilename();
+    }
+
+    if (BufferParserThread::s_BPTInstances <= 1)
+    {
+        BufferParserThread* thread = new BufferParserThread(this, idBPThreadEvent);
+        m_ThreadPool.AddTask(thread, true);
+    }
+}
+
+void NativeParserF::OnUpdateCurrentFileTokens(wxCommandEvent& event)
+{
+    m_Parser.ConnectToNewCurrentTokens();
 }

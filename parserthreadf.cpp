@@ -42,6 +42,30 @@ ParserThreadF::ParserThreadF(const wxString& bufferOrFilename,
 	InitSecondEndPart();
 }
 
+ParserThreadF::ParserThreadF(const wxString& filename,
+							 TokensArrayF* tokens,
+							 FortranSourceForm fsForm,
+							 IncludeDB* includeDB,
+							 const wxString& buffer)
+:
+	m_pTokens(tokens),
+	m_pLastParent(0L),
+	m_pIncludeDB(includeDB)
+{
+    m_InterfaceOperator = 0;
+    m_InterfaceAssignment = 0;
+    m_InterfaceRead = 0;
+    m_InterfaceWrite = 0;
+
+    m_Filename = filename;
+    m_Tokens.InitFromBuffer(buffer, fsForm);
+    m_Tokens.SetFilename(filename);
+    wxFileName fn(filename);
+    m_pLastParent = DoAddToken(tkFile, fn.GetFullName());
+
+	InitSecondEndPart();
+}
+
 ParserThreadF::~ParserThreadF()
 {
     //dtor
@@ -59,6 +83,7 @@ void ParserThreadF::InitSecondEndPart()
     m_EndSecPart.insert(_T("where"));
     //m_EndSecPart.insert(_T("block"));
     m_EndSecPart.insert(_T("critical"));
+    m_EndSecPart.insert(_T("template"));
 }
 
 bool ParserThreadF::Parse()
@@ -154,7 +179,7 @@ bool ParserThreadF::Parse()
         }
 	}
 
-    if (!m_Filename.IsEmpty())
+    if (!m_Filename.IsEmpty() && m_pIncludeDB)
     {
         //update IncludeDB
         wxFileName fn(m_Filename);
@@ -1614,10 +1639,6 @@ void ParserThreadF::SplitAssociateConstruct(const wxString& argLine, std::map<wx
                 wxString assocName = block.Mid(0,sind).Trim(true).Trim(false);
                 wxString sourceExpr = block.Mid(sind+2).Trim(true).Trim(false);
                 assocMap.insert(std::pair<wxString,wxString>(assocName, sourceExpr));
-
-//Manager::Get()->GetLogManager()->DebugLog(_T("SplitAssociateConstruct: i mapa assocName=") + assocName);
-//Manager::Get()->GetLogManager()->DebugLog(_T("SplitAssociateConstruct: i mapa sourceExpr=") + sourceExpr);
-
             }
         }
     }

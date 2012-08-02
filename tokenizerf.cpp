@@ -86,9 +86,7 @@ bool Tokenizerf::Init(const wxString& filename, FortranSourceForm sourceForm)
 	if (filename.IsEmpty())
 	{
 		if (m_Filename.IsEmpty())
-		{
 			return false;
-		}
 	}
 	else
 		m_Filename = filename;
@@ -97,14 +95,10 @@ bool Tokenizerf::Init(const wxString& filename, FortranSourceForm sourceForm)
 		return false;
 
 	if (!ReadFile())
-	{
 		return false;
-	}
 
 	if (!m_BufferLen)
-	{
 		return false;
-	}
 
 	m_SourceForm = sourceForm;
 	AdjustLineNumber();
@@ -987,4 +981,9 @@ unsigned int Tokenizerf::GetLineEndIndex(unsigned int indexInLine)
 void Tokenizerf::SetDetailedParsing(bool detPars)
 {
     m_DetailedParsing = detPars;
+}
+
+void Tokenizerf::SetFilename(const wxString& filename)
+{
+    m_Filename = filename;
 }

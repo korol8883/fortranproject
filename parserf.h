@@ -24,7 +24,7 @@ typedef std::vector<FortranSourceForm> ArrayOfFortranSourceForm;
 class ParserF
 {
     public:
-        ParserF();
+        ParserF(bool withIntrinsicModules=true);
         ~ParserF();
         bool Parse(const wxString& filename, FortranSourceForm fsForm);
         bool Reparse(const wxString& filename, FortranSourceForm fsForm);
@@ -38,7 +38,6 @@ class ParserF
         size_t FindMatchTokens(wxString filename, wxString search, TokensArrayF& result);
         void Clear();
         void ObtainUsedDeclaredModules(const wxString& fileName, StringSet* fileUseModules, StringSet* fileDeclaredModules, StringSet* fileIncludes);
-        bool Done();
         bool IsFileFortran(const wxString& filename, FortranSourceForm& fsForm);
         void FindMatchDeclarationsInCurrentScope(const wxString& search, cbEditor* ed, TokensArrayFlat& result, bool partialMatch, int endPos=-1, int* nLineStart=NULL);
         void FindMatchVariablesInModules(const wxString& search, TokensArrayFlat& result, bool partialMatch);
@@ -69,6 +68,11 @@ class ParserF
         bool HasIncludeFiles();
         TokenF* FindFile(const wxString& filename);
         void GetFortranFileExts(StringSet& fileExts);
+        void SetNewTokens(TokensArrayF* pTokens);
+        void SetNewIncludeDB(IncludeDB* pIncludeDB);
+        void ConnectToNewTokens();
+        void SetNewCurrentTokens(TokensArrayF* pTokens);
+        void ConnectToNewCurrentTokens();
     protected:
     private:
         void FindMatchChildren(TokensArrayF &m_Children, wxString search, TokensArrayF& result, bool exact=false);
@@ -100,9 +104,13 @@ class ParserF
         void AddIncludeFileChildren(const TokenF* include, TokensArrayF& tokens);
         void GetSubmoduleHostTokens(TokenF* subModToken, std::vector<TokensArrayF*> &vpChildren);
         void RereadFileExtensions();
+        void ClearTokens(TokensArrayF* pTokens);
+        void ParseIntrinsicModules();
+        void ChangeCaseChildren(TokensArrayF &children, int dispCase);
 
         TokensArrayF* m_pTokens;
-        IncludeDB m_IncludeDB;
+        TokensArrayF* m_pIntrinsicModuleTokens;
+        IncludeDB* m_pIncludeDB;
         bool m_Done;
         bool m_ExtDone;
         StringSet m_FortranExtFree;
@@ -126,11 +134,15 @@ class ParserF
         int m_IncludeDeep;
         int m_SubmodDeep;
 
-        wxArrayString m_VisitedModulesRen;
+        wxArrayString       m_VisitedModulesRen;
         PassedTokensArray2D m_PassedTokensVisitedRen;
-        ArrOfSizeT2D m_ChildrenIdxVisitedRen;
-        BoolArray3D m_CanBeSeenVisitedRen;
+        ArrOfSizeT2D        m_ChildrenIdxVisitedRen;
+        BoolArray3D         m_CanBeSeenVisitedRen;
 
+        TokensArrayF* m_pTokensNew;
+        IncludeDB*    m_pIncludeDBNew;
+        TokensArrayF* m_pCurrentBufferTokens;
+        TokensArrayF* m_pCurrentBufferTokensNew;
 };
 
 #endif // PARSERF_H

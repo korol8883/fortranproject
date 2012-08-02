@@ -15,6 +15,9 @@
 #include "projectdependencies.h"
 #include "jumptracker.h"
 
+#include <cbthreadpool.h>
+#include "workspaceparserthread.h"
+
 typedef std::map<wxString,ProjectDependencies*>  WSDependencyMap;
 
 // forward decls
@@ -38,6 +41,7 @@ class NativeParserF : public wxEvtHandler
         void ReparseProject(cbProject* project);
         void ParseProject(cbProject* project);
         void ForceReparseWorkspace();
+        void OnReparseWorkspaceTimer(wxTimerEvent& event);
         void UpdateProjectFilesDependency(cbProject* project);
         ParserF* GetParser();
         bool IsFileFortran(const wxString& filename);
@@ -49,7 +53,7 @@ class NativeParserF : public wxEvtHandler
         wxImageList* GetImageList();
         int GetTokenKindImageIdx(TokenF* token);
         void GetCallTips(const wxString& name, bool onlyUseAssoc, bool onlyPublicNames, wxArrayString& callTips, TokensArrayFlat* result);
-        void GetCallTipsForGenericTypeBoundProc(TokensArrayFlat* result, wxArrayString& callTips);
+        void GetCallTipsForGenericTypeBoundProc(TokensArrayFlat* result, wxArrayString& callTips, wxArrayInt& idxFuncSub);
         void GetCallTipsForTypeBoundProc(TokensArrayFlat* result, wxArrayString& callTips);
         int CountCommas(const wxString& lineText, int start, bool nesting=true);
         void CollectInformationForCallTip(int& commasAll, int& commasUntilPos, wxString& lastName, bool& isempty, bool& isAfterPercent, TokensArrayFlat* result);
@@ -61,6 +65,10 @@ class NativeParserF : public wxEvtHandler
         FortranProject* GetFortranProject();
         void GenMakefile();
         void GetFortranFileExts(StringSet& fileExts);
+        wxArrayString* GetWSFiles();
+        ArrayOfFortranSourceForm* GetWSFileForms();
+        void GetCurrentBuffer(wxString& buffer, wxString& filename);
+        void ReparseCurrentEditor();
 
     protected:
     private:
@@ -76,14 +84,30 @@ class NativeParserF : public wxEvtHandler
         void BreakUpInLines(wxString& str, const wxString& original_str, int chars_per_line);
         wxString GetLastName(const wxString& line);
 
+        void MakeWSFileList();
+
+        void OnUpdateWorkspaceBrowser(wxCommandEvent& event);
+        void OnUpdateCurrentFileTokens(wxCommandEvent& event);
+
         ParserF m_Parser;
         WorkspaceBrowserF* m_pWorkspaceBrowser;
         bool m_WorkspaceBrowserIsFloating;
         FortranProject* m_pFortranProject;
+        wxTimer m_WorkspaceReparseTimer;
 
         WSDependencyMap m_WSDependency;
 
         JumpTracker m_JumpTracker;
+
+        cbThreadPool m_ThreadPool;
+
+        wxArrayString m_WSFiles;
+        ArrayOfFortranSourceForm m_WSFileForms;
+
+        wxString m_CurrentEditorBuffer;
+        wxString m_CurrentEditorFilename;
+
+        DECLARE_EVENT_TABLE();
 };
 
 #endif // NATIVEPARSERF_H

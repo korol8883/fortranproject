@@ -24,6 +24,11 @@ class ParserThreadF
 							 FortranSourceForm fsForm,
 							 bool isBuffer=false,
 							 IncludeDB* includeDB=NULL);
+        ParserThreadF(const wxString& filename,
+							 TokensArrayF* tokens,
+							 FortranSourceForm fsForm,
+							 IncludeDB* includeDB,
+							 const wxString& buffer);
         virtual ~ParserThreadF();
         bool Parse();
         void ParseDeclarations(bool breakAtEnd=false, bool breakAtContains=false);

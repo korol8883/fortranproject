@@ -7,6 +7,8 @@
 #include "tokenf.h"
 #include <wx/intl.h>
 
+wxCriticalSection s_CritSect;
+
 TokenF::TokenF()
 	: m_LineStart(0),
 	m_LineEnd(0),

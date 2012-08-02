@@ -22,6 +22,7 @@
 #include "keywordsparserf.h"
 #include <wx/timer.h>
 #include <list>
+#include <map>
 #include "loggers.h"
 #include "finfowindow.h"
 #include "lineaddress.h"
@@ -78,9 +79,11 @@ class FortranProject : public cbCodeCompletionPlugin
         void OnGotoDeclaration(wxCommandEvent& event);
         void OnReparseActiveEditor(CodeBlocksEvent& event);
         void OnEditorActivated(CodeBlocksEvent& event);
+        void OnNextPrevCallTipPage(wxCommandEvent& event);
 //        void OnEditorOpen(CodeBlocksEvent& event);
 //        void OnEditorClose(CodeBlocksEvent& event);
         void OnCodeCompleteTimer(wxTimerEvent& event);
+        void OnReparseEditorTimer(wxTimerEvent& event);
         void CodeCompletePreprocessor();
         void DoCodeComplete();
         void OnValueTooltip(CodeBlocksEvent& event);
@@ -97,6 +100,7 @@ class FortranProject : public cbCodeCompletionPlugin
         bool m_IsDebugging;
 
         void OnGenerateMakefile(wxCommandEvent& event);
+        void OnChangeCase(wxCommandEvent& event);
 
         void RegisterFileExtensions();
 
@@ -142,6 +146,9 @@ class FortranProject : public cbCodeCompletionPlugin
         KeywordsParserF*                   m_pKeywordsParser;
         wxString                           m_LastCallTipName;
         bool                               m_WasCallTipInfoLog;
+
+        std::map<wxString,int>             m_IdxCallTipPage;
+        wxTimer                            m_TimerReparseEditor;
 
         DECLARE_EVENT_TABLE()
 };

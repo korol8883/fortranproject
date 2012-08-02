@@ -440,71 +440,6 @@ logical function BTEST(I, POS)
     integer :: I, POS
 end function
 
-logical function C_ASSOCIATED(c_prt_1 [, c_ptr_2])
-    ! Determines the status of the C pointer c_ptr_1 or if c_ptr_1 is associated with the target c_ptr_2.
-    ! Arguments:
-    ! c_ptr_1   -Scalar of the type C_PTR or C_FUNPTR.
-    ! c_ptr_2   -(Optional) Scalar of the same type as c_ptr_1.
-    ! Return value:
-    ! The return value is of type LOGICAL; it is .false. if either c_ptr_1 is a C NULL pointer
-    ! or if c_ptr1 and c_ptr_2 point to different addresses.
-    ! Standard: Fortran 2003 and later.
-    type(c_ptr or c_funptr) :: c_prt_1, c_ptr_2
-end function
-
-subroutine C_F_POINTER(CPTR, FPTR[, SHAPE])
-    ! Assign the target the C pointer CPTR to the Fortran pointer FPTR and specify its shape
-    ! Arguments:
-    ! CPTR  -scalar of the type C_PTR. It is INTENT(IN).
-    ! FPTR  -pointer interoperable with cptr. It is INTENT(OUT).
-    ! SHAPE -(Optional) Rank-one array of type INTEGER with INTENT(IN). It shall be present if and only
-    !         if fptr is an array. The size must be equal to the rank of fptr.
-    ! Standard: Fortran 2003 and later
-    type(c_ptr), intent(in) :: CPTR
-    type(Fortran pointer), intent(out) :: FPTR
-    integer, dimension(:), optional, intent(in) :: SHAPE
-end subroutine
-
-subroutine C_F_PROCPOINTER(cptr, fptr)
-    ! Assign the target of the C function pointer CPTR to the Fortran procedure pointer FPTR
-    ! Arguments:
-    ! FPTR  -procedure pointer interoperable with cptr. It is INTENT(OUT).
-    ! Standard: Fortran 2003 and later
-end subroutine
-
-function C_FUNLOC(x)
-    ! Determines the C address of the argument
-    ! Arguments:
-    ! x   -Interoperable function or pointer to such function.
-    ! Return value:
-    ! The return value is of type C_FUNPTR and contains the C address of the argument.
-    ! Standard: Fortran 2003 and later
-end function
-
-c_ptr function C_LOC(X)
-    ! Determines the C address of the argument
-    ! Arguments:
-    ! X  -Associated scalar pointer or interoperable scalar or allocated allocatable variable with TARGET attribute.
-    ! Return value:
-    ! The return value is of type C_PTR and contains the C address of the argument.
-    ! Standard: Fortran 2003 and later
-end function
-
-function C_SIZEOF(X)
-    ! Calculates the number of bytes of storage the expression X occupies
-    ! Arguments:
-    ! X   -The argument shall be of any type, rank or shape.
-    ! Return value:
-    ! The return value is of type integer and of the system-dependent kind C_SIZE_T (from the ISO_C_BINDING module).
-    ! Its value is the number of bytes occupied by the argument. If the argument has the POINTER attribute,
-    ! the number of bytes of the storage area pointed to is returned. If the argument is of a derived type
-    ! with POINTER or ALLOCATABLE components, the return value doesn't account for the sizes of the data pointed
-    ! to by these components.
-    ! Standard: Fortran 2008
-    type(any_type, rank or shape) :: X
-    integer(C_SIZE_T) :: C_SIZEOF
-end function
-
 complex function CABS(A)
     ! It is specific name of ABS procedure.
     ! Computes the absolute value of A.
@@ -2790,81 +2725,318 @@ function EXTENDS_TYPE_OF (A, MOLD)
     type(any_extensible_type) :: A, MOLD
 end function
 
-function bge (...)
-    !bit sequence comparison
+function BGE (I, J)
+    ! Determines whether an integral is a bitwise greater than or equal to another.
+    ! Arguments:
+    ! I    Shall be of INTEGER type.
+    ! J    Shall be of INTEGER type, and of the same kind as I.
+    ! Return value:
+    !    The return value is default logical
+    ! Standard:
+    !   Fortran 2008 and later
+    integer :: I, J
 end function
 
-function bgt (...)
+function BGT (I, J)
+    ! Determines whether an integral is a bitwise greater than another.
+    ! Arguments:
+    ! I    Shall be of INTEGER type.
+    ! J    Shall be of INTEGER type, and of the same kind as I.
+    ! Return value:
+    !    The return value is default logical
+    ! Standard:
+    !   Fortran 2008 and later
+    integer :: I, J
 end function
 
-function ble (...)
+function BLE (I, J)
+    ! Determines whether an integral is a bitwise less than or equal to another.
+    ! Arguments:
+    ! I    Shall be of INTEGER type.
+    ! J    Shall be of INTEGER type, and of the same kind as I.
+    ! Return value:
+    !    The return value is default logical
+    ! Standard:
+    !   Fortran 2008 and later
+    integer :: I, J
 end function
 
-function blt (...)
+function BLT (I, J)
+    ! Determines whether an integral is a bitwise less than another.
+    ! Arguments:
+    ! I    Shall be of INTEGER type.
+    ! J    Shall be of INTEGER type, and of the same kind as I.
+    ! Return value:
+    !    The return value is default logical
+    ! Standard:
+    !   Fortran 2008 and later
+    integer :: I, J
 end function
 
-function dshiftl (...)
+function DSHIFTL (I, J, SHIFT)
+    ! Combines bits of I and J. The rightmost SHIFT bits of the result are the leftmost SHIFT bits of J,
+    ! and the remaining bits are the rightmost bits of I.
+    ! Arguments:
+    ! I    Shall be of type INTEGER or a BOZ constant.
+    ! J    Shall be of type INTEGER or a BOZ constant. If both I and J have integer type,
+    !      then they shall have the same kind type parameter. I and J shall not both be BOZ constants.
+    ! SHIFT Shall be of type INTEGER. It shall be nonnegative. If I is not a BOZ constant,
+    !      then SHIFT shall be less than or equal to BIT_SIZE(I); otherwise, SHIFT shall be less than or equal to BIT_SIZE(J).
+    ! Return value:
+    !    If either I or J is a BOZ constant, it is first converted as if by the intrinsic function INT
+    !    to an integer type with the kind type parameter of the other.
+    ! Standard:
+    !   Fortran 2008 and later
+    integer :: I, J, SHIFT
 end function
 
-function dshiftr (...)
+function DSHIFTR (I, J, SHIFT)
+    ! Combines bits of I and J. The leftmost SHIFT bits of the result are the rightmost SHIFT bits of I,
+    ! and the remaining bits are the leftmost bits of J.
+    ! Arguments:
+    ! I    Shall be of type INTEGER or a BOZ constant.
+    ! J    Shall be of type INTEGER or a BOZ constant. If both I and J have integer type, then they shall
+    !      have the same kind type parameter. I and J shall not both be BOZ constants.
+    ! SHIFT Shall be of type INTEGER. It shall be nonnegative. If I is not a BOZ constant,
+    !      then SHIFT shall be less than or equal to BIT_SIZE(I); otherwise, SHIFT shall be less than or equal to BIT_SIZE(J).
+    ! Return value:
+    !    If either I or J is a BOZ constant, it is first converted as if by the intrinsic function INT
+    !    to an integer type with the kind type parameter of the other.
+    ! Standard:
+    !   Fortran 2008 and later
+    integer :: I, J, SHIFT
 end function
 
-function popcnt (...)
+function POPCNT (I)
+    ! Returns the number of bits set ('1' bits) in the binary representation of I.
+    ! Arguments:
+    ! I    Shall be of type INTEGER.
+    ! Return value:
+    !    The return value is of type INTEGER and of the default integer kind.
+    ! Standard:
+    !   Fortran 2008 and later
+    integer :: I
 end function
 
-function poppar (...)
+function POPPAR (I)
+    ! Returns parity of the integer I, i.e. the parity of the number of bits set ('1' bits) in the binary
+    ! representation of I. It is equal to 0 if I has an even number of bits set, and 1 for an odd number
+    ! of '1' bits.
+    ! Arguments:
+    ! I    Shall be of type INTEGER.
+    ! Return value:
+    !    The return value is of type INTEGER and of the default integer kind.
+    ! Standard:
+    !   Fortran 2008 and later
+    integer :: I
 end function
 
-function maskl (...)
+function MASKL(I[, KIND])
+    ! Sets its leftmost I bits to 1, and the remaining bits sets to 0.
+    ! Arguments:
+    ! I     Shall be of type INTEGER.
+    ! KIND  Shall be a scalar constant expression of type INTEGER.
+    ! Return value:
+    !    The return value is of type INTEGER. If KIND is present, it specifies the kind value
+    !    of the return type; otherwise, it is of the default integer kind.
+    ! Standard:
+    !   Fortran 2008 and later
+    integer :: I
+    integer, optional :: KIND
 end function
 
-function maskr (...)
+function MASKR(I[, KIND])
+    ! Sets its rightmost I bits to 1, and the remaining bits sets to 0.
+    ! Arguments:
+    ! I     Shall be of type INTEGER.
+    ! KIND  Shall be a scalar constant expression of type INTEGER.
+    ! Return value:
+    !    The return value is of type INTEGER. If KIND is present, it specifies the kind value
+    !    of the return type; otherwise, it is of the default integer kind.
+    ! Standard:
+    !   Fortran 2008 and later
+    integer :: I
+    integer, optional :: KIND
 end function
 
-function shifta (...)
+function SHIFTA(I, SHIFT)
+    ! Returns a value corresponding to I with all of the bits shifted right by SHIFT places.
+    ! If the absolute value of SHIFT is greater than BIT_SIZE(I), the value is undefined.
+    ! Bits shifted out from the right end are lost. The fill is arithmetic:
+    ! the bits shifted in from the left end are equal to the leftmost bit, which in two's
+    ! complement representation is the sign bit.
+    ! Arguments:
+    ! I     The type shall be INTEGER.
+    ! SHIFT The type shall be INTEGER.
+    ! Return value:
+    !    The return value is of type INTEGER and of the same kind as I.
+    ! Standard:
+    !   Fortran 2008 and later
+    integer :: I, SHIFT
 end function
 
-function shiftl (...)
+function SHIFTL(I, SHIFT)
+    ! Returns a value corresponding to I with all of the bits shifted left by SHIFT places.
+    ! If the absolute value of SHIFT is greater than BIT_SIZE(I), the value is undefined.
+    ! Bits shifted out from the left end are lost, and bits shifted in from the right end are set to 0.
+    ! Arguments:
+    ! I     The type shall be INTEGER.
+    ! SHIFT The type shall be INTEGER.
+    ! Return value:
+    !    The return value is of type INTEGER and of the same kind as I.
+    ! Standard:
+    !   Fortran 2008 and later
+    integer :: I, SHIFT
 end function
 
-function shiftr (...)
+function SHIFTR(I, SHIFT)
+    ! Returns a value corresponding to I with all of the bits shifted right by SHIFT places.
+    ! If the absolute value of SHIFT is greater than BIT_SIZE(I), the value is undefined.
+    ! Bits shifted out from the right end are lost, and bits shifted in from the left end are set to 0.
+    ! Arguments:
+    ! I     The type shall be INTEGER.
+    ! SHIFT The type shall be INTEGER.
+    ! Return value:
+    !    The return value is of type INTEGER and of the same kind as I.
+    ! Standard:
+    !   Fortran 2008 and later
+    integer :: I, SHIFT
 end function
 
-subroutine merge_bits(...)
-end subroutine
 
-function iall (...)
+function MERGE_BITS(I, J, MASK)
+    ! Merges the bits of I and J as determined by the mask. The i-th bit of the result is equal to
+    ! the i-th bit of I if the i-th bit of MASK is 1; it is equal to the i-th bit of J otherwise.
+    ! Arguments:
+    ! I     Shall be of type INTEGER.
+    ! J     Shall be of type INTEGER and of the same kind as I.
+    ! MASK  Shall be of type INTEGER and of the same kind as I.
+    ! Return value:
+    !    The result is of the same type and kind as I.
+    ! Standard:
+    !   Fortran 2008 and later
+    integer :: I, J, MASK
 end function
 
-function iany (...)
+function IALL(ARRAY[, DIM] [, MASK])
+    ! Reduces with bitwise AND the elements of ARRAY along dimension DIM if the corresponding element
+    ! in MASK is TRUE.
+    ! Arguments:
+    ! ARRAY   Shall be an array of type INTEGER
+    ! DIM    (Optional) shall be a scalar of type INTEGER with a value in the range from 1 to n, where n equals the rank of ARRAY.
+    ! MASK   (Optional) shall be of type LOGICAL and either be a scalar or an array of the same shape as ARRAY.
+    ! Return value:
+    !    The result is of the same type as ARRAY.
+    !    If DIM is absent, a scalar with the bitwise ALL of all elements in ARRAY is returned. Otherwise,
+    !    an array of rank n-1, where n equals the rank of ARRAY, and a shape similar to that of ARRAY with
+    !    dimension DIM dropped is returned.
+    ! Standard:
+    !   Fortran 2008 and later
+    integer :: ARRAY(:[,:,...])
+    integer, optional :: DIM
+    logical, optional :: MASK([:...])
 end function
 
-function iparity (...)
+function IANY(ARRAY[, DIM] [, MASK])
+    ! Reduces with bitwise OR (inclusive or) the elements of ARRAY along dimension DIM if the corresponding
+    ! element in MASK is TRUE.
+    ! Arguments:
+    ! ARRAY   Shall be an array of type INTEGER
+    ! DIM    (Optional) shall be a scalar of type INTEGER with a value in the range from 1 to n, where n equals the rank of ARRAY.
+    ! MASK   (Optional) shall be of type LOGICAL and either be a scalar or an array of the same shape as ARRAY.
+    ! Return value:
+    !    The result is of the same type as ARRAY.
+    !    If DIM is absent, a scalar with the bitwise OR of all elements in ARRAY is returned.
+    !    Otherwise, an array of rank n-1, where n equals the rank of ARRAY, and a shape similar to that
+    !    of ARRAY with dimension DIM dropped is returned.
+    ! Standard:
+    !   Fortran 2008 and later
+    integer :: ARRAY(:[,:,...])
+    integer, optional :: DIM
+    logical, optional :: MASK([:...])
 end function
 
-function storage_size (...)
+function IPARITY(ARRAY[, DIM] [, MASK])
+    ! Reduces with bitwise XOR (exclusive or) the elements of ARRAY along dimension DIM if the corresponding
+    ! element in MASK is TRUE.
+    ! Arguments:
+    ! ARRAY   Shall be an array of type INTEGER
+    ! DIM    (Optional) shall be a scalar of type INTEGER with a value in the range from 1 to n, where n equals the rank of ARRAY.
+    ! MASK   (Optional) shall be of type LOGICAL and either be a scalar or an array of the same shape as ARRAY.
+    ! Return value:
+    !    The result is of the same type as ARRAY.
+    !    If DIM is absent, a scalar with the bitwise XOR of all elements in ARRAY is returned.
+    !    Otherwise, an array of rank n-1, where n equals the rank of ARRAY, and a shape similar
+    !    to that of ARRAY with dimension DIM dropped is returned.
+    ! Standard:
+    !   Fortran 2008 and later
+    integer :: ARRAY(:[,:,...])
+    integer, optional :: DIM
+    logical, optional :: MASK([:...])
 end function
 
-function parity (...)
+function STORAGE_SIZE(A [, KIND])
+    ! Returns the storage size of argument A in bits.
+    ! Arguments:
+    ! A    Shall be a scalar or array of any type.
+    ! KIND (Optional) shall be a scalar integer constant expression.
+    ! Return value:
+    !    The result is a scalar integer with the kind type parameter specified by KIND (or default integer type
+    !    if KIND is missing). The result value is the size expressed in bits for an element of an array that
+    !    has the dynamic type and type parameters of A.
+    ! Standard:
+    !   Fortran 2008 and later
+    type(any_type) :: ARRAY(:[,:,...])
+    integer, optional :: KIND
 end function
 
-function norm2 (...)
+function PARITY(MASK[, DIM])
+    ! Calculates the parity, i.e. the reduction using .XOR., of MASK along dimension DIM.
+    ! Arguments:
+    ! MASK   Shall be an array of type LOGICAL
+    ! DIM   (Optional) shall be a scalar of type INTEGER with a value in the range from 1 to n, where n equals the rank of MASK.
+    ! Return value:
+    !   The result is of the same type as MASK.
+    !   If DIM is absent, a scalar with the parity of all elements in MASK is returned, i.e. true if
+    !   an odd number of elements is .true. and false otherwise. If DIM is present, an array of rank n-1,
+    !   where n equals the rank of ARRAY, and a shape similar to that of MASK with dimension DIM dropped is returned.
+    ! Standard:
+    !   Fortran 2008 and later
+    logical :: MASK(:[,:,...])
+    integer :: DIM
 end function
 
-subroutine execute_command_line(COMMAND [, WAIT, EXITSTAT, CMDSTAT, CMDMSG ]) 
+function NORM2(ARRAY[, DIM])
+    ! Calculates the Euclidean vector norm (L_2 norm) of of ARRAY along dimension DIM.
+    ! Arguments:
+    ! ARRAY   Shall be an array of type REAL.
+    ! DIM     (Optional) shall be a scalar of type INTEGER with a value in the range from 1 to n,
+    !          where n equals the rank of ARRAY.
+    ! Return value:
+    !   The result is of the same type as ARRAY.
+    !   If DIM is absent, a scalar with the square root of the sum of all elements in ARRAY squared is
+    !   returned. Otherwise, an array of rank n-1, where n equals the rank of ARRAY, and a shape similar
+    !   to that of ARRAY with dimension DIM dropped is returned.
+    ! Standard:
+    !   Fortran 2008 and later
+    real :: ARRAY(:[,:,...])
+    integer, optional :: DIM
+end function
+
+subroutine execute_command_line(COMMAND [, WAIT, EXITSTAT, CMDSTAT, CMDMSG ])
     ! Runs a shell command, synchronously or asynchronously.
-    ! If WAIT is present and has the value false, the execution of the command is asynchronous 
-    ! if the system supports it; otherwise, the command is executed synchronously. 
-    ! The three last arguments allow the user to get status information. 
-    ! After synchronous execution, EXITSTAT contains the integer exit code of the command, as returned by system. 
-    ! CMDSTAT is set to zero if the command line was executed (whatever its exit status was). 
+    ! If WAIT is present and has the value false, the execution of the command is asynchronous
+    ! if the system supports it; otherwise, the command is executed synchronously.
+    ! The three last arguments allow the user to get status information.
+    ! After synchronous execution, EXITSTAT contains the integer exit code of the command, as returned by system.
+    ! CMDSTAT is set to zero if the command line was executed (whatever its exit status was).
     ! CMDMSG is assigned an error message if an error has occurred.
     ! Standard:
     !    Fortran 2008 and later
     character(len=*), intent(in) :: COMMAND ! command line to be executed.
     logical, intent(in), optional :: WAIT ! Do perform execution synchronously?
     integer, intent(inout), optional :: EXITSTAT ! Exit status if synchronous execution is performed.
-    integer, intent(out), optional :: CMDSTAT 
+    integer, intent(out), optional :: CMDSTAT
     character(len=*), intent(inout), optional :: CMDMSG
 end subroutine
 
@@ -2897,4 +3069,13 @@ function rank(A)
     integer :: rank
     type(any_type) :: A ! data object
 end function
+
+module OpenMP
+    type(keywords) ::  atomic, auto, barrier, capture, collapse, copyin, copyprivate, default, &
+                       firstprivate, lastprivate, private, reduction, schedule, shared, critical, &
+                       do, flush, master, ordered, parallel, sections, workshare, copyin, copyprivate, &
+                       critical, default, threadprivate, do, dynamic, guided, read, runtime, single, &
+                       static, task, if, final, untied, none, mergeable, taskwait, taskyield, &
+                       threadprivate, update, write
+end module
 

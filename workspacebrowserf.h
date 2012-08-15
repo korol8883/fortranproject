@@ -33,6 +33,7 @@ class WorkspaceBrowserF : public wxPanel
         void MarkSymbol(wxString filename, int line);
         void RereadOptions();
         void DeleteAllItems();
+        void OnMenuEditPaste(wxCommandEvent& event);
 
     private:
         friend class myTextCtrl;

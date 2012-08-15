@@ -79,6 +79,7 @@ class FortranProject : public cbCodeCompletionPlugin
         void OnGotoDeclaration(wxCommandEvent& event);
         void OnReparseActiveEditor(CodeBlocksEvent& event);
         void OnEditorActivated(CodeBlocksEvent& event);
+        void OnEditorClose(CodeBlocksEvent& event);
         void OnNextPrevCallTipPage(wxCommandEvent& event);
 //        void OnEditorOpen(CodeBlocksEvent& event);
 //        void OnEditorClose(CodeBlocksEvent& event);
@@ -94,6 +95,8 @@ class FortranProject : public cbCodeCompletionPlugin
         void OnJumpHome(wxCommandEvent& event);
         void OnJumpForward(wxCommandEvent& event);
         void JumpToLine(const LineAddress& adr);
+        wxString GetIncludeFilename(cbStyledTextCtrl* control);
+        void OnMenuEditPaste(wxCommandEvent& event);
 
         void OnDebuggerStarted(CodeBlocksEvent& event);
         void OnDebuggerFinished(CodeBlocksEvent& event);

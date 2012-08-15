@@ -81,7 +81,7 @@ WorkspaceBrowserF::WorkspaceBrowserF(wxWindow* parent, NativeParserF* np, Parser
 
     m_BrowserOptions.visibleBottomTree = cfg->ReadBool(_T("/visible_bottom_tree"), true);
     m_BrowserOptions.sortAlphabetically = cfg->ReadBool(_T("/browser_sort_alphabetically"), true);
-    m_BrowserOptions.showLocalVariables = cfg->ReadBool(_T("/browser_show_local_variables"), true);
+    m_BrowserOptions.showLocalVariables = cfg->ReadBool(_T("/browser_show_local_variables"), false);
     m_BrowserOptions.showIncludeSeparately = cfg->ReadBool(_T("/browser_show_include_files_separately"), true);
 
 	wxXmlResource::Get()->LoadPanel(this, parent, _T("pnlWBF"));
@@ -135,10 +135,7 @@ void WorkspaceBrowserF::UpdateView()
 	    cbEditor* ed = Manager::Get()->GetEditorManager()->GetBuiltinActiveEditor();
 	    if (ed)
 	    {
-            //m_ActiveFilename = ed->GetFilename().BeforeLast(_T('.'));
-            // the above line is a bug (see https://developer.berlios.de/patch/index.php?func=detailpatch&patch_id=1559&group_id=5358)
-            m_ActiveFilename = ed->GetFilename().AfterLast(wxFILE_SEP_PATH);
-            m_ActiveFilename = ed->GetFilename().BeforeLast(wxFILE_SEP_PATH) + wxFILE_SEP_PATH + m_ActiveFilename; //.BeforeLast(_T('.'));
+            m_ActiveFilename = ed->GetFilename();
 	    }
 	    if (m_pActiveProject)
             BuildTree();
@@ -300,7 +297,9 @@ void WorkspaceBrowserF::OnForceReparse(wxCommandEvent& event)
             }
             case bdfProject:
             {
-                m_NativeParser->ReparseProject(m_pActiveProject);
+// NOTE (darius#1#): Force reparse workspace, just because currently only the workspace parsing is running on a secondary thread.
+                //m_NativeParser->ReparseProject(m_pActiveProject);
+                m_NativeParser->ForceReparseWorkspace();
                 UpdateView();
                 break;
             }
@@ -538,7 +537,7 @@ void WorkspaceBrowserF::RereadOptions()
     {
         m_BrowserOptions.visibleBottomTree = cfg->ReadBool(_("/visible_bottom_tree"), true);
         m_BrowserOptions.sortAlphabetically = cfg->ReadBool(_("/browser_sort_alphabetically"), true);
-        m_BrowserOptions.showLocalVariables = cfg->ReadBool(_T("/browser_show_local_variables"), true);
+        m_BrowserOptions.showLocalVariables = cfg->ReadBool(_T("/browser_show_local_variables"), false);
         m_BrowserOptions.showIncludeSeparately = cfg->ReadBool(_T("/browser_show_include_files_separately"), true);
         UpdateView();
     }
@@ -557,3 +556,21 @@ void WorkspaceBrowserF::OnMakeVisible(wxCommandEvent& event)
         m_pBrowserBuilder->MakeVisibleCurrent();
     }
 }
+
+void WorkspaceBrowserF::OnMenuEditPaste(wxCommandEvent& event)
+{
+    wxWindow* pFocused = wxWindow::FindFocus();
+    if (!pFocused)
+    {
+        event.Skip();
+        return;
+    }
+
+    if (pFocused == m_Search)
+        m_Search->Paste();
+    else
+        event.Skip();
+
+    return;
+}
+

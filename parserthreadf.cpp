@@ -47,7 +47,7 @@ ParserThreadF::ParserThreadF(const wxString& filename,
 							 FortranSourceForm fsForm,
 							 IncludeDB* includeDB,
 							 const wxString& buffer)
-:
+    :
 	m_pTokens(tokens),
 	m_pLastParent(0L),
 	m_pIncludeDB(includeDB)
@@ -83,7 +83,8 @@ void ParserThreadF::InitSecondEndPart()
     m_EndSecPart.insert(_T("where"));
     //m_EndSecPart.insert(_T("block"));
     m_EndSecPart.insert(_T("critical"));
-    m_EndSecPart.insert(_T("template"));
+    m_EndSecPart.insert(_T("template")); //non-standard
+    m_EndSecPart.insert(_T("structure")); //non-standard
 }
 
 bool ParserThreadF::Parse()
@@ -753,7 +754,7 @@ void ParserThreadF::HandleType(bool& needDefault, TokenF* &newToken)
     ParseDeclarations(true, true);
 
     if (m_LastTokenName.IsSameAs(_T("contains")))
-        ParseTypeBoundProcedures();
+        ParseTypeBoundProcedures(wxEmptyString, false);
 
     m_pLastParent->AddLineEnd(m_Tokens.GetLineNumber());
     newToken = m_pLastParent;
@@ -841,6 +842,10 @@ void ParserThreadF::ParseDeclarations(bool breakAtEnd, bool breakAtContains)
         else if (m_LastTokenName.IsSameAs(_T("block")) && !next.Lower().IsSameAs(_T("data")))
         {
             HandleBlockConstruct();
+        }
+        else if (m_LastTokenName.IsSameAs(_T("procedure")))
+        {
+            ParseTypeBoundProcedures(m_LastTokenName, true);
         }
 
         bool found = ParseDeclarationsFirstPart(token, next);
@@ -1040,6 +1045,7 @@ void ParserThreadF::ParseDeclarationsSecondPart(wxString& token, bool& needDefau
         TokenF* tok = DoAddToken(tkVariable, varNames[i], varArgs[i], defT);
         tok->m_PartLast = varComs.Item(i);
         tok->m_TokenAccess = taKind;
+        tok->AddLineEnd(tok->m_LineStart);
         newTokenArr.Add(tok);
     }
 	return;
@@ -1440,21 +1446,42 @@ void ParserThreadF::HandleProcedureList()
     }
 }
 
-void ParserThreadF::ParseTypeBoundProcedures()
+void ParserThreadF::ParseTypeBoundProcedures(const wxString& firstWord, bool breakAtEOL)
 {
     TokenAccessKind defAccKind = taPublic;
+    bool firstTime = true;
     while (1)
     {
         TokenAccessKind tokAccK = defAccKind;
-        wxString firstTokenLw = m_Tokens.GetToken().Lower();
+        wxString firstTokenLw;
+        if (firstTime && !firstWord.IsEmpty())
+        {
+            firstTokenLw = firstWord.Lower();
+            firstTime = false;
+        }
+        else
+            firstTokenLw = m_Tokens.GetToken().Lower();
+
         if (firstTokenLw.IsEmpty())
             break;
         unsigned int lineNum = m_Tokens.GetLineNumber();
         wxArrayString curLineArr = m_Tokens.GetTokensToEOL();
         bool isGen = firstTokenLw.IsSameAs(_T("generic"));
-        if (curLineArr.Count() > 0 && (firstTokenLw.IsSameAs(_T("procedure")) || isGen) ) // &&
+        bool isProc = firstTokenLw.IsSameAs(_T("procedure"));
+        if (curLineArr.Count() > 0 && (isProc || isGen) ) // &&
             // !curLineArr.Item(0).StartsWith(_T("(")) ) // not interface-name
         {
+            wxString interfaceName;
+            if (isProc)
+            {
+                wxString strInter = curLineArr.Item(0);
+                int idx_a = strInter.Find(')',true);
+                int idx_b = strInter.Find('(');
+                if (idx_a != wxNOT_FOUND && idx_b != wxNOT_FOUND && idx_a > idx_b+1)
+                {
+                    interfaceName = strInter.Mid(idx_b+1,idx_a-idx_b-1);
+                }
+            }
             bool pass = true;
             wxString passArg;
             int idx = curLineArr.Index(_T("::"));
@@ -1519,7 +1546,16 @@ void ParserThreadF::ParseTypeBoundProcedures()
                     token->m_DisplayName = bindName;
                     token->m_Pass = pass;
                     token->m_Args = passArg;
-                    token->m_PartLast = procName.Lower();
+                    if (interfaceName.IsEmpty())
+                    {
+                        token->m_PartLast = procName.Lower();
+                        token->m_IsAbstract = false;
+                    }
+                    else
+                    {
+                        token->m_PartLast = interfaceName.Lower();
+                        token->m_IsAbstract = true;
+                    }
                     token->AddLineEnd(m_Tokens.GetLineNumber());
                     token->m_TokenAccess = tokAccK;
                 }
@@ -1561,6 +1597,9 @@ void ParserThreadF::ParseTypeBoundProcedures()
         {
             defAccKind = taPrivate;
         }
+
+        if (breakAtEOL)
+            break;
     }
 }
 

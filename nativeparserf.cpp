@@ -315,11 +315,19 @@ void NativeParserF::OnEditorActivated(EditorBase* editor)
     cbEditor* ed = editor && editor->IsBuiltinEditor() ? static_cast<cbEditor*>(editor) : 0;
     if (ed)
     {
-        ParserF* parser = &m_Parser;;
-        if (parser && m_pWorkspaceBrowser->GetBrowserDisplayFilter() == bdfFile)
+        if (m_pWorkspaceBrowser->GetBrowserDisplayFilter() == bdfFile)
         {
             UpdateWorkspaceBrowser();
         }
+    }
+}
+
+void NativeParserF::OnEditorClose(EditorBase* editor)
+{
+    cbEditor* ed = editor && editor->IsBuiltinEditor() ? static_cast<cbEditor*>(editor) : 0;
+    if (ed)
+    {
+        m_Parser.RemoveBuffer(ed->GetFilename());
     }
 }
 
@@ -811,13 +819,9 @@ void NativeParserF::MarkCurrentSymbol()
     }
     wxString activeFilename;
     cbEditor* ed = Manager::Get()->GetEditorManager()->GetBuiltinActiveEditor();
-    if (ed)
-    {
-        //m_ActiveFilename = ed->GetFilename().BeforeLast(_T('.'));
-        // the above line is a bug (see https://developer.berlios.de/patch/index.php?func=detailpatch&patch_id=1559&group_id=5358)
-        activeFilename = ed->GetFilename().AfterLast(wxFILE_SEP_PATH);
-        activeFilename = ed->GetFilename().BeforeLast(wxFILE_SEP_PATH) + wxFILE_SEP_PATH + activeFilename; //.BeforeLast(_T('.'));
-    }
+    if (!ed)
+        return;
+    activeFilename = ed->GetFilename();
     if (activeFilename.IsEmpty())
         return;
     cbStyledTextCtrl* control = ed->GetControl();
@@ -932,3 +936,4 @@ void NativeParserF::OnUpdateCurrentFileTokens(wxCommandEvent& event)
 {
     m_Parser.ConnectToNewCurrentTokens();
 }
+

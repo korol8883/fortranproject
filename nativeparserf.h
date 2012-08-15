@@ -75,6 +75,7 @@ class NativeParserF : public wxEvtHandler
         friend class FortranProject;
 
         void OnEditorActivated(EditorBase* editor);
+        void OnEditorClose(EditorBase* editor);
         void OnProjectActivated(cbProject* project);
         void UpdateWorkspaceFilesDependency();
         void ClearWSDependency();

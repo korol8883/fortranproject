@@ -41,6 +41,7 @@ class Tokenizerf
 		const wxString& GetFilename(){ return m_Filename; }
 		unsigned int GetLineNumber(){ return m_LineNumber; }
 		unsigned int GetPeekedLineNumber(){ return m_PeekedLineNumber; }
+		unsigned int GetCurrentIndex(){ return m_TokenIndex; }
 		bool IsOK(){ return m_IsOK; }
 		bool SkipToOneOfChars(const char* chars, bool toLineEnd = false);
 		wxArrayString GetTokensToEOL(wxArrayString* arrStrLines = 0);
@@ -57,7 +58,7 @@ class Tokenizerf
         void UngetToken();
 		bool ReadFile();
 		bool SkipWhiteSpace();
-		bool SkipToChar(const wxChar& ch);
+		bool SkipToChar(const wxChar& ch, bool toLineEnd = false);
 		bool SkipToEOL();
 		bool SkipBlock(const wxChar& ch, int maxLines = 0);
 		bool SkipUnwanted(); // skips comments, assignments, preprocessor etc.

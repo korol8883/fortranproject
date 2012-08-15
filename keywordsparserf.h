@@ -20,6 +20,12 @@
 typedef std::vector<FortranSourceForm> ArrayOfFortranSourceForm;
 typedef std::set<wxString> StringSet;
 
+enum CompilerDirective
+{
+    cdOther = 0,
+    cdOpenMP,
+    cdOpenACC,
+};
 
 class KeywordsParserF
 {
@@ -30,7 +36,7 @@ class KeywordsParserF
         void GetCallTips(const wxString& name, wxArrayString& callTips, TokensArrayFlat* result);
         void GetTokensForToolTip(const wxString& name, TokensArrayFlat& result);
         ParserF* GetParser(){ return &m_Parser; };
-        const wxArrayString* GetKeywordsOpenMP(){ return &m_OpenMPKeywords; };
+        const wxArrayString* GetKeywords(CompilerDirective cdir);
 
     protected:
     private:
@@ -44,6 +50,7 @@ class KeywordsParserF
         StringSet m_OtherKeywordSet;
 
         wxArrayString m_OpenMPKeywords;
+        wxArrayString m_OpenACCKeywords;
 };
 
 #endif // KEYWORDSPARSERF_H

@@ -49,7 +49,7 @@ FPOptionsDlg::FPOptionsDlg(wxWindow* parent, NativeParserF* np, FortranProject* 
     XRCCTRL(*this, "chkFloatSB", wxCheckBox)->SetValue(cfg->ReadBool(_T("/as_floating_window"), false));
     XRCCTRL(*this, "chkBottomTree", wxCheckBox)->SetValue(cfg->ReadBool(_T("/visible_bottom_tree"), true));
     XRCCTRL(*this, "chkSortSB", wxCheckBox)->SetValue(cfg->ReadBool(_T("/browser_sort_alphabetically"), true));
-    XRCCTRL(*this, "chkLocVarSB", wxCheckBox)->SetValue(cfg->ReadBool(_T("/browser_show_local_variables"), true));
+    XRCCTRL(*this, "chkLocVarSB", wxCheckBox)->SetValue(cfg->ReadBool(_T("/browser_show_local_variables"), false));
     XRCCTRL(*this, "chkInclSepar", wxCheckBox)->SetValue(cfg->ReadBool(_T("/browser_show_include_files_separately"), true));
 
     XRCCTRL(*this, "chkKL_1", wxCheckBox)->SetValue(cfg->ReadBool(_T("/lexer_keywords_set1"), true));

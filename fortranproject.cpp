@@ -11,6 +11,7 @@
 #include "fortranproject.h"
 #include "fpoptionsdlg.h"
 #include "jumptracker.h"
+#include "changecase.h"
 #include <configurationpanel.h>
 #include <manager.h>
 #include <logmanager.h>
@@ -94,8 +95,12 @@ int idMenuPrevCallTipPage  = wxNewId();
 int idMenuGotoDeclaration  = wxNewId();
 int idViewSymbolsBrowser   = wxNewId();
 int idMenuGenerateMakefile = wxNewId();
-int idReparseEditorTimer   = wxNewId();
 int idMenuChangeCase       = wxNewId();
+int idReparseEditorTimer   = wxNewId();
+
+#ifndef __WXMSW__
+int idMenuEditPaste = XRCID("idEditPaste");
+#endif
 
 BEGIN_EVENT_TABLE(FortranProject, cbCodeCompletionPlugin)
     EVT_UPDATE_UI(idViewSymbolsBrowser, FortranProject::OnUpdateUI)
@@ -108,6 +113,9 @@ BEGIN_EVENT_TABLE(FortranProject, cbCodeCompletionPlugin)
     EVT_MENU(idViewSymbolsBrowser, FortranProject::OnViewWorkspaceBrowser)
     EVT_MENU(idMenuGenerateMakefile, FortranProject::OnGenerateMakefile)
     EVT_MENU(idMenuChangeCase, FortranProject::OnChangeCase)
+#ifndef __WXMSW__
+    EVT_MENU(idMenuEditPaste, FortranProject::OnMenuEditPaste)
+#endif
     EVT_TIMER(idCodeCompleteTimer, FortranProject::OnCodeCompleteTimer)
     EVT_TIMER(idReparseEditorTimer, FortranProject::OnReparseEditorTimer)
     EVT_TOOL(XRCID("idFortProjBack"), FortranProject::OnJumpBack)
@@ -166,6 +174,7 @@ void FortranProject::OnAttach()
     pm->RegisterEventSink(cbEVT_EDITOR_SAVE, new cbEventFunctor<FortranProject, CodeBlocksEvent>(this, &FortranProject::OnReparseActiveEditor));
     pm->RegisterEventSink(cbEVT_EDITOR_ACTIVATED, new cbEventFunctor<FortranProject, CodeBlocksEvent>(this, &FortranProject::OnEditorActivated));
     pm->RegisterEventSink(cbEVT_EDITOR_TOOLTIP, new cbEventFunctor<FortranProject, CodeBlocksEvent>(this, &FortranProject::OnValueTooltip));
+    pm->RegisterEventSink(cbEVT_EDITOR_CLOSE, new cbEventFunctor<FortranProject, CodeBlocksEvent>(this, &FortranProject::OnEditorClose));
 
     pm->RegisterEventSink(cbEVT_APP_STARTUP_DONE, new cbEventFunctor<FortranProject, CodeBlocksEvent>(this, &FortranProject::OnAppDoneStartup));
     pm->RegisterEventSink(cbEVT_WORKSPACE_CHANGED, new cbEventFunctor<FortranProject, CodeBlocksEvent>(this, &FortranProject::OnWorkspaceChanged));
@@ -227,6 +236,7 @@ void FortranProject::OnRelease(bool appShutDown)
         m_FortranToolsMenu->Delete(idMenuNextCallTipPage);
         m_FortranToolsMenu->Delete(idMenuPrevCallTipPage);
         m_FortranToolsMenu->Delete(idMenuGenerateMakefile);
+        m_FortranToolsMenu->Delete(idMenuChangeCase);
     }
 } // end of OnRelease
 
@@ -359,6 +369,17 @@ void FortranProject::OnEditorActivated(CodeBlocksEvent& event)
     event.Skip();
 }
 
+void FortranProject::OnEditorClose(CodeBlocksEvent& event)
+{
+    if (!ProjectManager::IsBusy() && IsAttached() && m_InitDone)
+    {
+        EditorBase* eb = event.GetEditor();
+        m_pNativeParser->OnEditorClose(eb);
+    }
+
+    event.Skip();
+}
+
 void FortranProject::OnCompilerStarted(CodeBlocksEvent& event)
 {
     event.Skip();
@@ -459,8 +480,8 @@ void FortranProject::BuildMenu(wxMenuBar* menuBar)
         m_FortranToolsMenu->Append(idMenuGotoDeclaration, _("Jump to declaration\tCtrl-."));
         m_FortranToolsMenu->Append(idMenuNextCallTipPage, _("Next call tip\tCtrl-DOWN"));
         m_FortranToolsMenu->Append(idMenuPrevCallTipPage, _("Prev call tip\tCtrl-UP"));
-        m_FortranToolsMenu->Append(idMenuGenerateMakefile, _T("Generate Makefile"));
-        m_FortranToolsMenu->Append(idMenuChangeCase, _T("Change case"));
+        m_FortranToolsMenu->Append(idMenuGenerateMakefile, _("Generate Makefile"));
+        m_FortranToolsMenu->Append(idMenuChangeCase, _("Change case"));
     }
 }
 
@@ -492,22 +513,13 @@ void FortranProject::BuildModuleMenu(const ModuleType type, wxMenu* menu, const 
         return;
     if (type == mtEditorManager)
     {
-        wxString activeFilename;
         cbEditor* ed = Manager::Get()->GetEditorManager()->GetBuiltinActiveEditor();
-	    if (ed)
-	    {
-            //m_ActiveFilename = ed->GetFilename().BeforeLast(_T('.'));
-            // the above line is a bug (see https://developer.berlios.de/patch/index.php?func=detailpatch&patch_id=1559&group_id=5358)
-            activeFilename = ed->GetFilename().AfterLast(wxFILE_SEP_PATH);
-            activeFilename = ed->GetFilename().BeforeLast(wxFILE_SEP_PATH) + wxFILE_SEP_PATH + activeFilename; //.BeforeLast(_T('.'));
-	    }
-        if (!m_pNativeParser->IsFileFortran(activeFilename))
+        if (!ed || !m_pNativeParser->IsFileFortran(ed->GetFilename()))
             return;
 
         wxString NameUnderCursor;
         if(EditorHasNameUnderCursor(NameUnderCursor))
         {
-
             wxString msg;
             msg.Printf(_("Jump to '%s'"), NameUnderCursor.c_str());
             menu->Insert(0, idGotoDeclaration, msg);
@@ -529,24 +541,34 @@ void FortranProject::OnGotoDeclaration(wxCommandEvent& event)
     {
         return;
     }
+
     // get the matching set
     ParserF* pParser = m_pNativeParser->GetParser();
     TokensArrayFlatClass tokensTmp;
     TokensArrayFlat* result = tokensTmp.GetTokens();
 
-    pParser->FindMatchTokensForJump(ed, m_LogOnlyUseAssoc, m_LogOnlyPublicNames, m_MaxMatch, *result);
-    // don't jump to intrinsic module
-    size_t ri = 0;
-    while (ri<result->GetCount())
+    wxString includeFilename = GetIncludeFilename(ed->GetControl());
+    if (!includeFilename.IsEmpty())
     {
-        if (result->Item(ri)->m_Filename.EndsWith(_T("/images/fortranproject/fortran_intrinsic_modules.f90")))
+        // was asked to jump to include file.
+        pParser->FindFile(includeFilename, *result);
+    }
+    else
+    {
+        pParser->FindMatchTokensForJump(ed, m_LogOnlyUseAssoc, false, m_MaxMatch, *result);
+        // don't jump to intrinsic module
+        size_t ri = 0;
+        while (ri<result->GetCount())
         {
-            result->Item(ri)->Clear();
-            delete result->Item(ri);
-            result->RemoveAt(ri);
+            if (result->Item(ri)->m_Filename.EndsWith(UnixFilename(_T("/images/fortranproject/fortran_intrinsic_modules.f90"))))
+            {
+                result->Item(ri)->Clear();
+                delete result->Item(ri);
+                result->RemoveAt(ri);
+            }
+            else
+                ri++;
         }
-        else
-            ri++;
     }
 
     size_t count = result->GetCount();
@@ -696,6 +718,14 @@ void FortranProject::DoCodeComplete()
         int lineStartPos = control->PositionFromLine(lineCur);
         wxString curLine = control->GetTextRange(lineStartPos,pos).Trim();
         if (!curLine.Lower().StartsWith(_T("!$")))
+            return;
+    }
+    else
+    {
+        int lineCur = control->LineFromPosition(pos);
+        int lineStartPos = control->PositionFromLine(lineCur);
+        wxString curLine = control->GetTextRange(lineStartPos,pos);
+        if (curLine.Find('!') != wxNOT_FOUND)
             return;
     }
 
@@ -998,12 +1028,22 @@ int FortranProject::CodeComplete()
     wxString NameUnderCursor = control->GetTextRange(start,pos);
     wxString NameUnderCursorLw = NameUnderCursor.Lower();
 
-    bool isOpenMP = false;
+    bool isDirective = false;
+    CompilerDirective pdir;
     int lineCur = control->LineFromPosition(pos);
     int lineStartPos = control->PositionFromLine(lineCur);
-    wxString curLine = control->GetTextRange(lineStartPos,pos).Trim();
-    if (curLine.Lower().StartsWith(_T("!$omp")))
-        isOpenMP = true;
+    wxString curLine = control->GetTextRange(lineStartPos,pos).Trim().Lower();
+
+    if (curLine.StartsWith(_T("!$")))
+    {
+        isDirective = true;
+        if (curLine.StartsWith(_T("!$omp")))
+            pdir = cdOpenMP;
+        else if (curLine.StartsWith(_T("!$acc")))
+            pdir = cdOpenACC;
+        else
+            pdir = cdOther;
+    }
 
     bool isAfterPercent;
     int tokenKind;
@@ -1030,9 +1070,6 @@ int FortranProject::CodeComplete()
             if (unique_strings.find(token->m_Name) != unique_strings.end())
                 continue;
 
-            if (isOpenMP && !(token->m_TokenKind & tkVariable))
-                continue;
-
             unique_strings.insert(token->m_Name);
             int iidx = m_pNativeParser->GetTokenKindImageIdx(token);
             if (already_registered.Index(iidx) == wxNOT_FOUND)
@@ -1052,7 +1089,7 @@ int FortranProject::CodeComplete()
         }
 
         EditorColourSet* theme = ed->GetColourSet();
-        if (theme && !isAfterPercent && !isOpenMP)
+        if (theme && !isAfterPercent && (!isDirective || (isDirective && pdir == cdOther)) )
         {
             int iidx = ilist->GetImageCount();
             bool isF = ft==ftSource;
@@ -1103,13 +1140,13 @@ int FortranProject::CodeComplete()
                 }
             }
         }
-        else if (isOpenMP)
+        else if (isDirective && (pdir == cdOpenMP || pdir == cdOpenACC))
         {
             int iidx = ilist->GetImageCount();
             control->RegisterImage(iidx, wxBitmap(fortran_keyword_xpm));
 
             int kwcase = cfg->ReadInt(_T("/keywords_case"), 0);
-            const wxArrayString* kwOMP = m_pKeywordsParser->GetKeywordsOpenMP();
+            const wxArrayString* kwOMP = m_pKeywordsParser->GetKeywords(pdir);
             for (size_t i=0; i<kwOMP->size(); i++)
             {
                 wxString kw = kwOMP->Item(i);
@@ -1428,7 +1465,7 @@ void FortranProject::OnNextPrevCallTipPage(wxCommandEvent& event)
     if (event.GetId() == idMenuNextCallTipPage)
         deltaIdx = 1;
 
-    if (m_IdxCallTipPage.count(m_LastCallTipName) == 1)
+    if (m_IdxCallTipPage.count(m_LastCallTipName))
     {
         int idxPage = m_IdxCallTipPage[m_LastCallTipName];
         m_IdxCallTipPage[m_LastCallTipName] = idxPage+deltaIdx;
@@ -1802,6 +1839,12 @@ void FortranProject::OnGenerateMakefile(wxCommandEvent& event)
     m_pNativeParser->GenMakefile();
 }
 
+void FortranProject::OnChangeCase(wxCommandEvent& event)
+{
+    ChangeCase changCaseDlg(Manager::Get()->GetAppWindow());
+    changCaseDlg.ShowModal();
+}
+
 void FortranProject::OnReparseEditorTimer(wxTimerEvent& event)
 {
     m_pNativeParser->ReparseCurrentEditor();
@@ -1817,7 +1860,52 @@ void FortranProject::RegisterFileExtensions()
     plugman->RegisterCCFileExts(_T("FortranProject"), fileExts);
 }
 
-void FortranProject::OnChangeCase(wxCommandEvent& event)
+wxString FortranProject::GetIncludeFilename(cbStyledTextCtrl* control)
 {
-    Manager::Get()->GetLogManager()->DebugLog(_T("FortranProject::OnChangeCase called"));
+    if (!control)
+        return wxEmptyString;
+    wxString strName;
+    int style = control->GetStyleAt(control->GetCurrentPos());
+    if (style == wxSCI_F_STRING1 || style == wxSCI_F_STRING2)
+    {
+        wxString curLine = control->GetCurLine().Lower();
+        if (!curLine.Trim(false).StartsWith(_T("include")))
+            return wxEmptyString;
+
+        int pos   = control->GetCurrentPos();
+        int lineCur = control->LineFromPosition(pos);
+        int lineStartPos = control->PositionFromLine(lineCur);
+        wxString strBefore = control->GetTextRange(lineStartPos, pos).Lower().Trim(false);
+        int idx1 = strBefore.Find('"', true);
+        int idx2 = strBefore.Find('\'', true);
+        if ((idx1 == wxNOT_FOUND && idx2 == wxNOT_FOUND) ||
+            (idx1 != wxNOT_FOUND && idx2 != wxNOT_FOUND))
+            return wxEmptyString;
+        int idx = (idx1 != wxNOT_FOUND) ? idx1 : idx2;
+        if (strBefore.Mid(0,idx).Trim().Trim(false) != _T("include"))
+            return wxEmptyString;
+
+        wxChar ch = curLine[idx];
+        wxString strLast = curLine.Mid(strBefore.size());
+        int idxL = strLast.Find(ch);
+        if (idxL == wxNOT_FOUND)
+            return wxEmptyString;
+        int idxE = strBefore.size() + idxL;
+        strName = curLine.Mid(idx+1, idxE-(idx+1)).Trim().Trim(false);
+    }
+    return strName;
 }
+
+void FortranProject::OnMenuEditPaste(wxCommandEvent& event)
+{
+    // Process clipboard data only if we have the focus
+    if (!IsAttached() || !m_InitDone)
+    {
+        event.Skip();
+        return;
+    }
+    m_pNativeParser->GetWorkspaceBrowser()->OnMenuEditPaste(event);
+}
+
+
+

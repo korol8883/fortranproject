@@ -235,7 +235,7 @@ module ieee_arithmetic
     end function
 
     function ieee_rint(x)
-        ! Roound to integer.
+        ! Round to integer.
     end function
 
     function ieee_scalb(x, i)

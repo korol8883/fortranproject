@@ -52,6 +52,15 @@ KeywordsParserF::KeywordsParserF():
                     m_OpenMPKeywords.Add(pOMPMod->Item(j)->m_DisplayName);
             }
         }
+        else if (pTokens->Item(i)->m_TokenKind == tkModule && pTokens->Item(i)->m_Name.IsSameAs(_T("openacc")))
+        {
+            TokensArrayF* pACCMod = &pTokens->Item(i)->m_Children;
+            for (size_t j=0; j<pACCMod->GetCount(); j++)
+            {
+                if (pACCMod->Item(j)->m_TokenKind == tkVariable)
+                    m_OpenACCKeywords.Add(pACCMod->Item(j)->m_DisplayName);
+            }
+        }
     }
     MakeOtherKeywordSet();
     m_IsDone = true;
@@ -129,3 +138,11 @@ void KeywordsParserF::MakeOtherKeywordSet()
     }
 }
 
+const wxArrayString* KeywordsParserF::GetKeywords(CompilerDirective cdir)
+{
+    if (cdir == cdOpenMP)
+        return &m_OpenMPKeywords;
+    else if (cdir == cdOpenACC)
+        return &m_OpenACCKeywords;
+    return NULL;
+}

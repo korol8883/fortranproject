@@ -3023,7 +3023,7 @@ function NORM2(ARRAY[, DIM])
     integer, optional :: DIM
 end function
 
-subroutine execute_command_line(COMMAND [, WAIT, EXITSTAT, CMDSTAT, CMDMSG ])
+subroutine EXECUTE_COMMAND_LINE(COMMAND [, WAIT, EXITSTAT, CMDSTAT, CMDMSG ])
     ! Runs a shell command, synchronously or asynchronously.
     ! If WAIT is present and has the value false, the execution of the command is asynchronous
     ! if the system supports it; otherwise, the command is executed synchronously.
@@ -3040,33 +3040,81 @@ subroutine execute_command_line(COMMAND [, WAIT, EXITSTAT, CMDSTAT, CMDMSG ])
     character(len=*), intent(inout), optional :: CMDMSG
 end subroutine
 
-function findloc (...)
+function FINDLOC (ARRAY, VALUE [, DIM, MASK, KIND, BACK])
+    ! Returns location(s) of a specified value.
+    ! Standard:
+    !    Fortran 2008 and later
+    type(intrinsic-type) :: ARRAY(..) ! Shall be an array of intrinsic type.
+    type(same-as-array)  :: VALUE ! Shall be scalar in type conformance with ARRAY.
+    integer, optional :: DIM  ! Shall be an integer scalar with a value in the range 1<=DIM<=n.
+    logical, optional :: MASK ! (Optional) shall be of type logical and shall be conformance with ARRAY.
+    integer, optional :: KIND ! (Optional) shall be a scalar integer constant.
+    logical, optional :: BACK ! (Optional) shall be a logical scalar.
 end function
 
-function num_images (...)
+function NUM_IMAGES ()
+    ! Retuns the number of images.
+    ! Return value:
+    !    Scalar default-kind integer.
+    ! Standard:
+    !    Fortran 2008 and later
 end function
 
-function this_image (...)
+function THIS_IMAGE ([COARRAY [, DIM]])
+    ! Returns the cosubscript for this image.
+    ! Standard:
+    !    Fortan 2008 and later.
+    type(*), optional :: COARRAY
+    integer, optional :: DIM  ! Shall be an integer scalar with a value in the range 1<=DIM<=n.
 end function
 
-function ucobound (...)
+function UCOBOUND (COARRAY [, DIM, KIND])
+    ! Returns the upper cobounds of a coarray, or a single upper cobound along the DIM codimension. 
+    ! Standard:
+    !    Fortan 2008 and later.
+    type(*), optional :: COARRAY
+    integer, optional :: DIM
+    integer, optional :: KIND
 end function
 
-function lcobound (...)
+function LCOBOUND (COARRAY [, DIM, KIND])
+    ! Returns the lower bounds of a coarray, or a single lower cobound along the DIM codimension.
+    ! Standard:
+    !    Fortan 2008 and later.
+    type(*), optional :: COARRAY
+    integer, optional :: DIM
+    integer, optional :: KIND
 end function
 
-function image_index (...)
+function IMAGE_INDEX (COARRAY, SUB)
+    ! Returns the image index belonging to a cosubscript.
+    ! Standard:
+    !    Fortan 2008 and later.
+    type(*), optional :: COARRAY
+    integer, optional :: SUB
 end function
 
-subroutine atomic_define (...)
+subroutine ATOMIC_DEFINE (ATOM, VALUE)
+    ! Defines the variable ATOM with the value VALUE atomically. 
+    ! Standard:
+    !    Fortan 2008 and later.
+    ! Arguments:
+    !  ATOM   Scalar coarray or coindexed variable of either integer type with ATOMIC_INT_KIND kind or logical type with ATOMIC_LOGICAL_KIND kind.
+    !  VALUE  Scalar and of the same type as ATOM. If the kind is different, the value is converted to the kind of ATOM. 
 end subroutine
 
-subroutine atomic_ref (...)
+subroutine ATOMIC_REF (ATOM, VALUE)
+    ! Atomically assigns the value of the variable ATOM to VALUE. 
+    ! Standard:
+    !    Fortan 2008 and later.
+    ! Arguments:
+    !  ATOM   Scalar coarray or coindexed variable of either integer type with ATOMIC_INT_KIND kind or logical type with ATOMIC_LOGICAL_KIND kind.
+    !  VALUE  Scalar and of the same type as ATOM. If the kind is different, the value is converted to the kind of ATOM.
 end subroutine
 
-function rank(A)
+function RANK(A)
     ! Determine the rank of a data object.
-    integer :: rank
+    integer :: RANK
     type(any_type) :: A ! data object
 end function
 
@@ -3077,5 +3125,15 @@ module OpenMP
                        critical, default, threadprivate, do, dynamic, guided, read, runtime, single, &
                        static, task, if, final, untied, none, mergeable, taskwait, taskyield, &
                        threadprivate, update, write
+end module
+
+module OpenACC
+    type(keywords) :: parallel, end, if, async, num_gangs, num_workers, vector_length, reduction, &
+                      copy, copyin, copyout, create, present, present_or_copy, present_or_copyin, &
+                      present_or_copyout, present_or_create, deviceptr, private, firstprivate, &
+                      kernels, data, host_data, use_device, &
+                      loop, collapse, gang, worker, vector, seq, independent, cache, &
+                      declare, device_resident, update, host, device, wait
+
 end module
 

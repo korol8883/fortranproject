@@ -29,6 +29,41 @@ void CCSmartFilter::GetTokenKind(wxArrayString& words, int& kindFilter, bool& al
              (wordLw.IsSameAs('(') && words.Item(1).Lower().IsSameAs(_T("class"))))
             wordLw.Prepend( words.Item(1).Lower() );
     }
+
+    if (woCount >= 2 && wordLastLw.IsSameAs(_T("!")) &&
+        words.Item(woCount-2).IsSameAs(_T("$")) )
+    {
+        if (woCount >= 3 &&
+            (words.Item(woCount-3).IsSameAs(_T("omp")) || words.Item(woCount-3).IsSameAs(_T("acc"))))
+        {
+            kindFilter = tkOther;
+            int idxa = words.Index(_T("("));
+            if (idxa != wxNOT_FOUND)
+            {
+                int idxb = words.Index((_T(")")));
+                if (idxb == wxNOT_FOUND || idxb > idxa)
+                    allowVariables = true;
+            }
+            return;
+        }
+        else
+        {
+            words.RemoveAt(words.GetCount()-1);
+            words.RemoveAt(words.GetCount()-1);
+            int woCount = words.GetCount();
+            if (woCount > 0)
+            {
+                wordLastLw = words.Item(woCount-1);
+            }
+            else
+            {
+                wordLw = wxEmptyString;
+                wordLastLw = wxEmptyString;
+            }
+        }
+    }
+
+
     if (wordLw.IsEmpty())
     {
         kindFilter = tkOther;

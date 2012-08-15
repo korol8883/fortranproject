@@ -14,6 +14,7 @@ TokenF::TokenF()
 	m_LineEnd(0),
 	m_TokenAccess(taPublic),
 	m_Pass(true),
+	m_IsAbstract(false),
 	m_pParent(0L)
 {
 }
@@ -24,6 +25,7 @@ TokenF::TokenF(const wxString& name, const wxString& filename, unsigned int line
 	m_LineStart(line),
 	m_TokenAccess(taPublic),
 	m_Pass(true),
+	m_IsAbstract(false),
 	m_pParent(0L)
 {
 	//ctor
@@ -139,6 +141,7 @@ TokenFlat::TokenFlat(const TokenF* tok)
     {
         m_PartLast = tok->m_PartLast;
         m_Pass = tok->m_Pass;
+        m_IsAbstract = tok->m_IsAbstract;
     }
     m_PartLast = tok->m_PartLast;
 }
@@ -169,6 +172,7 @@ TokenFlat::TokenFlat(const TokenFlat* tok)
     {
         m_PartLast = tok->m_PartLast;
         m_Pass = tok->m_Pass;
+        m_IsAbstract = tok->m_IsAbstract;
     }
     m_PartLast = tok->m_PartLast;
     m_Rename = tok->m_Rename;

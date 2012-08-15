@@ -17,9 +17,11 @@
 #include <set>
 #include <vector>
 #include "farrays.h"
+#include "fortranfileext.h"
 
 typedef std::vector<FortranSourceForm> ArrayOfFortranSourceForm;
 
+extern FortranFileExt g_FortranFileExt;
 
 class ParserF
 {
@@ -30,6 +32,7 @@ class ParserF
         bool Reparse(const wxString& filename, FortranSourceForm fsForm);
         bool BatchParse(const wxArrayString& filenames, ArrayOfFortranSourceForm& fileForms);
         bool RemoveFile(const wxString& filename);
+        void RemoveBuffer(const wxString& filename);
         TokensArrayF* GetTokens(){return m_pTokens;};
         bool FindTypeBoundProcedures(const TokenFlat& interToken, const wxArrayString& searchArr, TokensArrayFlat& resTokenArr);
         bool FindMatchTokenInSameModule(const TokenFlat& procedureToken, const wxString& search, TokensArrayFlat& result, int tokenKindMask, int noChildrenOf);
@@ -67,6 +70,7 @@ class ParserF
         bool IsIncludeFile(wxString fileName);
         bool HasIncludeFiles();
         TokenF* FindFile(const wxString& filename);
+        void FindFile(const wxString& filename, TokensArrayFlat& result);
         void GetFortranFileExts(StringSet& fileExts);
         void SetNewTokens(TokensArrayF* pTokens);
         void SetNewIncludeDB(IncludeDB* pIncludeDB);
@@ -76,8 +80,6 @@ class ParserF
     protected:
     private:
         void FindMatchChildren(TokensArrayF &m_Children, wxString search, TokensArrayF& result, bool exact=false);
-        void FindChildrenOfTokenInWorkspace(wxString nameToken, TokensArrayF& result, int tokenKindMask, bool partialMatch);
-        void FindChildrenOfToken(TokensArrayF &children, const wxString &nameToken, TokensArrayF& result,  int tokenKindMask, bool partialMatch);
         size_t GetFileIndex(const wxString& filename);
         TokensArrayF* FindFileTokens(const wxString& filename);
         TokenF* FindModuleSubmoduleToken(const wxString& moduleName);
@@ -103,18 +105,15 @@ class ParserF
         void AddUniqueResult(TokensArrayFlat& result, const TokenFlat* token);
         void AddIncludeFileChildren(const TokenF* include, TokensArrayF& tokens);
         void GetSubmoduleHostTokens(TokenF* subModToken, std::vector<TokensArrayF*> &vpChildren);
-        void RereadFileExtensions();
         void ClearTokens(TokensArrayF* pTokens);
         void ParseIntrinsicModules();
         void ChangeCaseChildren(TokensArrayF &children, int dispCase);
+        TokenF* FindToken(const TokenFlat &token, TokensArrayF* children=NULL);
 
         TokensArrayF* m_pTokens;
         TokensArrayF* m_pIntrinsicModuleTokens;
         IncludeDB* m_pIncludeDB;
         bool m_Done;
-        bool m_ExtDone;
-        StringSet m_FortranExtFree;
-        StringSet m_FortranExtFixed;
 
         wxString m_Buff;
         std::vector<int> m_LineStarts;
@@ -141,7 +140,7 @@ class ParserF
 
         TokensArrayF* m_pTokensNew;
         IncludeDB*    m_pIncludeDBNew;
-        TokensArrayF* m_pCurrentBufferTokens;
+        TokensArrayF* m_pBufferTokens;
         TokensArrayF* m_pCurrentBufferTokensNew;
 };
 

@@ -213,12 +213,12 @@ bool Tokenizerf::SkipWhiteSpace()
 	return true;
 }
 
-bool Tokenizerf::SkipToChar(const wxChar& ch)
+bool Tokenizerf::SkipToChar(const wxChar& ch, bool toLineEnd)
 {
 	// skip everything until we find ch
 	while (1)
 	{
-		while (!IsEOF() && CurrentChar() != ch)
+		while (!IsEOF() && CurrentChar() != ch && (!toLineEnd || (toLineEnd && CurrentChar() != '\n')))
 			MoveToNextChar();
         break;
 	}
@@ -282,7 +282,7 @@ bool Tokenizerf::SkipToOneOfChars(const char* chars, bool toLineEnd)
 				// this is the case that match is inside a string!
 				char ch = CurrentChar();
 				MoveToNextChar();
-				SkipToChar(ch);
+				SkipToChar(ch, true);
 			}
 	        MoveToNextChar();
 	    }
@@ -332,7 +332,7 @@ bool Tokenizerf::SkipBlock(const wxChar& ch, int maxLines)
                 // this is the case that match is inside a string!
                 char ch = CurrentChar();
                 MoveToNextChar();
-                SkipToChar(ch);
+                SkipToChar(ch, true);
                 MoveToNextChar();
             }
             else
@@ -561,6 +561,13 @@ wxString Tokenizerf::PeekTokenSameFortranLine()
 
 void Tokenizerf::UngetToken()
 {
+//    m_WasPeeked = true;
+//	m_PeekedTokenIndex = m_TokenIndex;
+//	m_PeekedLineNumber = m_LineNumber;
+//	m_PeekedLineNumberStart = m_LineNumberStart;
+//	m_PeekedColumn = m_Column;
+//	m_PeekedWasNextLine = m_WasNextLine;
+
 	m_TokenIndex = m_UndoTokenIndex;
 	m_LineNumber = m_UndoLineNumber;
 	m_LineNumberStart = m_UndoLineNumberStart;
@@ -610,7 +617,7 @@ wxString Tokenizerf::DoGetToken()
 		// string, char, etc.
 		wxChar match = CurrentChar();
 		MoveToNextChar();  // skip starting ' or "
-		if (!SkipToChar(match))
+		if (!SkipToChar(match, true))
 			return wxEmptyString;
 		MoveToNextChar(); // skip ending ' or "
 		m_Str = m_Buffer.Mid(start, m_TokenIndex - start);

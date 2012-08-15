@@ -43,7 +43,7 @@
 										</object>
 										<object class="sizeritem">
 											<object class="wxCheckBox" name="chkOnlyUseAssociated">
-												<label>Show only use associated entities</label>
+												<label>Follow use-assiciation and include-file path</label>
 											</object>
 											<flag>wxTOP|wxLEFT|wxRIGHT|wxEXPAND|wxALIGN_LEFT|wxALIGN_TOP</flag>
 											<border>8</border>
@@ -207,7 +207,7 @@
 													<item>From lexer</item>
 													<item>All caps</item>
 													<item>First cap</item>
-													<item>All small</item>
+													<item>All lower</item>
 												</content>
 												<default>-1</default>
 											</object>

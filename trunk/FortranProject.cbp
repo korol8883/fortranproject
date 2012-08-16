@@ -62,12 +62,18 @@
 			<Add after="zip -j9 FortranProject.cbplugin FortranProject.dll FortranProject.zip" />
 			<Mode after="always" />
 		</ExtraCommands>
+		<Unit filename="bufferparserthread.cpp" />
+		<Unit filename="bufferparserthread.h" />
 		<Unit filename="ccsmartfilter.cpp" />
 		<Unit filename="ccsmartfilter.h" />
+		<Unit filename="changecase.cpp" />
+		<Unit filename="changecase.h" />
 		<Unit filename="farrays.cpp" />
 		<Unit filename="farrays.h" />
 		<Unit filename="finfowindow.cpp" />
 		<Unit filename="finfowindow.h" />
+		<Unit filename="fortranfileext.cpp" />
+		<Unit filename="fortranfileext.h" />
 		<Unit filename="fortranproject.cpp" />
 		<Unit filename="fortranproject.h" />
 		<Unit filename="fpoptionsdlg.cpp" />
@@ -95,6 +101,8 @@
 		<Unit filename="resources\fortranprojecttoolbar.xrc" />
 		<Unit filename="resources\settings.xrc" />
 		<Unit filename="resources\workspacebrowserf.xrc" />
+		<Unit filename="textcutter.cpp" />
+		<Unit filename="textcutter.h" />
 		<Unit filename="tokenf.cpp" />
 		<Unit filename="tokenf.h" />
 		<Unit filename="tokenizerf.cpp" />
@@ -105,6 +113,8 @@
 		<Unit filename="workspacebrowserbuilder.h" />
 		<Unit filename="workspacebrowserf.cpp" />
 		<Unit filename="workspacebrowserf.h" />
+		<Unit filename="workspaceparserthread.cpp" />
+		<Unit filename="workspaceparserthread.h" />
 		<Extensions>
 			<code_completion />
 			<debugger />

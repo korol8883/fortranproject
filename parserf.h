@@ -47,8 +47,8 @@ class ParserF
         bool FindMatchTypeComponents(cbEditor* ed, const wxString& line, TokensArrayFlat& result, bool partialMatch, bool onlyPublicNames, bool& isAfterPercent, bool getAsProcedure=false);
         void FindMatchTokensForToolTip(const wxString& nameUnder, int posEndOfWord, cbEditor* ed, bool onlyUseAssoc, bool onlyPublicNames, TokensArrayFlat& result, bool& isAfterPercent);
         void FindGenericTypeBoudComponents(TokenFlat* token, TokensArrayFlat& result);
-        void FindMatchTokensForJump(cbEditor* ed, bool onlyUseAssoc, bool onlyPublicNames, size_t maxMatch, TokensArrayFlat& result);
-        bool FindMatchTokensForCodeCompletion(bool useSmartCC, bool onlyUseAssoc, bool onlyPublicNames, size_t maxMatch, const wxString& nameUnderCursor, cbEditor* ed, TokensArrayFlat& result, bool& isAfterPercent, int& tokKind);
+        void FindMatchTokensForJump(cbEditor* ed, bool onlyUseAssoc, bool onlyPublicNames, TokensArrayFlat& result);
+        bool FindMatchTokensForCodeCompletion(bool useSmartCC, bool onlyUseAssoc, bool onlyPublicNames, const wxString& nameUnderCursor, cbEditor* ed, TokensArrayFlat& result, bool& isAfterPercent, int& tokKind);
         bool FindWordsBefore(cbEditor* ed, int numberOfWords, wxString &curLine, wxArrayString &firstWords);
         void RereadOptions();
         bool FindTokenDeclaration(TokenFlat& token, const wxString& argName, wxString& argDecl, wxString& argDescription);
@@ -77,6 +77,7 @@ class ParserF
         void ConnectToNewTokens();
         void SetNewCurrentTokens(TokensArrayF* pTokens);
         void ConnectToNewCurrentTokens();
+        void ChangeLineIfRequired(cbEditor* ed, wxString& curLine);
     protected:
     private:
         void FindMatchChildren(TokensArrayF &m_Children, wxString search, TokensArrayF& result, bool exact=false);
@@ -100,7 +101,7 @@ class ParserF
                                              int noChildrenOf, bool partialMatch, bool onlyPublicNames, bool changeDisplayName, TokensArrayFlat* useWithRenameTok);
         void ChangeAssociatedName(wxString& line, TokenFlat* token);
         void FindAddress(cbEditor* ed, wxArrayString& address);
-        void FindTokensForUse(const wxString& search, wxArrayString& firstWords, TokensArrayFlat& result, int& tokKind, bool onlyPublicNames);
+        void FindTokensForUse(const wxString& search, wxArrayString& firstWords, TokensArrayFlat& result, bool onlyPublicNames);
         void AddUniqueResult(TokensArrayFlat& result, const TokenF* token);
         void AddUniqueResult(TokensArrayFlat& result, const TokenFlat* token);
         void AddIncludeFileChildren(const TokenF* include, TokensArrayF& tokens);

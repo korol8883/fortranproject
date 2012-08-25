@@ -555,7 +555,7 @@ void FortranProject::OnGotoDeclaration(wxCommandEvent& event)
     }
     else
     {
-        pParser->FindMatchTokensForJump(ed, m_LogOnlyUseAssoc, false, m_MaxMatch, *result);
+        pParser->FindMatchTokensForJump(ed, m_LogOnlyUseAssoc, false, *result);
         // don't jump to intrinsic module
         size_t ri = 0;
         while (ri<result->GetCount())
@@ -571,7 +571,7 @@ void FortranProject::OnGotoDeclaration(wxCommandEvent& event)
         }
     }
 
-    size_t count = result->GetCount();
+    size_t count = std::min(result->GetCount(),m_MaxMatch);
 
     TokenFlat* pToken = 0;
     // one match
@@ -1048,7 +1048,7 @@ int FortranProject::CodeComplete()
     bool isAfterPercent;
     int tokenKind;
 
-    if (!pParser->FindMatchTokensForCodeCompletion(m_UseSmartCC, m_LogOnlyUseAssoc, m_LogOnlyPublicNames, m_MaxMatch, NameUnderCursor, ed, *result, isAfterPercent, tokenKind))
+    if (!pParser->FindMatchTokensForCodeCompletion(m_UseSmartCC, m_LogOnlyUseAssoc, m_LogOnlyPublicNames, NameUnderCursor, ed, *result, isAfterPercent, tokenKind))
         return -1;
 
     if (result->size() <= m_MaxMatch)
@@ -1722,6 +1722,8 @@ void FortranProject::RereadOptions()
     m_LexerKeywordsToInclude[8] = cfg->ReadBool(_T("/lexer_keywords_set9"), false);
 
     m_MaxMatch = cfg->ReadInt(_T("/max_matches"), 1000);
+    if (m_MaxMatch < 1)
+        m_MaxMatch = 1;
 
     m_UseSmartCC = cfg->ReadBool(_T("/use_smart_code_completion"), true);
     m_LogOnlyUseAssoc = cfg->ReadBool(_T("/only_use_associated"), true);

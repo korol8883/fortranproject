@@ -78,6 +78,8 @@ wxString TokenF::GetTokenKindString()
         case tkBlockConstruct: return _("block construct");
         case tkAssociateConstruct: return _("associate construct");
         case tkSubmodule: return _("submodule");
+        case tkSelectTypeChild: return _("select type");
+        case tkSelectTypeDefault: return _("select type");
 	}
 	return _("other");
 }

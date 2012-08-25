@@ -78,6 +78,8 @@ void CCSmartFilter::GetTokenKind(wxArrayString& words, int& kindFilter, bool& al
               ( wordLastLw.IsSameAs(_T("module")) && words.Item(woCount-2).Lower().IsSameAs(_T("procedure")) ) ))
     {
         kindFilter = tkSubroutine | tkFunction | tkInterface;
+        if (words.Index(_T(":")) == wxNOT_FOUND)
+            kindFilter = kindFilter | tkOther;
     }
     else if (wordLw.IsSameAs(_T("use")) || wordLw.IsSameAs(_T("module")))
     {
@@ -128,6 +130,10 @@ void CCSmartFilter::GetTokenKind(wxArrayString& words, int& kindFilter, bool& al
             kindFilter = tkVariable;
             allowVariables = true;
         }
+    }
+    else if (woCount >= 2 && words.Item(1).IsSameAs(_T("c_funloc")) && wordLw.IsSameAs('('))
+    {
+        kindFilter = tkSubroutine | tkFunction | tkInterface;
     }
     else if (wordLw.IsSameAs('(') || wordLw.IsSameAs(','))
     {

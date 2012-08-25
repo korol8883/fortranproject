@@ -545,11 +545,6 @@ wxString Tokenizerf::PeekTokenSameFortranLine()
 
 	m_WasPeeked = false;
 
-//	m_PeekedTokenIndex = m_TokenIndex;
-//	m_PeekedLineNumber = m_LineNumber;
-//	m_PeekedColumn = m_Column;
-//	m_PeekedWasNextLine = m_WasNextLine;
-
 	m_TokenIndex = undoTokenIndex;
 	m_LineNumber = undoLineNumber;
 	m_LineNumberStart = undoLineNumberStart;
@@ -567,6 +562,8 @@ void Tokenizerf::UngetToken()
 //	m_PeekedLineNumberStart = m_LineNumberStart;
 //	m_PeekedColumn = m_Column;
 //	m_PeekedWasNextLine = m_WasNextLine;
+
+    m_WasPeeked = false;
 
 	m_TokenIndex = m_UndoTokenIndex;
 	m_LineNumber = m_UndoLineNumber;

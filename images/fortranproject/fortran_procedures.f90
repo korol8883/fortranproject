@@ -28,7 +28,7 @@ function list_of_other_fortran_keywords()
                 formatted, function, go, goto, id, if, implicit, in, include, inout, &
                 integer, inquire, intent, interface, intrinsic, iomsg, iolength, &
                 iostat, kind, len, logical, module, named, namelist, nextrec, nml, &
-                none, nullify, number, only, open, opened, operator, optional, out, pad, &
+                none, nopass, nullify, number, only, open, opened, operator, optional, out, pad, &
                 parameter, pass, pause, pending, pointer, pos, position, precision, &
                 print, private, program, protected, public, quote, read, readwrite, &
                 real, rec, recl, recursive, result, return, rewind, save, select, &
@@ -39,7 +39,7 @@ function list_of_other_fortran_keywords()
                 null, new_line,  block, abstract, delegate, static, reference, round, &
                 decorate, extends, generic, non_overridable, enum, endenum, enumerator, typealias, &
                 submodule, endsubmodule, concurrent, contiguous, re, im, endblock, non_intrinsic, codimension, &
-                impure, critical, endcritical, lock, unlock, error, sync, all, memory, images
+                impure, critical, endcritical, lock, unlock, error, sync, all, memory, images, deferred
 
 end function
 

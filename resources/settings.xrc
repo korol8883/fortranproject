@@ -83,6 +83,7 @@
 												<object class="sizeritem">
 													<object class="wxSpinCtrl" name="spnMaxMatches">
 														<value>16384</value>
+														<min>1</min>
 														<max>100000</max>
 													</object>
 													<flag>wxALL|wxALIGN_LEFT|wxALIGN_TOP</flag>

@@ -81,7 +81,6 @@ class WorkspaceBrowserBuilder
         bool AddFileNodes(wxTreeCtrl* tree, wxTreeItemId parent, wxString file, int tokenKindMask);
         bool AddChildrenNodes(wxTreeCtrl* tree, wxTreeItemId parent, TokenF* token, int tokenKindMask);
         int AddInterfaceNode(wxTreeCtrl* tree, wxTreeItemId parent, TokenF* parToken);
-        wxTreeItemId AddTreeNode(wxTreeCtrl* tree, const wxTreeItemId& parentNode, TokenF* token);
         wxTreeItemId FindItemByName(wxTreeCtrl* tree, wxString name, wxString name2=wxString());
         void CreateSpecialFolders();
         bool FileHasTokens(const wxString& fileName, int tokenKindMask);

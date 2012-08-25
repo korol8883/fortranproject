@@ -49,6 +49,8 @@ enum TokenKindF
     tkBlockConstruct = 0x80000,
     tkAssociateConstruct = 0x100000,
     tkSubmodule = 0x200000,
+    tkSelectTypeChild = 0x400000,
+    tkSelectTypeDefault = 0x800000,
 };
 
 enum TokenAccessKind

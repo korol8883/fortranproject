@@ -604,6 +604,10 @@ wxTreeItemId WorkspaceBrowserBuilder::AddNodeIfNotThere(wxTreeCtrl* tree, wxTree
                 {
                     insert_after = existing;
                 }
+                else // name.CmpNoCase(itemText) < 0
+                {
+                    break;
+                }
             }
         }
         existing = tree->GetNextChild(parent, cookie);

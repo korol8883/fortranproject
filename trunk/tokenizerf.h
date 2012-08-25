@@ -52,10 +52,10 @@ class Tokenizerf
 		unsigned int GetLineEndIndex(unsigned int indexInLine);
 		void SetDetailedParsing(bool detPars);
 		void SetFilename(const wxString& filename);
+        void UngetToken();
 	protected:
 		void BaseInit();
 		wxString DoGetToken();
-        void UngetToken();
 		bool ReadFile();
 		bool SkipWhiteSpace();
 		bool SkipToChar(const wxChar& ch, bool toLineEnd = false);

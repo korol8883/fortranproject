@@ -486,6 +486,9 @@ void NativeParserF::CollectInformationForCallTip(int& commasAll, int& commasUnti
     cbEditor* ed = Manager::Get()->GetEditorManager()->GetBuiltinActiveEditor();
     if(!ed)
         return;
+
+    m_Parser.ChangeLineIfRequired(ed, lineText);
+
     TokensArrayFlatClass tokensTemp;
     TokensArrayFlat* resultTemp = tokensTemp.GetTokens();
     if (!m_Parser.FindMatchTypeComponents(ed, lineText, *resultTemp, false, false, isAfterPercent, true))
@@ -523,9 +526,6 @@ void NativeParserF::CollectInformationForCallTip(int& commasAll, int& commasUnti
                     m_Parser.FindGenericTypeBoudComponents(resultTemp->Item(i), *result);
                 }
             }
-        }
-        else
-        {
         }
     }
 
@@ -566,14 +566,14 @@ void NativeParserF::CountCommasInEditor(int& commasAll, int& commasUntilPos, wxS
             lineTextPast = lineTextPast.Trim();
             if (!lineTextPast.IsEmpty())
             {
-                int idx = lineTextPast.Find('&');
+                int idx = lineTextPast.Find('&', true);
                 if (idx == wxNOT_FOUND)
                 {
                     break;
                 }
                 else
                 {
-                    lineText = lineTextPast.BeforeFirst('&') + lineText;
+                    lineText = lineTextPast.Mid(0,idx) + lineText;
                     end += idx;
                 }
             }

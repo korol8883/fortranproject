@@ -64,6 +64,8 @@ class ParserThreadF
 		void HandleUse();
 		void HandleBlockConstruct();
 		void HandleAssociateConstruct();
+		void HandleSelectTypeConstruct();
+		void HandleSelectCaseConstruct();
 		void HandleInterface(TokenAccessKind taKind=taPublic);
 		void HandleBlockData();
 		void HandleInclude();
@@ -81,7 +83,7 @@ class ParserThreadF
 		void MakeArrayStringLower(wxArrayString &arr, wxArrayString &arrLw);
 		void ChangeTokenAccess(ModuleTokenF* modToken, TokenF* token);
 
-        std::set<wxString> m_EndSecPart;
+        std::set<wxString> m_KnownEndSecPart;
 };
 
 #endif // PARSERTHREADF_H

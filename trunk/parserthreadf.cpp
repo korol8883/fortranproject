@@ -8,7 +8,7 @@
 #include "usetokenf.h"
 #include <set>
 
-//#include <logmanager.h>
+#include <logmanager.h>
 
 ParserThreadF::ParserThreadF(const wxString& bufferOrFilename,
 							 TokensArrayF* tokens,
@@ -73,18 +73,17 @@ ParserThreadF::~ParserThreadF()
 
 void ParserThreadF::InitSecondEndPart()
 {
-    //m_EndSecPart.insert(_T("associate"));
-    m_EndSecPart.insert(_T("do"));
-    m_EndSecPart.insert(_T("enum"));
-    m_EndSecPart.insert(_T("file"));
-    m_EndSecPart.insert(_T("forall"));
-    m_EndSecPart.insert(_T("if"));
-    m_EndSecPart.insert(_T("select"));
-    m_EndSecPart.insert(_T("where"));
-    //m_EndSecPart.insert(_T("block"));
-    m_EndSecPart.insert(_T("critical"));
-    m_EndSecPart.insert(_T("template")); //non-standard
-    m_EndSecPart.insert(_T("structure")); //non-standard
+    m_KnownEndSecPart.insert(_T("subroutine"));
+    m_KnownEndSecPart.insert(_T("function"));
+    m_KnownEndSecPart.insert(_T("module"));
+    m_KnownEndSecPart.insert(_T("submodule"));
+    m_KnownEndSecPart.insert(_T("type"));
+    m_KnownEndSecPart.insert(_T("interface"));
+    m_KnownEndSecPart.insert(_T("program"));
+    m_KnownEndSecPart.insert(_T("block"));
+    m_KnownEndSecPart.insert(_T("blockdata"));
+    m_KnownEndSecPart.insert(_T("associate"));
+    m_KnownEndSecPart.insert(_T("procedure"));
 }
 
 bool ParserThreadF::Parse()
@@ -166,6 +165,16 @@ bool ParserThreadF::Parse()
         else if (tok_low.Matches(_T("associate")))
         {
         	HandleAssociateConstruct();
+        }
+        else if ((tok_low.Matches(_T("select")) && nex_low.Matches(_T("type"))) ||
+                 tok_low.Matches(_T("selecttype")))
+        {
+        	HandleSelectTypeConstruct();
+        }
+        else if ((tok_low.Matches(_T("select")) && nex_low.Matches(_T("case"))) ||
+                  tok_low.Matches(_T("selectcase")))
+        {
+        	HandleSelectCaseConstruct();
         }
         else if (tok_low.Matches(_T("end")))
         {
@@ -807,7 +816,9 @@ void ParserThreadF::ParseDeclarations(bool breakAtEnd, bool breakAtContains)
         {
         	HandleInterface(taDefKind);
         }
-        else if (breakAtEnd && IsEnd(m_LastTokenName, next.Lower()))
+        else if (breakAtEnd &&
+                 ( ((m_Tokens.GetLineNumber() == m_Tokens.GetPeekedLineNumber()) && IsEnd(m_LastTokenName, next.Lower())) ||
+                   ((m_Tokens.GetLineNumber() != m_Tokens.GetPeekedLineNumber()) && IsEnd(m_LastTokenName, _T(""))) ))
         {
             m_Tokens.SkipToOneOfChars(";", true);
             break;
@@ -1149,6 +1160,71 @@ void ParserThreadF::HandleAssociateConstruct()
 }
 
 
+void ParserThreadF::HandleSelectTypeConstruct()
+{
+    TokenF* old_parent = m_pLastParent;
+    wxString args = m_Tokens.PeekTokenSameFortranLine();
+    if (args.IsEmpty() || !args(0,1).Matches(_T("(")))
+        args = _T("()");
+    else
+        args = m_Tokens.GetTokenSameFortranLine();
+
+    while (1)
+    {
+    	wxString token = m_Tokens.GetToken();
+    	if (token.IsEmpty())
+            break;
+
+        wxString tok_low = token.Lower();
+        wxString next    = m_Tokens.PeekToken();
+        wxString nex_low = next.Lower();
+
+        if ( (tok_low.Matches(_T("end")) && nex_low.Matches(_T("select"))) || tok_low.Matches(_T("endselect")) )
+        {
+            m_Tokens.SkipToOneOfChars(";", true);
+            break;
+        }
+        else if ( (tok_low.Matches(_T("type")) && nex_low.Matches(_T("is"))) ||
+                  (tok_low.Matches(_T("class")) && nex_low.Matches(_T("is"))) )
+        {
+            wxString defstr = tok_low;
+            if (m_Tokens.GetToken().IsEmpty())
+                break;
+            wxString next = m_Tokens.PeekToken();
+            wxString nex_low = next.Lower();
+            if (nex_low.StartsWith(_T("(")))
+                defstr << nex_low;
+
+            m_pLastParent = DoAddToken(tkSelectTypeChild, wxEmptyString, args, defstr);
+            GoThroughBody();
+            m_pLastParent->AddLineEnd(m_Tokens.GetLineNumber());
+            m_pLastParent = old_parent;
+        }
+        else if (tok_low.Matches(_T("class")) && nex_low.Matches(_T("default")))
+        {
+            m_pLastParent = DoAddToken(tkSelectTypeDefault, wxEmptyString, args, wxEmptyString);
+            GoThroughBody();
+            m_pLastParent->AddLineEnd(m_Tokens.GetLineNumber());
+            m_pLastParent = old_parent;
+        }
+        else if (tok_low.Matches(_T("include")))
+        {
+            HandleInclude();
+        }
+    }
+    m_pLastParent = old_parent;
+}
+
+
+void ParserThreadF::HandleSelectCaseConstruct()
+{
+    // we are not interesting in SelectCase, but we need to catch EndSelect
+    GoThroughBody();
+    m_Tokens.GetToken();
+    m_Tokens.SkipToOneOfChars(";", true);
+}
+
+
 void ParserThreadF::HandleInterface(TokenAccessKind taKind)
 {
     TokenF* old_parent = m_pLastParent;
@@ -1275,7 +1351,8 @@ void ParserThreadF::HandleBlockData()
 
         wxString next = m_Tokens.PeekToken();
         wxString nex_low = next.Lower();
-        if (IsEnd(tok_low, nex_low))
+        if ( ((m_Tokens.GetLineNumber() == m_Tokens.GetPeekedLineNumber()) && IsEnd(tok_low, nex_low)) ||
+             ((m_Tokens.GetLineNumber() != m_Tokens.GetPeekedLineNumber()) && IsEnd(tok_low, _T(""))) )
         {
             m_Tokens.SkipToOneOfChars(";", true);
             break;
@@ -1369,9 +1446,19 @@ void ParserThreadF::GoThroughBody()
 
         wxString next = m_Tokens.PeekToken();
         wxString nex_low = next.Lower();
-        if (IsEnd(tok_low, nex_low))
+
+        if ( ((m_Tokens.GetLineNumber() == m_Tokens.GetPeekedLineNumber()) && IsEnd(tok_low, nex_low)) ||
+             ((m_Tokens.GetLineNumber() != m_Tokens.GetPeekedLineNumber()) && IsEnd(tok_low, _T(""))) )
         {
             m_Tokens.SkipToOneOfChars(";", true);
+            break;
+        }
+        else if ( (tok_low.Matches(_T("end")) && nex_low.Matches(_T("select"))) || tok_low.Matches(_T("endselect")) ||
+                                    (tok_low.Matches(_T("type")) && nex_low.Matches(_T("is"))) ||
+                                    (tok_low.Matches(_T("class")) && nex_low.Matches(_T("is"))) ||
+                                    (tok_low.Matches(_T("class")) && nex_low.Matches(_T("default"))) )
+        {
+            m_Tokens.UngetToken();
             break;
         }
         else if (tok_low.Matches(_T("type")) && !nex_low(0,1).Matches(_T("(")) && !nex_low.Matches(_T("is"))
@@ -1425,6 +1512,20 @@ void ParserThreadF::GoThroughBody()
         else if (tok_low.Matches(_T("associate")))
         {
         	HandleAssociateConstruct();
+        }
+        else if (tok_low.Matches(_T("select")) && nex_low.Matches(_T("type")))
+        {
+            m_Tokens.GetToken();
+        	HandleSelectTypeConstruct();
+        }
+        else if (tok_low.Matches(_T("selecttype")))
+        {
+        	HandleSelectTypeConstruct();
+        }
+        else if ((tok_low.Matches(_T("select")) && nex_low.Matches(_T("case"))) ||
+                  tok_low.Matches(_T("selectcase")))
+        {
+        	HandleSelectCaseConstruct();
         }
         else
         {
@@ -1586,9 +1687,8 @@ void ParserThreadF::ParseTypeBoundProcedures(const wxString& firstWord, bool bre
                 }
             }
         }
-        else if ( ( firstTokenLw.IsSameAs(_T("end"))) ||
-                  ( curLineArr.Count() >= 1 && IsEnd(firstTokenLw,curLineArr.Item(0).Lower()) ) ||
-                  ( IsEnd(firstTokenLw, wxEmptyString) ) )
+        else if ( (curLineArr.Count() == 0 && IsEnd(firstTokenLw, wxEmptyString)) ||
+                  (curLineArr.Count() >= 1 && IsEnd(firstTokenLw,curLineArr.Item(0).Lower())) )
         {
             m_Tokens.SkipToOneOfChars(";", true);
             break;
@@ -1606,17 +1706,19 @@ void ParserThreadF::ParseTypeBoundProcedures(const wxString& firstWord, bool bre
 bool ParserThreadF::IsEnd(wxString tok_low, wxString nex_low)
 {
     bool isend = false;
-    if ( (tok_low.Matches(_T("end")) && !m_EndSecPart.count(nex_low)) ||
-          tok_low.Matches(_T("endsubroutine")) ||
-          tok_low.Matches(_T("endfunction")) ||
-          tok_low.Matches(_T("endmodule")) ||
-          tok_low.Matches(_T("endsubmodule")) ||
-          tok_low.Matches(_T("endtype")) ||
-          tok_low.Matches(_T("endinterface")) ||
-          tok_low.Matches(_T("endprogram")) ||
-          tok_low.Matches(_T("endblock")) ||
-          tok_low.Matches(_T("endblockdata")) ||
-          tok_low.Matches(_T("endassociate"))
+    if ( tok_low.StartsWith(_T("end")) &&
+         ( (tok_low.Matches(_T("end")) && (nex_low.IsEmpty() || m_KnownEndSecPart.count(nex_low))) ||
+           tok_low.Matches(_T("endsubroutine")) ||
+           tok_low.Matches(_T("endfunction")) ||
+           tok_low.Matches(_T("endmodule")) ||
+           tok_low.Matches(_T("endsubmodule")) ||
+           tok_low.Matches(_T("endtype")) ||
+           tok_low.Matches(_T("endinterface")) ||
+           tok_low.Matches(_T("endprogram")) ||
+           tok_low.Matches(_T("endblock")) ||
+           tok_low.Matches(_T("endblockdata")) ||
+           tok_low.Matches(_T("endassociate")) ||
+           tok_low.Matches(_T("endprocedure")) )
            )
     {
         isend = true;
@@ -1678,6 +1780,11 @@ void ParserThreadF::SplitAssociateConstruct(const wxString& argLine, std::map<wx
                 wxString assocName = block.Mid(0,sind).Trim(true).Trim(false);
                 wxString sourceExpr = block.Mid(sind+2).Trim(true).Trim(false);
                 assocMap.insert(std::pair<wxString,wxString>(assocName, sourceExpr));
+            }
+            else
+            {
+                wxString assocName = block.Trim(true).Trim(false);
+                assocMap.insert(std::pair<wxString,wxString>(assocName, assocName));
             }
         }
     }

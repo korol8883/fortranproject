@@ -315,7 +315,8 @@ void NativeParserF::OnEditorActivated(EditorBase* editor)
     cbEditor* ed = editor && editor->IsBuiltinEditor() ? static_cast<cbEditor*>(editor) : 0;
     if (ed)
     {
-        if (m_pWorkspaceBrowser->GetBrowserDisplayFilter() == bdfFile)
+        wxString filename = ed->GetFilename();
+        if (m_pWorkspaceBrowser->GetBrowserDisplayFilter() == bdfFile && !m_pWorkspaceBrowser->GetActiveFilename().IsSameAs(filename))
         {
             UpdateWorkspaceBrowser();
         }

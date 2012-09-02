@@ -847,6 +847,17 @@ TokensArrayF* ParserF::FindFileTokens(const wxString& filename)
             }
         }
     }
+    if (!children && m_pIntrinsicModuleTokens)
+    {
+        for (size_t i=0; i<m_pIntrinsicModuleTokens->GetCount(); i++)
+        {
+            if ((m_pIntrinsicModuleTokens->Item(i)->m_TokenKind == tkFile) && (m_pIntrinsicModuleTokens->Item(i)->m_Filename.IsSameAs(fn)))
+            {
+                children = &m_pIntrinsicModuleTokens->Item(i)->m_Children;
+                break;
+            }
+        }
+    }
     return children;
 }
 
@@ -3606,7 +3617,7 @@ void ParserF::SetNewCurrentTokens(TokensArrayF* pTokens)
 void ParserF::ConnectToNewCurrentTokens()
 {
     wxCriticalSectionLocker locker(s_CurrentBTokensCritSect);
-    if (m_pBufferTokens)
+    if (m_pBufferTokens && m_pCurrentBufferTokensNew && m_pCurrentBufferTokensNew->size() > 0)
     {
         for (size_t i=0; i<m_pBufferTokens->size(); i++)
         {
@@ -3620,7 +3631,8 @@ void ParserF::ConnectToNewCurrentTokens()
         }
         m_pBufferTokens->Add(m_pCurrentBufferTokensNew->Item(0));
     }
-    delete m_pCurrentBufferTokensNew;
+    if (m_pCurrentBufferTokensNew)
+        delete m_pCurrentBufferTokensNew;
     m_pCurrentBufferTokensNew = NULL;
 }
 

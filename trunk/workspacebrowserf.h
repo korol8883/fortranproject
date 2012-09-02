@@ -34,6 +34,7 @@ class WorkspaceBrowserF : public wxPanel
         void RereadOptions();
         void DeleteAllItems();
         void OnMenuEditPaste(wxCommandEvent& event);
+        wxString GetActiveFilename() { return m_ActiveFilename; };
 
     private:
         friend class myTextCtrl;

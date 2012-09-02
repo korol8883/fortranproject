@@ -588,12 +588,13 @@ wxString Tokenizerf::DoGetToken()
 	int start = m_TokenIndex;
 	wxString m_Str;
 
-	if (isalpha(CurrentChar()) || CurrentChar() == '_')
+	if (isalpha(CurrentChar()) || CurrentChar() == '_' || CurrentChar() == '$')
 	{
 		// keywords, identifiers, etc.
 		while (!IsEOF() &&
 				(isalnum(CurrentChar()) ||
-				CurrentChar() == '_'))
+				CurrentChar() == '_'    ||
+				CurrentChar() == '$'))
 			MoveToNextChar();
 		if (IsEOF())
 			return wxEmptyString;

@@ -1348,7 +1348,10 @@ void FortranProject::ShowCallTip()
             {
                 wxString argDecl;
                 wxString argDescription;
-                if (m_pNativeParser->GetParser()->FindTokenDeclaration(*token, argName, argDecl, argDescription))
+                bool found = m_pNativeParser->GetParser()->FindTokenDeclaration(*token, argName, argDecl, argDescription);
+                if (!found)
+                    found = m_pKeywordsParser->GetParser()->FindTokenDeclaration(*token, argName, argDecl, argDescription);
+                if (found)
                 {
                     definition << _T('\n') << argDecl;
                     if (m_ComVariab && !argDescription.IsEmpty())

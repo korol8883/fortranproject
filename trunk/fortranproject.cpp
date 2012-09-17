@@ -705,6 +705,10 @@ void FortranProject::DoCodeComplete()
     const int lineIndentPos = control->GetLineIndentPosition(control->GetCurrentLine());
     const wxChar lineFirstChar = control->GetCharAt(lineIndentPos);
 
+    int lineCur = control->LineFromPosition(pos);
+    int lineStartPos = control->PositionFromLine(lineCur);
+    wxString curLine = control->GetTextRange(lineStartPos,pos).Trim(false);
+
     if (lineFirstChar == _T('#'))
     {
         const int end = control->WordEndPosition(lineIndentPos + 1, true);
@@ -714,17 +718,12 @@ void FortranProject::DoCodeComplete()
     }
     else if (lineFirstChar == _T('!'))
     {
-        int lineCur = control->LineFromPosition(pos);
-        int lineStartPos = control->PositionFromLine(lineCur);
-        wxString curLine = control->GetTextRange(lineStartPos,pos).Trim();
-        if (!curLine.Lower().StartsWith(_T("!$")))
+        wxString curLineLw = curLine.Lower();
+        if (!curLineLw.StartsWith(_T("!$ ")) && !curLineLw.StartsWith(_T("!$\t")) && !curLineLw.StartsWith(_T("!$omp")) && !curLineLw.StartsWith(_T("!$acc")))
             return;
     }
     else
     {
-        int lineCur = control->LineFromPosition(pos);
-        int lineStartPos = control->PositionFromLine(lineCur);
-        wxString curLine = control->GetTextRange(lineStartPos,pos);
         if (curLine.Find('!') != wxNOT_FOUND)
             return;
     }
@@ -1032,7 +1031,7 @@ int FortranProject::CodeComplete()
     CompilerDirective pdir;
     int lineCur = control->LineFromPosition(pos);
     int lineStartPos = control->PositionFromLine(lineCur);
-    wxString curLine = control->GetTextRange(lineStartPos,pos).Trim().Lower();
+    wxString curLine = control->GetTextRange(lineStartPos,pos).Trim(false).Lower();
 
     if (curLine.StartsWith(_T("!$")))
     {

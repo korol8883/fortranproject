@@ -3119,12 +3119,14 @@ function RANK(A)
 end function
 
 module OpenMP
-    type(keywords) ::  atomic, auto, barrier, capture, collapse, copyin, copyprivate, default, &
+    type(keywords) ::  atomic, auto, barrier, capture, collapse, copyin, copyprivate, default, end, &
                        firstprivate, lastprivate, private, reduction, schedule, shared, critical, &
                        do, flush, master, ordered, parallel, sections, workshare, copyin, copyprivate, &
-                       critical, default, threadprivate, do, dynamic, guided, read, runtime, single, &
+                       threadprivate, dynamic, guided, read, runtime, single, update, write, &
                        static, task, if, final, untied, none, mergeable, taskwait, taskyield, &
-                       threadprivate, update, write
+                       num_threads, shared, section, nowait, &
+                       endatomic, endcritical, enddo, endmaster, endordered, endparallel, endsections, &
+                       endsingle, endtask, endworkshare, paralleldo, parallelsections, parallelworkshare
 end module
 
 module OpenACC

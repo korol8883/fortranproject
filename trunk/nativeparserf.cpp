@@ -880,7 +880,11 @@ void NativeParserF::GenMakefile()
 {
     cbProject* project = Manager::Get()->GetProjectManager()->GetActiveProject();
     if (!project)
+    {
+        Manager::Get()->GetLogManager()->Log(_T("No active project was found. Makefile was not generated."));
+        cbMessageBox(_("No active project was found.\nMakefile was not generated."), _("Error"), wxICON_ERROR);
         return;
+    }
 
     UpdateProjectFilesDependency(project);
 

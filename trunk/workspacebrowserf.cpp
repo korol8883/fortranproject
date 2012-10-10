@@ -226,8 +226,7 @@ void WorkspaceBrowserF::JumpToToken(TokenF* pToken)
         {
             cbStyledTextCtrl* control = ed->GetControl();
             int curLine = control->LineFromPosition(control->GetCurrentPos());
-            jumpStart.m_Filename = ed->GetFilename();
-            jumpStart.m_LineNumber = curLine;
+            jumpStart.Init(ed->GetFilename(), curLine, false);
         }
         EditorManager* edMan = Manager::Get()->GetEditorManager();
         if (cbEditor* ed = edMan->Open(pToken->m_Filename))
@@ -244,8 +243,7 @@ void WorkspaceBrowserF::JumpToToken(TokenF* pToken)
             // Track jump history
             cbStyledTextCtrl* control = ed->GetControl();
             int curLine = control->LineFromPosition(control->GetCurrentPos());
-            jumpFinish.m_Filename = ed->GetFilename();
-            jumpFinish.m_LineNumber = curLine;
+            jumpFinish.Init(ed->GetFilename(), curLine, true);
 
             m_NativeParser->GetJumpTracker()->TakeJump(jumpStart, jumpFinish);
             m_NativeParser->GetFortranProject()->CheckEnableToolbar();

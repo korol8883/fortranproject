@@ -859,17 +859,22 @@ void ParserThreadF::ParseDeclarations(bool breakAtEnd, bool breakAtContains)
             ParseTypeBoundProcedures(m_LastTokenName, true);
         }
 
-        bool found = ParseDeclarationsFirstPart(token, next);
-        if (found)
+        wxArrayString lineTok = m_Tokens.PeekTokensToEOL();
+        int funIdx = lineTok.Index(_T("function"), false);
+        if (funIdx == wxNOT_FOUND || (funIdx > 2))
         {
-            bool nDef=true;
-            TokensArrayF tokArrTmp;
-            ParseDeclarationsSecondPart(token, nDef, tokArrTmp);
-            if (nDef)
+            bool found = ParseDeclarationsFirstPart(token, next);
+            if (found)
             {
-                for (size_t i=0; i<tokArrTmp.Count(); i++)
+                bool nDef=true;
+                TokensArrayF tokArrTmp;
+                ParseDeclarationsSecondPart(token, nDef, tokArrTmp);
+                if (nDef)
                 {
-                    tokArr.Add(tokArrTmp.Item(i));
+                    for (size_t i=0; i<tokArrTmp.Count(); i++)
+                    {
+                        tokArr.Add(tokArrTmp.Item(i));
+                    }
                 }
             }
         }

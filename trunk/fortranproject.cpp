@@ -626,8 +626,7 @@ void FortranProject::OnGotoDeclaration(wxCommandEvent& event)
         {
             cbStyledTextCtrl* control = ed->GetControl();
             int curLine = control->LineFromPosition(control->GetCurrentPos());
-            jumpStart.m_Filename = ed->GetFilename();
-            jumpStart.m_LineNumber = curLine;
+            jumpStart.Init(ed->GetFilename(), curLine, false);
         }
 
         if (cbEditor* ed = Manager::Get()->GetEditorManager()->Open(pToken->m_Filename))
@@ -637,9 +636,7 @@ void FortranProject::OnGotoDeclaration(wxCommandEvent& event)
             // Track jump history
             cbStyledTextCtrl* control = ed->GetControl();
             int curLine = control->LineFromPosition(control->GetCurrentPos());
-            jumpFinish.m_Filename = ed->GetFilename();
-            jumpFinish.m_LineNumber = curLine;
-
+            jumpFinish.Init(ed->GetFilename(), curLine, true);
             m_pNativeParser->GetJumpTracker()->TakeJump(jumpStart, jumpFinish);
             CheckEnableToolbar();
         }
@@ -1262,7 +1259,7 @@ void FortranProject::ShowCallTip()
     int start = 0;
     int end = 0;
     int commas; // how many commas has the user typed so far?
-    int commasPos; // how many commas until current possition?
+    int commasPos; // how many commas until current position?
     bool isempt;
     wxArrayString callTipsOneLine;
     wxArrayInt idxFuncSub;
@@ -1792,7 +1789,7 @@ void FortranProject::OnJumpHome(wxCommandEvent& event)
 {
     JumpTracker* jTr = m_pNativeParser->GetJumpTracker();
 
-    if (!m_pNativeParser->GetJumpTracker()->IsJumpHomeEmpty())
+    if (!jTr->IsJumpHomeEmpty())
         JumpToLine(jTr->GetHomeAddress());
 }
 
@@ -1820,9 +1817,9 @@ void FortranProject::JumpToLine(const LineAddress& adr)
         return;
 
     EditorManager* edMan = Manager::Get()->GetEditorManager();
-    if (cbEditor* ed = edMan->Open(adr.m_Filename))
+    if (cbEditor* ed = edMan->Open(adr.GetFilename()))
     {
-        ed->GotoLine(adr.m_LineNumber);
+        ed->GotoLine(adr.GetLineNumber());
     }
 }
 

@@ -19,15 +19,19 @@ typedef std::list<LineAddress> JumpAddressList;
 class LineAddress
 {
     public:
-        wxString m_Filename;
-        int m_LineNumber;
-        bool IsSameAs(LineAddress &other)
-        {
-            if (m_Filename.IsSameAs(other.m_Filename) && (m_LineNumber == other.m_LineNumber))
-                return true;
-            else
-                return false;
-        };
+        LineAddress();
+        ~LineAddress();
+
+        void Init(const wxString& fileName, int lineNumber, bool isFinish);
+        bool IsSameAs(LineAddress &other);
+        wxString GetFilename()const {return m_Filename;};
+        int GetLineNumber()const {return m_LineNumber;};
+        bool IsFinish()const {return m_IsFinish;};
+
+    private:
+        wxString    m_Filename;
+        int         m_LineNumber;
+        bool        m_IsFinish;
 };
 
 #endif //LINEADDRESS_H_INCLUDED

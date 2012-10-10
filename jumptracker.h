@@ -20,6 +20,7 @@ class JumpTracker
         JumpAddressList                    m_JumpForward;
         LineAddress                        m_JumpHome;
         JumpAddressList                    m_JumpBack;
+        bool                               m_HomeIsStart;
 };
 
 #endif // JUMPTRACKER_H

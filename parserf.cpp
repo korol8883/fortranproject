@@ -2278,6 +2278,23 @@ void ParserF::FindChildrenOfInterface(TokenFlat* token, TokensArrayFlat& result)
                                     result.Add(new TokenFlat(pModChildren->Item(m)));
                                     break;
                                 }
+                                else if (pModChildren->Item(m)->m_TokenKind == tkInterfaceExplicit)
+                                {
+                                    bool found = false;
+                                    TokensArrayF* pIntExplCh = &pModChildren->Item(m)->m_Children;
+                                    for (size_t n=0; n < pIntExplCh->GetCount(); n++)
+                                    {
+                                        if ( (pIntExplCh->Item(n)->m_TokenKind == tkFunction || pIntExplCh->Item(n)->m_TokenKind == tkSubroutine) &&
+                                              pIntExplCh->Item(n)->m_Name.IsSameAs(name) )
+                                        {
+                                            result.Add(new TokenFlat(pIntExplCh->Item(n)));
+                                            found = true;
+                                            break;
+                                        }
+                                    }
+                                    if (found)
+                                        break;
+                                }
                             }
                         }
                     }

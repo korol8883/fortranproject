@@ -8,7 +8,7 @@
 
 void MakefileGen::GenerateMakefile(cbProject* project, ProjectDependencies* projDep, NativeParserF* pNativeParser)
 {
-    if (!project)
+    if (!project || !projDep)
         return;
 
     ProjectBuildTarget* buildTarget = project->GetBuildTarget(project->GetActiveBuildTarget());
@@ -62,7 +62,7 @@ void MakefileGen::GenerateMakefile(cbProject* project, ProjectDependencies* proj
         sfn.MakeRelativeTo(mffn.GetPath(wxPATH_GET_SEPARATOR));
         //sfn.MakeRelativeTo(commonPath);
         //wxString ffpath = sfn.GetFullPath();
-        wxString dir = sfn.GetPath(wxPATH_GET_VOLUME | wxPATH_GET_SEPARATOR);
+        wxString dir = sfn.GetPath(wxPATH_GET_VOLUME | wxPATH_GET_SEPARATOR, wxPATH_UNIX);
         int didx = src_dirs.Index(dir);
         if (didx == wxNOT_FOUND)
             didx = src_dirs.Add(dir);
@@ -148,7 +148,7 @@ void MakefileGen::GenerateMakefile(cbProject* project, ProjectDependencies* proj
             wxFileName ofn(pfd.object_file_absolute_native);
             ofn.MakeRelativeTo(mffn.GetPath(wxPATH_GET_SEPARATOR));
             ofn.SetExt(_T("o"));
-            objdir << ofn.GetPath(wxPATH_GET_VOLUME | wxPATH_GET_SEPARATOR) + _T("\n");
+            objdir << ofn.GetPath(wxPATH_GET_VOLUME | wxPATH_GET_SEPARATOR, wxPATH_UNIX) + _T("\n");
             break;
         }
     }
@@ -232,7 +232,7 @@ void MakefileGen::GenerateMakefile(cbProject* project, ProjectDependencies* proj
 
 
     wxFileName exefile(buildTarget->GetOutputFilename());
-    mfile.Write(_T("EXE_DIR = ") + exefile.GetPath(wxPATH_GET_VOLUME | wxPATH_GET_SEPARATOR) + _T("\n"));
+    mfile.Write(_T("EXE_DIR = ") + exefile.GetPath(wxPATH_GET_VOLUME | wxPATH_GET_SEPARATOR, wxPATH_UNIX) + _T("\n"));
     mfile.Write(_T("\nEXE = ") + exefile.GetFullName() + _T("\n"));
     Compiler * compiler = CompilerFactory::GetCompiler(buildTarget->GetCompilerID());
     wxString compStr = _T("FC = ");

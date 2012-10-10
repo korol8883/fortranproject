@@ -10,6 +10,7 @@
 
 JumpTracker::JumpTracker()
 {
+    m_HomeIsStart = true;
 }
 
 JumpTracker::~JumpTracker()
@@ -22,10 +23,11 @@ void JumpTracker::TakeJump(LineAddress& jumpStart, LineAddress& jumpFinish)
     {
         //do nothing
     }
-    else if (jumpStart.IsSameAs(jumpFinish) && !m_JumpHome.m_Filename.IsEmpty())
+    else if (jumpStart.IsSameAs(jumpFinish) && !m_JumpHome.GetFilename().IsEmpty())
     {
-        m_JumpBack.push_front(m_JumpHome);
-        m_JumpHome = jumpStart;
+        if (m_JumpHome.IsFinish())
+            m_JumpBack.push_front(m_JumpHome);
+        m_JumpHome = jumpFinish;
     }
     else if ( m_JumpHome.IsSameAs(jumpStart) && !m_JumpForward.empty() && jumpFinish.IsSameAs(m_JumpForward.front()) )
     {
@@ -39,7 +41,7 @@ void JumpTracker::TakeJump(LineAddress& jumpStart, LineAddress& jumpFinish)
     }
     else
     {
-        if (!m_JumpHome.m_Filename.IsEmpty())
+        if (!m_JumpHome.GetFilename().IsEmpty() && m_JumpHome.IsFinish())
         {
             m_JumpBack.push_front(m_JumpHome);
         }
@@ -63,7 +65,7 @@ bool JumpTracker::IsJumpBackEmpty()
 
 bool JumpTracker::IsJumpHomeEmpty()
 {
-    return m_JumpHome.m_Filename.IsEmpty();
+    return m_JumpHome.GetFilename().IsEmpty();
 }
 
 bool JumpTracker::IsJumpForwardEmpty()

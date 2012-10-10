@@ -69,6 +69,7 @@
 		<Unit filename="jumptracker.h" />
 		<Unit filename="keywordsparserf.cpp" />
 		<Unit filename="keywordsparserf.h" />
+		<Unit filename="lineaddress.cpp" />
 		<Unit filename="lineaddress.h" />
 		<Unit filename="makefilegen.cpp" />
 		<Unit filename="makefilegen.h" />

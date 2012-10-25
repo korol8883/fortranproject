@@ -572,3 +572,13 @@ void WorkspaceBrowserF::OnMenuEditPaste(wxCommandEvent& event)
     return;
 }
 
+void WorkspaceBrowserF::SetActiveProject(cbProject* prj)
+{
+    m_pActiveProject = prj;
+    if (m_pBrowserBuilder)
+    {
+        m_pBrowserBuilder->SetActiveProject(prj);
+    }
+}
+
+

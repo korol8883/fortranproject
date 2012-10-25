@@ -242,6 +242,9 @@ void NativeParserF::ForceReparseWorkspace()
     if (Manager::IsAppShuttingDown())
         return;
 
+    cbProject* project = Manager::Get()->GetProjectManager()->GetActiveProject();
+    if (project && m_pWorkspaceBrowser)
+        m_pWorkspaceBrowser->SetActiveProject(project);
     m_WorkspaceReparseTimer.Start(500, wxTIMER_ONE_SHOT);
 }
 
@@ -305,6 +308,7 @@ void NativeParserF::OnProjectActivated(cbProject* prj)
     if (!m_pWorkspaceBrowser)
         return;
 
+    m_pWorkspaceBrowser->SetActiveProject(prj);
     UpdateWorkspaceBrowser();
 }
 

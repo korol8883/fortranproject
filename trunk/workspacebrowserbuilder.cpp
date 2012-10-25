@@ -1504,3 +1504,8 @@ void WorkspaceBrowserBuilder::AddIncludeFiles(wxTreeCtrl* tree, wxTreeItemId par
     }
 }
 
+void WorkspaceBrowserBuilder::SetActiveProject(cbProject* prj)
+{
+    m_pActiveProject = prj;
+}
+

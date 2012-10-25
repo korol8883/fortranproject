@@ -35,6 +35,7 @@ class WorkspaceBrowserF : public wxPanel
         void DeleteAllItems();
         void OnMenuEditPaste(wxCommandEvent& event);
         wxString GetActiveFilename() { return m_ActiveFilename; };
+        void SetActiveProject(cbProject* prj);
 
     private:
         friend class myTextCtrl;

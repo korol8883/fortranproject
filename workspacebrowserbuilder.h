@@ -71,6 +71,7 @@ class WorkspaceBrowserBuilder
 		int GetTokenKindImageIdx(TokenF* token);
 		void MarkSymbol(const wxString& filename, int line);
         void MakeVisibleCurrent();
+        void SetActiveProject(cbProject* prj);
 
 		bool m_AtWork;
 

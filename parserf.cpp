@@ -3560,11 +3560,6 @@ void ParserF::GetSubmoduleHostTokens(TokenF* subModToken, std::vector<TokensArra
         GetSubmoduleHostTokens(modTok, vpChildren);
 }
 
-void ParserF::GetFortranFileExts(StringSet& fileExts)
-{
-    g_FortranFileExt.GetFortranFileExts(fileExts);
-}
-
 void ParserF::SetNewTokens(TokensArrayF* pTokens)
 {
     if (m_pTokensNew)

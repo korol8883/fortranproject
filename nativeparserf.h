@@ -64,7 +64,6 @@ class NativeParserF : public wxEvtHandler
         JumpTracker* GetJumpTracker();
         FortranProject* GetFortranProject();
         void GenMakefile();
-        void GetFortranFileExts(StringSet& fileExts);
         wxArrayString* GetWSFiles();
         ArrayOfFortranSourceForm* GetWSFileForms();
         void GetCurrentBuffer(wxString& buffer, wxString& filename);

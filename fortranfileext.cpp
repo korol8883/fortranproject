@@ -69,19 +69,3 @@ void FortranFileExt::RereadOptions()
     m_ExtDone = false;
 }
 
-void FortranFileExt::GetFortranFileExts(StringSet& fileExts)
-{
-    RereadFileExtensions();
-    fileExts.clear();
-    StringSet::iterator it;
-    for( it = m_FortranExtFixed.begin(); it != m_FortranExtFixed.end(); ++it )
-    {
-        fileExts.insert(*it);
-    }
-    for( it = m_FortranExtFree.begin(); it != m_FortranExtFree.end(); ++it )
-    {
-        fileExts.insert(*it);
-    }
-}
-
-

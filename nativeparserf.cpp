@@ -907,11 +907,6 @@ void NativeParserF::GenMakefile()
     }
 }
 
-void NativeParserF::GetFortranFileExts(StringSet& fileExts)
-{
-    m_Parser.GetFortranFileExts(fileExts);
-}
-
 void NativeParserF::GetCurrentBuffer(wxString& buffer, wxString& filename)
 {
     wxCriticalSectionLocker locker(s_CurrentBufferCritSect);

@@ -48,6 +48,7 @@ class FortranProject : public cbCodeCompletionPlugin
         virtual void ShowCallTip();
         void OnCodeComplete(wxCommandEvent& event);
         void OnShowCallTip(wxCommandEvent& event);
+        virtual bool IsProviderFor(cbEditor *ed);
         void CompleteCodeEvt(CodeBlocksEvent& event);
         void ShowCallTipEvt(CodeBlocksEvent& event);
         void MakeCompleteCode();
@@ -104,8 +105,6 @@ class FortranProject : public cbCodeCompletionPlugin
 
         void OnGenerateMakefile(wxCommandEvent& event);
         void OnChangeCase(wxCommandEvent& event);
-
-        void RegisterFileExtensions();
 
         bool m_InitDone;
 

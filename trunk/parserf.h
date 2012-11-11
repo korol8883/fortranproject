@@ -71,7 +71,6 @@ class ParserF
         bool HasIncludeFiles();
         TokenF* FindFile(const wxString& filename);
         void FindFile(const wxString& filename, TokensArrayFlat& result);
-        void GetFortranFileExts(StringSet& fileExts);
         void SetNewTokens(TokensArrayF* pTokens);
         void SetNewIncludeDB(IncludeDB* pIncludeDB);
         void ConnectToNewTokens();

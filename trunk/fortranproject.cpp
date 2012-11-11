@@ -1226,6 +1226,17 @@ int FortranProject::CodeComplete()
     return -5;
 }
 
+bool FortranProject::IsProviderFor(cbEditor *ed)
+{
+    if (!ed
+        || !m_pNativeParser->IsFileFortran(ed->GetShortName())
+        || !Manager::Get()->GetConfigManager(_T("fortran_project"))->ReadBool(_T("/use_code_completion"), true))
+    {
+        return false;
+    }
+    return true;
+}
+
 void FortranProject::ShowCallTip()
 {
     if (!IsAttached() || !m_InitDone)
@@ -1744,7 +1755,6 @@ void FortranProject::RereadOptions()
     {
         RemoveLogWindow(false);
     }
-    RegisterFileExtensions();
 }
 
 void FortranProject::WriteToLog(const wxString& text)
@@ -1849,16 +1859,6 @@ void FortranProject::OnChangeCase(wxCommandEvent& event)
 void FortranProject::OnReparseEditorTimer(wxTimerEvent& event)
 {
     m_pNativeParser->ReparseCurrentEditor();
-}
-
-void FortranProject::RegisterFileExtensions()
-{
-    PluginManager* plugman = Manager::Get()->GetPluginManager();
-    if (!plugman)
-        return;
-    StringSet fileExts;
-    m_pNativeParser->GetFortranFileExts(fileExts);
-    plugman->RegisterCCFileExts(_T("FortranProject"), fileExts);
 }
 
 wxString FortranProject::GetIncludeFilename(cbStyledTextCtrl* control)

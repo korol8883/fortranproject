@@ -12,7 +12,6 @@ class FortranFileExt
         ~FortranFileExt();
 		bool IsFileFortran(const wxString& filename, FortranSourceForm& fsForm);
 		void RereadOptions();
-		void GetFortranFileExts(StringSet& fileExts);
     private:
 		void RereadFileExtensions();
         bool m_ExtDone;

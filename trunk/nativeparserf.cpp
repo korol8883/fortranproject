@@ -592,6 +592,8 @@ void NativeParserF::CountCommasInEditor(int& commasAll, int& commasUntilPos, wxS
             wxChar contS = lineText.GetChar(5);
             if (contS != ' ' && contS != '0')
             {
+                lineText = lineText.Mid(6);
+                end -= 6;
                 int line2 = line - 1;
                 while (line2 > 0)
                 {
@@ -605,14 +607,15 @@ void NativeParserF::CountCommasInEditor(int& commasAll, int& commasUntilPos, wxS
                         {
                             wxChar contS2 = lineTextPast.GetChar(5);
                             if (contS2 == ' ' || contS2 == '0')
-                            {
                                 break;
+                            else
+                            {
+                                lineText = lineText.Mid(6);
+                                end -= 6;
                             }
                         }
                         else
-                        {
                             break;
-                        }
                     }
                     line2--;
                 }

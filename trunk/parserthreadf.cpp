@@ -8,8 +8,6 @@
 #include "usetokenf.h"
 #include <set>
 
-#include <logmanager.h>
-
 ParserThreadF::ParserThreadF(const wxString& bufferOrFilename,
 							 TokensArrayF* tokens,
 							 FortranSourceForm fsForm,

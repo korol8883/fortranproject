@@ -498,10 +498,40 @@ wxString Tokenizerf::GetTokenSameFortranLine()
 {
     wxString token;
 
-    token = GetTokenSameLine();
-    while (token.IsSameAs(_T("&")))
+    if (m_SourceForm == fsfFree)
     {
-        token = GetToken();
+        token = GetTokenSameLine();
+        while (token.IsSameAs(_T("&")))
+        {
+            token = GetToken();
+        }
+    }
+    else
+    {
+        token = PeekToken();
+        if (m_LineNumberStart == m_PeekedLineNumberStart)
+            token = GetToken();
+        else
+        {
+            if ( (m_PeekedColumn >= 7 && (m_PeekedColumn - token.Length()) >= 7) ||
+                 ((m_PeekedColumn - token.Length()) < 6) ||
+                 (token.Mid((token.Length() - (m_PeekedColumn - 6)),1).IsSameAs(_("0"))) )
+                token = wxEmptyString;
+            else
+            {
+                token = GetToken();
+                if (m_Column > 7)
+                    token = token.Mid(token.Length() - (m_Column - 7));
+                else
+                {
+                    token = PeekToken();
+                    if (m_LineNumberStart == m_PeekedLineNumberStart)
+                        token = GetToken();
+                    else
+                        token = wxEmptyString;
+                }
+            }
+        }
     }
 	return token;
 }

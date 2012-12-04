@@ -14,6 +14,7 @@
 #include <wx/settings.h>
 #include <wx/utils.h>
 #include <wx/string.h>
+#include <string>
 
 namespace compatibility { typedef TernaryCondTypedef<wxMinimumVersion<2,5>::eval, wxTreeItemIdValue, long int>::eval tree_cookie_t; };
 

@@ -352,14 +352,21 @@ bool ParserF::FindMatchTypeComponents(cbEditor* ed, const wxString& lineCur, Tok
         if (!tmpString.EndsWith(_T("%")))
             return true;
     }
-    else if (line.EndsWith(_T(")")) || line.EndsWith(_T("(")) || line.EndsWith(_T(",")))
+    else if (line.EndsWith(_T(")")) || line.EndsWith(_T("(")) || line.EndsWith(_T(","))
+             || line.EndsWith(_T("[")) || line.EndsWith(_T("]")))
         return true;
     int idx_a = line.Find('(', true);
     int idx_b = line.Find(')', true);
     if ((idx_a != wxNOT_FOUND && idx_b == wxNOT_FOUND) || (idx_a > idx_b))
         line = line.Mid(idx_a+1);
 
+    idx_a = line.Find('[', true);
+    idx_b = line.Find(']', true);
+    if ((idx_a != wxNOT_FOUND && idx_b == wxNOT_FOUND) || (idx_a > idx_b))
+        line = line.Mid(idx_a+1);
+
     CutBlocks('(', line);
+    CutBlocks('[', line);
 
     idx_a = line.Find(',', true);
     if (idx_a != wxNOT_FOUND)

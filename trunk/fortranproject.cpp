@@ -12,6 +12,7 @@
 #include "fpoptionsdlg.h"
 #include "jumptracker.h"
 #include "changecase.h"
+#include "tab2space.h"
 #include <configurationpanel.h>
 #include <manager.h>
 #include <logmanager.h>
@@ -92,10 +93,15 @@ int idMenuCodeComplete     = wxNewId();
 int idMenuShowCallTip      = wxNewId();
 int idMenuNextCallTipPage  = wxNewId();
 int idMenuPrevCallTipPage  = wxNewId();
+int idMenuJump             = wxNewId();
 int idMenuGotoDeclaration  = wxNewId();
+int idMenuJumpBack         = wxNewId();
+int idMenuJumpHome         = wxNewId();
+int idMenuJumpForward      = wxNewId();
 int idViewSymbolsBrowser   = wxNewId();
 int idMenuGenerateMakefile = wxNewId();
 int idMenuChangeCase       = wxNewId();
+int idMenuTab2Space        = wxNewId();
 int idReparseEditorTimer   = wxNewId();
 
 #ifndef __WXMSW__
@@ -105,6 +111,9 @@ int idMenuEditPaste = XRCID("idEditPaste");
 BEGIN_EVENT_TABLE(FortranProject, cbCodeCompletionPlugin)
     EVT_UPDATE_UI(idViewSymbolsBrowser, FortranProject::OnUpdateUI)
     EVT_MENU(idMenuGotoDeclaration, FortranProject::OnGotoDeclaration)
+    EVT_MENU(idMenuJumpBack, FortranProject::OnJumpBack)
+    EVT_MENU(idMenuJumpHome, FortranProject::OnJumpHome)
+    EVT_MENU(idMenuJumpForward, FortranProject::OnJumpForward)
     EVT_MENU(idMenuCodeComplete, FortranProject::OnCodeComplete)
     EVT_MENU(idMenuShowCallTip, FortranProject::OnShowCallTip)
     EVT_MENU(idMenuNextCallTipPage, FortranProject::OnNextPrevCallTipPage)
@@ -113,6 +122,7 @@ BEGIN_EVENT_TABLE(FortranProject, cbCodeCompletionPlugin)
     EVT_MENU(idViewSymbolsBrowser, FortranProject::OnViewWorkspaceBrowser)
     EVT_MENU(idMenuGenerateMakefile, FortranProject::OnGenerateMakefile)
     EVT_MENU(idMenuChangeCase, FortranProject::OnChangeCase)
+    EVT_MENU(idMenuTab2Space, FortranProject::OnTab2Space)
 #ifndef __WXMSW__
     EVT_MENU(idMenuEditPaste, FortranProject::OnMenuEditPaste)
 #endif
@@ -232,11 +242,12 @@ void FortranProject::OnRelease(bool appShutDown)
     }
     if (m_FortranToolsMenu)
     {
-        m_FortranToolsMenu->Delete(idMenuGotoDeclaration);
+        m_FortranToolsMenu->Delete(idMenuJump);
         m_FortranToolsMenu->Delete(idMenuNextCallTipPage);
         m_FortranToolsMenu->Delete(idMenuPrevCallTipPage);
         m_FortranToolsMenu->Delete(idMenuGenerateMakefile);
         m_FortranToolsMenu->Delete(idMenuChangeCase);
+        m_FortranToolsMenu->Delete(idMenuTab2Space);
     }
 } // end of OnRelease
 
@@ -477,11 +488,21 @@ void FortranProject::BuildMenu(wxMenuBar* menuBar)
     }
     if (m_FortranToolsMenu)
     {
-        m_FortranToolsMenu->Append(idMenuGotoDeclaration, _("Jump to declaration\tCtrl-."));
+        wxMenu* submenuJump = new wxMenu();
+        submenuJump->Append(idMenuGotoDeclaration, _("Jump to declaration\tCtrl-."));
+        submenuJump->Append(idMenuJumpBack, _("Jump back"));
+        submenuJump->Append(idMenuJumpHome, _("Jump last"));
+        submenuJump->Append(idMenuJumpForward, _("Jump forward"));
+        submenuJump->Enable(idMenuJumpBack, false);
+        submenuJump->Enable(idMenuJumpHome, false);
+        submenuJump->Enable(idMenuJumpForward, false);
+
+        m_FortranToolsMenu->Append(idMenuJump, _("Jump"), submenuJump);
         m_FortranToolsMenu->Append(idMenuNextCallTipPage, _("Next call tip\tCtrl-DOWN"));
         m_FortranToolsMenu->Append(idMenuPrevCallTipPage, _("Prev call tip\tCtrl-UP"));
         m_FortranToolsMenu->Append(idMenuGenerateMakefile, _("Generate Makefile"));
         m_FortranToolsMenu->Append(idMenuChangeCase, _("Change case"));
+        m_FortranToolsMenu->Append(idMenuTab2Space, _("Tab2space"));
     }
 }
 
@@ -1819,6 +1840,13 @@ void FortranProject::CheckEnableToolbar()
     m_pToolbar->EnableTool(XRCID("idFortProjBack"), !m_pNativeParser->GetJumpTracker()->IsJumpBackEmpty());
     m_pToolbar->EnableTool(XRCID("idFortProjHome"), !m_pNativeParser->GetJumpTracker()->IsJumpHomeEmpty());
     m_pToolbar->EnableTool(XRCID("idFortProjForward"), !m_pNativeParser->GetJumpTracker()->IsJumpForwardEmpty());
+
+    wxMenuItem* pJumpBack = m_FortranToolsMenu->FindItem(idMenuJumpBack);
+    pJumpBack->Enable(!m_pNativeParser->GetJumpTracker()->IsJumpBackEmpty());
+    wxMenuItem* pJumpHome = m_FortranToolsMenu->FindItem(idMenuJumpHome);
+    pJumpHome->Enable(!m_pNativeParser->GetJumpTracker()->IsJumpHomeEmpty());
+    wxMenuItem* pJumpForward = m_FortranToolsMenu->FindItem(idMenuJumpForward);
+    pJumpForward->Enable(!m_pNativeParser->GetJumpTracker()->IsJumpForwardEmpty());
 }
 
 void FortranProject::JumpToLine(const LineAddress& adr)
@@ -1854,6 +1882,12 @@ void FortranProject::OnChangeCase(wxCommandEvent& event)
 {
     ChangeCase changCaseDlg(Manager::Get()->GetAppWindow());
     changCaseDlg.ShowModal();
+}
+
+void FortranProject::OnTab2Space(wxCommandEvent& event)
+{
+    Tab2Space tab2SpaceDlg(Manager::Get()->GetAppWindow());
+    tab2SpaceDlg.ShowModal();
 }
 
 void FortranProject::OnReparseEditorTimer(wxTimerEvent& event)

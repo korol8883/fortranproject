@@ -105,6 +105,7 @@ class FortranProject : public cbCodeCompletionPlugin
 
         void OnGenerateMakefile(wxCommandEvent& event);
         void OnChangeCase(wxCommandEvent& event);
+        void OnTab2Space(wxCommandEvent& event);
 
         bool m_InitDone;
 

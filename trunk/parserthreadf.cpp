@@ -1011,14 +1011,16 @@ void ParserThreadF::ParseDeclarationsSecondPart(wxString& token, bool& needDefau
             continue;
         }
         wxString arg1;
-        if (i+1 < lineTok.GetCount())
+        while (i+1 < lineTok.GetCount())
         {
             wxString s = lineTok.Item(i+1);
-            if (s.StartsWith(_T("(")) && s.EndsWith(_T(")")))
+            if ((s.StartsWith(_T("(")) && s.EndsWith(_T(")"))) || (s.StartsWith(_T("[")) && s.EndsWith(_T("]"))))
             {
-                arg1 = s;
+                arg1 << s;
                 i++;
             }
+            else
+                break;
         }
         if (i+1 < lineTok.GetCount() && (lineTok.Item(i+1).IsSameAs(_T("=>")) || lineTok.Item(i+1).IsSameAs(_T("=")) || lineTok.Item(i+1).IsSameAs(_T("*"))) )
         {

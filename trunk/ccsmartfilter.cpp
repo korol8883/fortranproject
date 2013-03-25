@@ -185,6 +185,11 @@ void CCSmartFilter::GetTokenKind(wxArrayString& words, int& kindFilter, bool& al
         kindFilter = tkOther | tkFunction | tkInterface;
         allowVariables = true;
     }
+    else if (wordLw.IsSameAs('['))
+    {
+        kindFilter = tkVariable;
+        allowVariables = true;
+    }
     else
     {
         kindFilter = tkOther;

@@ -378,7 +378,8 @@ void ProjectDependencies::RemoveModFiles(cbProject* pr, ProjectBuildTarget* bTar
         !CompilerFactory::CompilerInheritsFrom(comID, _T("g95")) &&
         !CompilerFactory::CompilerInheritsFrom(comID, _T("ifcwin")) &&
         !CompilerFactory::CompilerInheritsFrom(comID, _T("ifclin")) &&
-        !CompilerFactory::CompilerInheritsFrom(comID, _T("pgfortran")) )
+        !CompilerFactory::CompilerInheritsFrom(comID, _T("pgfortran")) &&
+        !CompilerFactory::CompilerInheritsFrom(comID, _T("oracfortran")) )
     {
         bool haveFortran = false;
         for (FilesList::iterator it = pr->GetFilesList().begin(); it != pr->GetFilesList().end(); ++it)
@@ -394,24 +395,7 @@ void ProjectDependencies::RemoveModFiles(cbProject* pr, ProjectBuildTarget* bTar
             return;
     }
 
-    wxString objDir;
-    bool found = false;
-    for (FilesList::iterator it = pr->GetFilesList().begin(); it != pr->GetFilesList().end(); ++it)
-    {
-        ProjectFile* pf = *it;
-        const pfDetails& pfd = pf->GetFileDetails(bTarget);
-        if (&pfd)
-        {
-            wxFileName objFname = pfd.object_file_absolute_native;
-            objDir = objFname.GetPath();
-
-            found = true;
-            break;
-        }
-    }
-    if (!found)
-        return;
-
+    wxString objDir = bTarget->GetObjectOutput();
     wxDir odir;
     if (odir.Open(objDir))
     {

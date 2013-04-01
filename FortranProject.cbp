@@ -30,34 +30,34 @@
 					<Add option="-DwxUSE_UNICODE" />
 					<Add option="-DWXMAKINGDLL_PROPGRID" />
 					<Add option="-DwxPG_USE_WXMODULE=0" />
-					<Add directory="$(#cb)\include" />
-					<Add directory="$(#cb)\include\wxscintilla\include" />
+					<Add directory="$(#cb)/include" />
+					<Add directory="$(#cb)/include/wxscintilla/include" />
 					<Add directory="$(#wx.include)" />
-					<Add directory="$(#wx.lib)\gcc_dll\mswu" />
+					<Add directory="$(#wx.lib)/gcc_dll/mswu" />
 				</Compiler>
 				<Linker>
 					<Add library="codeblocks" />
 					<Add library="wxmsw28u" />
-					<Add directory="$(#cb)\devel" />
-					<Add directory="$(#wx.lib)\gcc_dll" />
+					<Add directory="$(#cb)/devel" />
+					<Add directory="$(#wx.lib)/gcc_dll" />
 				</Linker>
 			</Target>
 		</Build>
 		<Compiler>
 			<Add option="-g" />
-			<Add directory="$(#cb)\include" />
-			<Add directory="$(#cb)\sdk\wxscintilla\include" />
+			<Add directory="$(#cb)/include" />
+			<Add directory="$(#cb)/sdk/wxscintilla/include" />
 			<Add directory="$(#wx.include)" />
-			<Add directory="#(wx.lib)\gcc_dll\mswu" />
+			<Add directory="#(wx.lib)/gcc_dll/mswu" />
 		</Compiler>
 		<Linker>
 			<Add library="codeblocks" />
 			<Add library="wxmsw28u" />
-			<Add directory="$(#cb)\devel" />
-			<Add directory="$(#wx.lib)\gcc_dll" />
+			<Add directory="$(#cb)/devel" />
+			<Add directory="$(#wx.lib)/gcc_dll" />
 		</Linker>
 		<ExtraCommands>
-			<Add after="zip -j9 FortranProject.zip manifest.xml resources\workspacebrowserf.xrc resources\settings.xrc resources\fortranprojecttoolbar.xrc" />
+			<Add after="zip -j9 FortranProject.zip manifest.xml resources\workspacebrowserf.xrc resources\settings.xrc resources\fortranprojecttoolbar.xrc resources\changecase.xrc resources\tab2space.xrc" />
 			<Add after="zip -r9  FortranProject.zip images" />
 			<Add after="zip -j9 FortranProject.cbplugin FortranProject.dll FortranProject.zip" />
 			<Mode after="always" />
@@ -99,9 +99,12 @@
 		<Unit filename="parserthreadf.h" />
 		<Unit filename="projectdependencies.cpp" />
 		<Unit filename="projectdependencies.h" />
-		<Unit filename="resources\fortranprojecttoolbar.xrc" />
-		<Unit filename="resources\settings.xrc" />
-		<Unit filename="resources\workspacebrowserf.xrc" />
+		<Unit filename="resources/fortranprojecttoolbar.xrc" />
+		<Unit filename="resources/settings.xrc" />
+		<Unit filename="resources/tab2space.xrc" />
+		<Unit filename="resources/workspacebrowserf.xrc" />
+		<Unit filename="tab2space.cpp" />
+		<Unit filename="tab2space.h" />
 		<Unit filename="textcutter.cpp" />
 		<Unit filename="textcutter.h" />
 		<Unit filename="tokenf.cpp" />

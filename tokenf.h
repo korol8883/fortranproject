@@ -98,7 +98,7 @@ class TokenF
 
 		//For tkProcedure
 		bool m_Pass;
-		bool m_IsAbstract; // is abstract procedure or procedure pointer
+		bool m_IsAbstract; // is abstract procedure or procedure pointer, or type
 
 		TokenF* m_pParent;
 		TokensArrayF m_Children;

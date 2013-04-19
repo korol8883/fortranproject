@@ -67,6 +67,7 @@ class ParserThreadF
 		void HandleSelectTypeConstruct();
 		void HandleSelectCaseConstruct();
 		void HandleInterface(TokenAccessKind taKind=taPublic);
+		void HandleInterface(TokenAccessKind taKind, TokenF* &tokNew, bool &isGeneric);
 		void HandleBlockData();
 		void HandleInclude();
 		void HandleAccessList(TokenAccessKind taKind, bool& changeDefault, int& countAccess, wxArrayString& nameList);

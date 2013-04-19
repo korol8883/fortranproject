@@ -7,6 +7,7 @@
 #include "parserthreadf.h"
 #include "usetokenf.h"
 #include <set>
+#include <wx/tokenzr.h>
 
 ParserThreadF::ParserThreadF(const wxString& bufferOrFilename,
 							 TokensArrayF* tokens,
@@ -395,7 +396,10 @@ void ParserThreadF::HandleModule()
     wxArrayString protectedNameList;
 
     TokensArrayF typeTokens;
+    TokensArrayF typeTokensAll;
     TokensArrayF decklTokens;
+    TokensArrayF interfGenTokens;
+    TokensArrayF interfTokens;
 
     while (1)
     {
@@ -421,6 +425,8 @@ void ParserThreadF::HandleModule()
             {
                 typeTokens.Add(tokTmp);
             }
+            if (tokTmp)
+                typeTokensAll.Add(tokTmp);
         }
         else if (tok_low.Matches(_T("subroutine")))
         {
@@ -436,7 +442,13 @@ void ParserThreadF::HandleModule()
         }
         else if (tok_low.Matches(_T("interface")))
         {
-        	HandleInterface(taDefKind);
+            TokenF* tokTmp = 0;
+            bool isGeneric = false;
+            HandleInterface(taDefKind, tokTmp, isGeneric);
+        	if (isGeneric && tokTmp)
+                interfGenTokens.Add(tokTmp);
+            if (tokTmp)
+                interfTokens.Add(tokTmp);
         }
         else if (tok_low.Matches(_T("include")))
         {
@@ -494,6 +506,19 @@ void ParserThreadF::HandleModule()
         decklTokens.Item(i)->m_TokenAccess = taDefKind;
     }
 
+    for (size_t i=0; i<interfTokens.GetCount(); i++)
+    {
+        interfTokens.Item(i)->m_TokenAccess = taDefKind;
+        if (interfTokens.Item(i)->m_TokenKind == tkInterfaceExplicit)
+        {
+            TokensArrayF* chs = &interfTokens.Item(i)->m_Children;
+            for (size_t j=0; j<chs->GetCount(); j++)
+            {
+                chs->Item(j)->m_TokenAccess = taDefKind;
+            }
+        }
+    }
+
     for (size_t i=0; i<publicNameList.GetCount(); i++)
     {
         modToken->AddToPublicList(publicNameList.Item(i));
@@ -524,6 +549,136 @@ void ParserThreadF::HandleModule()
                         ChangeTokenAccess(modToken, chs->Item(j));
                     }
                 }
+            }
+        }
+    }
+
+    // find kind of children of GenericInterfaces
+    for (size_t i=0; i<interfGenTokens.GetCount(); i++)
+    {
+        TokensArrayF* chs = &interfGenTokens.Item(i)->m_Children;
+        for (size_t j=0; j<chs->GetCount(); j++)
+        {
+            wxString intfname = chs->Item(j)->m_Name;
+            TokensArrayF* modChs = &modToken->m_Children;
+            TokenKindF tk;
+            bool found = false;
+            for (size_t k=0; k<modChs->GetCount(); k++)
+            {
+                if ((modChs->Item(k)->m_TokenKind == tkSubroutine || modChs->Item(k)->m_TokenKind == tkFunction) &&
+                    modChs->Item(k)->m_Name.IsSameAs(intfname))
+                {
+                    tk = modChs->Item(k)->m_TokenKind;
+                    found = true;
+                    break;
+                }
+                else if (modChs->Item(k)->m_TokenKind == tkInterfaceExplicit)
+                {
+                    TokensArrayF* intfExpChs = &modChs->Item(k)->m_Children;
+                    if (intfExpChs)
+                    {
+                        for (size_t m=0; m<intfExpChs->GetCount(); m++)
+                        {
+                            if ((intfExpChs->Item(m)->m_TokenKind == tkSubroutine || intfExpChs->Item(m)->m_TokenKind == tkFunction) &&
+                                intfExpChs->Item(m)->m_Name.IsSameAs(intfname))
+                            {
+                                tk = intfExpChs->Item(m)->m_TokenKind;
+                                found = true;
+                                break;
+                            }
+                        }
+                        if (found)
+                            break;
+                    }
+                }
+            }
+
+            if (found)
+            {
+                // write kind for GenericInterface
+                if (tk == tkFunction)
+                    interfGenTokens.Item(i)->m_TypeDefinition = _T("function");
+                else
+                    interfGenTokens.Item(i)->m_TypeDefinition = _T("subroutine");
+                break;
+            }
+        }
+    }
+
+    for (size_t i=0; i<typeTokensAll.GetCount(); i++)
+    {
+        TokensArrayF* chs = &typeTokensAll.Item(i)->m_Children;
+        TokensArrayF genericProc;
+        for (size_t j=0; j<chs->GetCount(); j++)
+        {
+            if (chs->Item(j)->m_TokenKind == tkProcedure)
+            {
+                wxString procName;
+                if (chs->Item(j)->m_PartLast.IsEmpty())
+                    procName = chs->Item(j)->m_Name;
+                else
+                    procName = chs->Item(j)->m_PartLast;
+
+                TokensArrayF* modChs = &modToken->m_Children;
+                TokenKindF tk;
+                bool found = false;
+                for (size_t k=0; k<modChs->GetCount(); k++)
+                {
+                    if ((modChs->Item(k)->m_TokenKind == tkSubroutine || modChs->Item(k)->m_TokenKind == tkFunction) &&
+                        modChs->Item(k)->m_Name.IsSameAs(procName))
+                    {
+                        tk = modChs->Item(k)->m_TokenKind;
+                        found = true;
+                        break;
+                    }
+                    else if (modChs->Item(k)->m_TokenKind == tkInterfaceExplicit)
+                    {
+                        TokensArrayF* intfExpChs = &modChs->Item(k)->m_Children;
+                        if (intfExpChs)
+                        {
+                            for (size_t m=0; m<intfExpChs->GetCount(); m++)
+                            {
+                                if ((intfExpChs->Item(m)->m_TokenKind == tkSubroutine || intfExpChs->Item(m)->m_TokenKind == tkFunction) &&
+                                    intfExpChs->Item(m)->m_Name.IsSameAs(procName))
+                                {
+                                    tk = intfExpChs->Item(m)->m_TokenKind;
+                                    found = true;
+                                    break;
+                                }
+                            }
+                            if (found)
+                                break;
+                        }
+                    }
+                }
+
+                if (found)
+                {
+                    if (tk == tkFunction)
+                        chs->Item(j)->m_TypeDefinition = _T("function");
+                    else
+                        chs->Item(j)->m_TypeDefinition = _T("subroutine");
+                }
+            }
+            else if (chs->Item(j)->m_TokenKind == tkInterface)
+                genericProc.Add(chs->Item(j));
+        }
+
+        for (size_t k=0; k<genericProc.GetCount(); k++)
+        {
+            wxStringTokenizer tkz(genericProc.Item(k)->m_PartLast);
+            while (tkz.HasMoreTokens())
+            {
+                wxString pron = tkz.GetNextToken().Lower();
+                for (size_t j=0; j<chs->GetCount(); j++)
+                {
+                    if (chs->Item(j)->m_TokenKind == tkProcedure && chs->Item(j)->m_Name.IsSameAs(pron))
+                    {
+                        genericProc.Item(k)->m_TypeDefinition = chs->Item(j)->m_TypeDefinition;
+                        break;
+                    }
+                }
+                break;
             }
         }
     }
@@ -697,6 +852,7 @@ void ParserThreadF::HandleType(bool& needDefault, TokenF* &newToken)
     wxString exTypeName;
     wxArrayString lineTok = m_Tokens.GetTokensToEOL();
     wxArrayString lineTokLw;
+    bool isAbstract = false;
     MakeArrayStringLower(lineTok, lineTokLw);
     int idx = lineTok.Index(_T("::"));
     if (idx != wxNOT_FOUND)
@@ -734,6 +890,12 @@ void ParserThreadF::HandleType(bool& needDefault, TokenF* &newToken)
                     needDefault = false;
                 }
             }
+
+            idex = lineTokLw.Index(_T("abstract"));
+            if (idex != wxNOT_FOUND && idex < idx)
+            {
+                isAbstract = true;
+            }
         }
         else
         {
@@ -757,6 +919,7 @@ void ParserThreadF::HandleType(bool& needDefault, TokenF* &newToken)
     m_pLastParent = DoAddToken(tkType, typeName);
     m_pLastParent->m_ExtendsType = exTypeName;
     m_pLastParent->m_TokenAccess = taKind;
+    m_pLastParent->m_IsAbstract = isAbstract;
 
     ParseDeclarations(true, true);
 
@@ -1232,6 +1395,14 @@ void ParserThreadF::HandleSelectCaseConstruct()
 
 void ParserThreadF::HandleInterface(TokenAccessKind taKind)
 {
+    TokenF* tokTmp = 0;
+    bool isGeneric;
+    HandleInterface(taKind, tokTmp, isGeneric);
+}
+
+void ParserThreadF::HandleInterface(TokenAccessKind taKind, TokenF* &tokNew, bool &isGeneric)
+{
+    isGeneric = false;
     TokenF* old_parent = m_pLastParent;
     unsigned int defStartLine = m_Tokens.GetLineNumber();
     wxArrayString curLineArr = m_Tokens.GetTokensToEOL();
@@ -1309,6 +1480,7 @@ void ParserThreadF::HandleInterface(TokenAccessKind taKind)
                 name.Append(_T(" "));
                 name.Append(curLineArr.Item(i));
             }
+            isGeneric = true;
         }
         tokKin = tkInterface;
     }
@@ -1319,6 +1491,7 @@ void ParserThreadF::HandleInterface(TokenAccessKind taKind)
 
     m_pLastParent = DoAddToken(tokKin, name, wxEmptyString, defStartLine);
     m_pLastParent->m_TokenAccess = taKind;
+    tokNew = m_pLastParent;
 
     GoThroughBody();
 

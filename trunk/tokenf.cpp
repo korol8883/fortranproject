@@ -139,7 +139,7 @@ TokenFlat::TokenFlat(const TokenF* tok)
         m_ResultVariable = tok->m_ResultVariable;
 		m_PartFirst = tok->m_PartFirst;
     }
-    else if (m_TokenKind == tkProcedure)
+    else if (m_TokenKind == tkProcedure || m_TokenKind == tkType)
     {
         m_PartLast = tok->m_PartLast;
         m_Pass = tok->m_Pass;
@@ -170,7 +170,7 @@ TokenFlat::TokenFlat(const TokenFlat* tok)
         m_ResultVariable = tok->m_ResultVariable;
 		m_PartFirst = tok->m_PartFirst;
     }
-    else if (m_TokenKind == tkProcedure)
+    else if (m_TokenKind == tkProcedure || m_TokenKind == tkType)
     {
         m_PartLast = tok->m_PartLast;
         m_Pass = tok->m_Pass;

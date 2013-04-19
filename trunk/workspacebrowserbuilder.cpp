@@ -30,97 +30,109 @@ WorkspaceBrowserBuilder::WorkspaceBrowserBuilder(ParserF* parser, wxTreeCtrl* tr
     prefix = ConfigManager::GetDataFolder() + _T("/images/codecompletion/");
     prefix2 = ConfigManager::GetDataFolder() + _T("/images/fortranproject/");
 
-    bmp = cbLoadBitmap(prefix + _T("ctor_public.png"), wxBITMAP_TYPE_PNG);
+    bmp = cbLoadBitmap(prefix2 + _T("ctor_public.png"), wxBITMAP_TYPE_PNG);
     m_pImlist->Add(bmp);
     m_ImgNr["use"] = 0;
-    bmp = cbLoadBitmap(prefix + _T("class_public.png"), wxBITMAP_TYPE_PNG);
+    bmp = cbLoadBitmap(prefix2 + _T("class_public.png"), wxBITMAP_TYPE_PNG);
     m_pImlist->Add(bmp);
     m_ImgNr["module"] = 1;
-    bmp = cbLoadBitmap(prefix + _T("method_public.png"), wxBITMAP_TYPE_PNG);
+    bmp = cbLoadBitmap(prefix2 + _T("method_public.png"), wxBITMAP_TYPE_PNG);
     m_pImlist->Add(bmp);
     m_ImgNr["subroutine"] = 2;
-    bmp = cbLoadBitmap(prefix + _T("method_protected.png"), wxBITMAP_TYPE_PNG);
+    bmp = cbLoadBitmap(prefix2 + _T("method_protected.png"), wxBITMAP_TYPE_PNG);
     m_pImlist->Add(bmp);
     m_ImgNr["function"] = 3;
-    bmp = cbLoadBitmap(prefix + _T("method_private.png"), wxBITMAP_TYPE_PNG);
+    bmp = cbLoadBitmap(prefix2 + _T("method_private.png"), wxBITMAP_TYPE_PNG);
     m_pImlist->Add(bmp);
     m_ImgNr["program"] = 4;
-    bmp = cbLoadBitmap(prefix + _T("typedef.png"), wxBITMAP_TYPE_PNG);
+    bmp = cbLoadBitmap(prefix2 + _T("typedef.png"), wxBITMAP_TYPE_PNG);
     m_pImlist->Add(bmp);
     m_ImgNr["type"] = 5;
-    bmp = cbLoadBitmap(prefix + _T("namespace.png"), wxBITMAP_TYPE_PNG);
+    bmp = cbLoadBitmap(prefix2 + _T("interface.png"), wxBITMAP_TYPE_PNG);
     m_pImlist->Add(bmp);
     m_ImgNr["interface"] = 6;
-    bmp = cbLoadBitmap(prefix + _T("class_folder.png"), wxBITMAP_TYPE_PNG);
+    bmp = cbLoadBitmap(prefix2 + _T("funcs_folder.png"), wxBITMAP_TYPE_PNG);
     m_pImlist->Add(bmp);
-    m_ImgNr["module_folder"] = 7;
-    bmp = cbLoadBitmap(prefix + _T("funcs_folder.png"), wxBITMAP_TYPE_PNG);
+    m_ImgNr["function_folder"] = 7;
+    bmp = cbLoadBitmap(prefix2 + _T("others_folder.png"), wxBITMAP_TYPE_PNG);
     m_pImlist->Add(bmp);
-    m_ImgNr["function_folder"] = 8;
-    bmp = cbLoadBitmap(prefix + _T("others_folder.png"), wxBITMAP_TYPE_PNG);
+    m_ImgNr["others_folder"] = 8;
+    bmp = cbLoadBitmap(prefix2 + _T("symbols_folder.png"), wxBITMAP_TYPE_PNG);
     m_pImlist->Add(bmp);
-    m_ImgNr["others_folder"] = 9;
-    bmp = cbLoadBitmap(prefix + _T("symbols_folder.png"), wxBITMAP_TYPE_PNG);
-    m_pImlist->Add(bmp);
-    m_ImgNr["symbols_folder"] = 10;
-    bmp = cbLoadBitmap(prefix + _T("typedefs_folder.png"), wxBITMAP_TYPE_PNG);
-    m_pImlist->Add(bmp);
-    m_ImgNr["typedefs_folder"] = 11;
+    m_ImgNr["symbols_folder"] = 9;
     bmp = cbLoadBitmap(prefix + _T("preproc.png"), wxBITMAP_TYPE_PNG);
     m_pImlist->Add(bmp);
-    m_ImgNr["preproc"] = 12;
-    bmp = cbLoadBitmap(prefix + _T("var_public.png"), wxBITMAP_TYPE_PNG);
+    m_ImgNr["preproc"] = 10;
+    bmp = cbLoadBitmap(prefix2 + _T("var_public.png"), wxBITMAP_TYPE_PNG);
     m_pImlist->Add(bmp);
-    m_ImgNr["variable"] = 13;
+    m_ImgNr["variable"] = 11;
     bmp = cbLoadBitmap(prefix2 + _T("interface_function.png"), wxBITMAP_TYPE_PNG);
     m_pImlist->Add(bmp);
-    m_ImgNr["interface_function"] = 14;
+    m_ImgNr["interface_function"] = 12;
     bmp = cbLoadBitmap(prefix2 + _T("interface_subroutine.png"), wxBITMAP_TYPE_PNG);
     m_pImlist->Add(bmp);
-    m_ImgNr["interface_subroutine"] = 15;
+    m_ImgNr["interface_subroutine"] = 13;
     bmp = cbLoadBitmap(prefix2 + _T("procedure.png"), wxBITMAP_TYPE_PNG);
     m_pImlist->Add(bmp);
-    m_ImgNr["procedure"] = 16;
+    m_ImgNr["procedure"] = 14;
 
     bmp = cbLoadBitmap(prefix2 + _T("subroutine_private.png"), wxBITMAP_TYPE_PNG);
     m_pImlist->Add(bmp);
-    m_ImgNr["subroutine_private"] = 17;
+    m_ImgNr["subroutine_private"] = 15;
     bmp = cbLoadBitmap(prefix2 + _T("function_private.png"), wxBITMAP_TYPE_PNG);
     m_pImlist->Add(bmp);
-    m_ImgNr["function_private"] = 18;
+    m_ImgNr["function_private"] = 16;
     bmp = cbLoadBitmap(prefix2 + _T("var_private.png"), wxBITMAP_TYPE_PNG);
     m_pImlist->Add(bmp);
-    m_ImgNr["variable_private"] = 19;
+    m_ImgNr["variable_private"] = 17;
     bmp = cbLoadBitmap(prefix2 + _T("var_protected.png"), wxBITMAP_TYPE_PNG);
     m_pImlist->Add(bmp);
-    m_ImgNr["variable_protected"] = 20;
+    m_ImgNr["variable_protected"] = 18;
     bmp = cbLoadBitmap(prefix2 + _T("typedef_private.png"), wxBITMAP_TYPE_PNG);
     m_pImlist->Add(bmp);
-    m_ImgNr["type_private"] = 21;
+    m_ImgNr["type_private"] = 19;
     bmp = cbLoadBitmap(prefix2 + _T("interface_private.png"), wxBITMAP_TYPE_PNG);
     m_pImlist->Add(bmp);
-    m_ImgNr["interface_private"] = 22;
+    m_ImgNr["interface_private"] = 20;
     bmp = cbLoadBitmap(prefix2 + _T("access_list_private.png"), wxBITMAP_TYPE_PNG);
     m_pImlist->Add(bmp);
-    m_ImgNr["access_list_private"] = 23;
+    m_ImgNr["access_list_private"] = 21;
     bmp = cbLoadBitmap(prefix2 + _T("access_list_public.png"), wxBITMAP_TYPE_PNG);
     m_pImlist->Add(bmp);
-    m_ImgNr["access_list_public"] = 24;
+    m_ImgNr["access_list_public"] = 22;
     bmp = cbLoadBitmap(prefix2 + _T("access_list_protected.png"), wxBITMAP_TYPE_PNG);
     m_pImlist->Add(bmp);
-    m_ImgNr["access_list_protected"] = 25;
+    m_ImgNr["access_list_protected"] = 23;
     bmp = cbLoadBitmap(prefix2 + _T("procedure_private.png"), wxBITMAP_TYPE_PNG);
     m_pImlist->Add(bmp);
-    m_ImgNr["procedure_private"] = 26;
+    m_ImgNr["procedure_private"] = 24;
     bmp = cbLoadBitmap(prefix2 + _T("interface_function_private.png"), wxBITMAP_TYPE_PNG);
     m_pImlist->Add(bmp);
-    m_ImgNr["interface_function_private"] = 27;
+    m_ImgNr["interface_function_private"] = 25;
     bmp = cbLoadBitmap(prefix2 + _T("interface_subroutine_private.png"), wxBITMAP_TYPE_PNG);
     m_pImlist->Add(bmp);
-    m_ImgNr["interface_subroutine_private"] = 28;
+    m_ImgNr["interface_subroutine_private"] = 26;
     bmp = cbLoadBitmap(prefix2 + _T("class.png"), wxBITMAP_TYPE_PNG);
     m_pImlist->Add(bmp);
-    m_ImgNr["submodule"] = 29;
+    m_ImgNr["submodule"] = 27;
+    bmp = cbLoadBitmap(prefix2 + _T("interface_subroutine_gen_private.png"), wxBITMAP_TYPE_PNG);
+    m_pImlist->Add(bmp);
+    m_ImgNr["interface_sub_gen_private"] = 28;
+    bmp = cbLoadBitmap(prefix2 + _T("interface_subroutine_gen.png"), wxBITMAP_TYPE_PNG);
+    m_pImlist->Add(bmp);
+    m_ImgNr["interface_sub_gen"] = 29;
+    bmp = cbLoadBitmap(prefix2 + _T("interface_function_gen_private.png"), wxBITMAP_TYPE_PNG);
+    m_pImlist->Add(bmp);
+    m_ImgNr["interface_fun_gen_private"] = 30;
+    bmp = cbLoadBitmap(prefix2 + _T("interface_function_gen.png"), wxBITMAP_TYPE_PNG);
+    m_pImlist->Add(bmp);
+    m_ImgNr["interface_fun_gen"] = 31;
+    bmp = cbLoadBitmap(prefix2 + _T("typedef_abstract.png"), wxBITMAP_TYPE_PNG);
+    m_pImlist->Add(bmp);
+    m_ImgNr["type_abstract"] = 32;
+    bmp = cbLoadBitmap(prefix2 + _T("typedef_abstract_private.png"), wxBITMAP_TYPE_PNG);
+    m_pImlist->Add(bmp);
+    m_ImgNr["type_abstract_private"] = 33;
 
     m_ImgNr["none"] = -1;
 
@@ -178,8 +190,10 @@ void WorkspaceBrowserBuilder::BuildTree()
 
     m_pTreeTop->Hide();
     m_pTreeTop->Freeze();
+    wxArrayString expandedBottomNodes;
     if (m_Options.visibleBottomTree)
     {
+        MakeExpandedNodesArray(expandedBottomNodes);
         m_pTreeBottom->Hide();
         m_pTreeBottom->Freeze();
     }
@@ -238,7 +252,10 @@ void WorkspaceBrowserBuilder::BuildTree()
         {
             wxTreeItemId item = FindItemByName(m_pTreeTop, oldSelText); // refresh selection
             if (item.IsOk())
+            {
                 m_pTreeTop->SelectItem(item);
+                ExpandBottomNodes(expandedBottomNodes);
+            }
         }
     }
 }
@@ -252,6 +269,46 @@ void WorkspaceBrowserBuilder::DeleteTopRootChildren()
     if (root.IsOk())
     {
         m_pTreeTop->DeleteChildren(root);
+    }
+}
+
+void WorkspaceBrowserBuilder::MakeExpandedNodesArray(wxArrayString &expandedBottomNodes)
+{
+    if (!m_Options.visibleBottomTree)
+        return;
+
+    wxTreeItemIdValue cookie;
+    wxTreeItemId root = m_pTreeBottom->GetRootItem();
+    wxTreeItemId item = m_pTreeBottom->GetFirstChild(root, cookie);
+    while (item.IsOk())
+    {
+        if (m_pTreeBottom->IsExpanded(item))
+        {
+            wxTreeItemIdValue cookie2;
+            wxTreeItemId item2 = m_pTreeBottom->GetFirstChild(item, cookie2);
+            while (item2.IsOk())
+            {
+                if (m_pTreeBottom->IsExpanded(item2))
+                {
+                    expandedBottomNodes.Add(m_pTreeBottom->GetItemText(item));
+                    expandedBottomNodes.Add(m_pTreeBottom->GetItemText(item2));
+                }
+                item2 = m_pTreeBottom->GetNextChild(item, cookie2);
+            }
+        }
+        item = m_pTreeBottom->GetNextChild(root, cookie);
+    }
+}
+
+void WorkspaceBrowserBuilder::ExpandBottomNodes(wxArrayString &expandedBottomNodes)
+{
+    if (!m_Options.visibleBottomTree)
+        return;
+
+    for (size_t i=1; i<expandedBottomNodes.Count(); i+=2)
+    {
+        wxTreeItemId item = FindItemByName(m_pTreeBottom, expandedBottomNodes.Item(i-1), expandedBottomNodes.Item(i));
+        m_pTreeBottom->Expand(item);
     }
 }
 
@@ -417,11 +474,17 @@ bool WorkspaceBrowserBuilder::AddChildrenNodes(wxTreeCtrl* tree, wxTreeItemId pa
 {
     int count = 0;
     bool sorted = m_Options.sortAlphabetically;
-
     TokensArrayF* pTokens = &parToken->m_Children;
+
+    if (parToken->m_TokenKind == tkType)
+    {
+        count += AddTypeChildren(tree, parent, pTokens);
+        return count != 0;
+    }
 
     int childKM = tkFunction | tkProgram | tkSubroutine | tkPreprocessor | tkInterface | tkInterfaceExplicit | tkBlockData |
                     tkType | tkVariable | tkProcedure | tkAccessList;
+    int interfaceMask = tkInterface | tkInterfaceExplicit;
 
     if (!m_Options.showLocalVariables && (parToken->m_TokenKind == tkSubroutine || parToken->m_TokenKind == tkFunction || parToken->m_TokenKind == tkProgram))
     {
@@ -435,7 +498,11 @@ bool WorkspaceBrowserBuilder::AddChildrenNodes(wxTreeCtrl* tree, wxTreeItemId pa
         TokenF* token = pTokens->Item(i);
         if (token->m_TokenKind & tokenKindMask)
         {
-            if (token->m_TokenKind != tkInterface && token->m_TokenKind != tkInterfaceExplicit)
+            if (token->m_TokenKind & interfaceMask)
+            {
+                count += AddInterfaceNode(tree, parent, token);
+            }
+            else
             {
                 wxTreeItemId idni = AddNodeIfNotThere(tree, parent, token->m_DisplayName, GetTokenKindImageIdx(token), new TreeDataF(sfToken, token), sorted);
                 count++;
@@ -447,11 +514,6 @@ bool WorkspaceBrowserBuilder::AddChildrenNodes(wxTreeCtrl* tree, wxTreeItemId pa
                 {
                     AddChildrenNodes(tree, idni, token, childKM);
                 }
-            }
-            else
-            {
-                //tkInterface || tkInterfaceExplicit token
-                count += AddInterfaceNode(tree, parent, token);
             }
         }
     }
@@ -509,6 +571,69 @@ int WorkspaceBrowserBuilder::AddInterfaceNode(wxTreeCtrl* tree, wxTreeItemId par
             }
         }
     }
+    return count;
+}
+
+int WorkspaceBrowserBuilder::AddTypeChildren(wxTreeCtrl* tree, wxTreeItemId parent, TokensArrayF* pTokens)
+{
+    int count = 0;
+    bool sorted = m_Options.sortAlphabetically;
+    TokensArrayF varTokens;
+    TokensArrayF otherTokens;
+
+    for (size_t i=0; i<pTokens->GetCount(); ++i)
+    {
+        TokenF* token = pTokens->Item(i);
+        if (token->m_TokenKind == tkVariable)
+        {
+            if (sorted)
+            {
+                size_t j;
+                for (j=0; j<varTokens.GetCount(); j++)
+                {
+                    if (token->m_DisplayName.CmpNoCase(varTokens.Item(j)->m_DisplayName) < 0)
+                        break;
+                }
+                varTokens.Insert(token, j);
+            }
+            else
+            {
+                varTokens.Add(token);
+            }
+        }
+        else
+        {
+            if (sorted)
+            {
+                size_t j;
+                for (j=0; j<otherTokens.GetCount(); j++)
+                {
+                    if (token->m_DisplayName.CmpNoCase(otherTokens.Item(j)->m_DisplayName) < 0)
+                        break;
+                }
+                otherTokens.Insert(token, j);
+            }
+            else
+            {
+                otherTokens.Add(token);
+            }
+        }
+    }
+
+    for (size_t i=0; i<varTokens.GetCount(); ++i)
+    {
+        AddNodeIfNotThere(tree, parent, varTokens.Item(i)->m_DisplayName,
+                          GetTokenKindImageIdx(varTokens.Item(i)), new TreeDataF(sfToken, varTokens.Item(i)), false);
+        count++;
+    }
+
+    for (size_t i=0; i<otherTokens.GetCount(); ++i)
+    {
+        AddNodeIfNotThere(tree, parent, otherTokens.Item(i)->m_DisplayName,
+                          GetTokenKindImageIdx(otherTokens.Item(i)), new TreeDataF(sfToken, otherTokens.Item(i)), false);
+        count++;
+    }
+
     return count;
 }
 
@@ -836,16 +961,43 @@ int WorkspaceBrowserBuilder::GetTokenKindImageIdx(TokenF* token)
         case tkType:
             {
                 if (token->m_TokenAccess == taPrivate)
-                    return m_ImgNr["type_private"];
+                {
+                    if (token->m_IsAbstract)
+                        return m_ImgNr["type_abstract_private"];
+                    else
+                        return m_ImgNr["type_private"];
+                }
                 else
-                    return m_ImgNr["type"];
+                {
+                    if (token->m_IsAbstract)
+                        return m_ImgNr["type_abstract"];
+                    else
+                        return m_ImgNr["type"];
+                }
             }
         case tkInterface:
             {
-                if (token->m_TokenAccess == taPrivate)
-                    return m_ImgNr["interface_private"];
+                if (token->m_TypeDefinition.IsSameAs(_T("subroutine")))
+                {
+                    if (token->m_TokenAccess == taPrivate)
+                        return m_ImgNr["interface_sub_gen_private"];
+                    else
+                        return m_ImgNr["interface_sub_gen"];
+                }
+                else if (token->m_TypeDefinition.IsSameAs(_T("function")))
+                {
+                    if (token->m_TokenAccess == taPrivate)
+                        return m_ImgNr["interface_fun_gen_private"];
+                    else
+                        return m_ImgNr["interface_fun_gen"];
+                }
                 else
-                    return m_ImgNr["interface"];
+                {
+                    if (token->m_TokenAccess == taPrivate)
+                        return m_ImgNr["interface_private"];
+                    else
+                        return m_ImgNr["interface"];
+                }
             }
         case tkInterfaceExplicit:
             {
@@ -877,10 +1029,27 @@ int WorkspaceBrowserBuilder::GetTokenKindImageIdx(TokenF* token)
 
         case tkProcedure:
             {
-                if (token->m_TokenAccess == taPrivate)
-                    return m_ImgNr["procedure_private"];
+                if (token->m_TypeDefinition.IsSameAs(_T("subroutine")))
+                {
+                    if (token->m_TokenAccess == taPrivate)
+                        return m_ImgNr["subroutine_private"];
+                    else
+                        return m_ImgNr["subroutine"];
+                }
+                else if (token->m_TypeDefinition.IsSameAs(_T("function")))
+                {
+                    if (token->m_TokenAccess == taPrivate)
+                        return m_ImgNr["function_private"];
+                    else
+                        return m_ImgNr["function"];
+                }
                 else
-                    return m_ImgNr["procedure"];
+                {
+                    if (token->m_TokenAccess == taPrivate)
+                        return m_ImgNr["procedure_private"];
+                    else
+                        return m_ImgNr["procedure"];
+                }
             }
 
         case tkAccessList:

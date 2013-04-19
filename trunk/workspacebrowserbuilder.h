@@ -67,6 +67,8 @@ class WorkspaceBrowserBuilder
         void SelectItem(TokenF* item);
         bool SelectNode(wxTreeItemId node);
         void DeleteTopRootChildren();
+        void MakeExpandedNodesArray(wxArrayString &expandedBottomNodes);
+        void ExpandBottomNodes(wxArrayString &expandedBottomNodes);
         wxImageList* GetImageList();
 		int GetTokenKindImageIdx(TokenF* token);
 		void MarkSymbol(const wxString& filename, int line);
@@ -82,6 +84,7 @@ class WorkspaceBrowserBuilder
         bool AddFileNodes(wxTreeCtrl* tree, wxTreeItemId parent, wxString file, int tokenKindMask);
         bool AddChildrenNodes(wxTreeCtrl* tree, wxTreeItemId parent, TokenF* token, int tokenKindMask);
         int AddInterfaceNode(wxTreeCtrl* tree, wxTreeItemId parent, TokenF* parToken);
+        int AddTypeChildren(wxTreeCtrl* tree, wxTreeItemId parent, TokensArrayF* pTokens);
         wxTreeItemId FindItemByName(wxTreeCtrl* tree, wxString name, wxString name2=wxString());
         void CreateSpecialFolders();
         bool FileHasTokens(const wxString& fileName, int tokenKindMask);

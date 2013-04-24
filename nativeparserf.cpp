@@ -445,7 +445,11 @@ int NativeParserF::CountCommas(const wxString& lineText, int start, bool nesting
         else if (nesting && (c == '(' || c == '['))
             ++nest;
         else if (nesting && (c == ')' || c == ']'))
+        {
             --nest;
+            if (nest < 0)
+                break;
+        }
         else if (c == ',' && nest == 0)
             ++commas;
     }
@@ -482,7 +486,7 @@ wxString NativeParserF::GetLastName(const wxString& line)
 void NativeParserF::CollectInformationForCallTip(int& commasAll, int& commasUntilPos, wxString& lastName, bool& isempty,
                                                  bool& isAfterPercent, TokensArrayFlat* result)
 {
-    wxString lineText = wxEmptyString; // string before '('
+    wxString lineText; // string before '('
     CountCommasInEditor(commasAll, commasUntilPos, lastName, isempty, lineText);
     if (lastName.IsEmpty())
         return;
@@ -659,7 +663,11 @@ void NativeParserF::CountCommasInEditor(int& commasAll, int& commasUntilPos, wxS
 
 void NativeParserF::GetCallTips(const wxString& name, bool onlyUseAssoc, bool onlyPublicNames, wxArrayString& callTips, TokensArrayFlat* result)
 {
-    int tokKind = tkFunction | tkSubroutine | tkInterface;
+    int tokKind;
+    if (Manager::Get()->GetConfigManager(_T("fortran_project"))->ReadBool(_T("/call_tip_arrays"), true))
+        tokKind = tkFunction | tkSubroutine | tkInterface | tkVariable;
+    else
+        tokKind = tkFunction | tkSubroutine | tkInterface;
     int resCountOld = result->GetCount();
     if (onlyUseAssoc)
     {
@@ -669,6 +677,18 @@ void NativeParserF::GetCallTips(const wxString& name, bool onlyUseAssoc, bool on
         m_Parser.FindUseAssociatedTokens(onlyPublicNames, ed, name, false, *result, tokKind, false);
         int noChildrenOf = tkInterface | tkModule | tkSubmodule | tkFunction | tkSubroutine | tkProgram;
         m_Parser.FindMatchTokensDeclared(name, *result, tokKind, false, noChildrenOf, false, true); // take global procedures only
+
+        if (tokKind & tkVariable)
+        {
+            TokensArrayFlatClass tokensTmp;
+            TokensArrayFlat* resultTmp = tokensTmp.GetTokens();
+            m_Parser.FindMatchDeclarationsInCurrentScope(name, ed, *resultTmp, false);
+            for (size_t i=0; i<resultTmp->GetCount(); i++)
+            {
+                if (resultTmp->Item(i)->m_TokenKind == tkVariable)
+                    result->Add(new TokenFlat(resultTmp->Item(i)));
+            }
+        }
     }
     else
     {
@@ -710,7 +730,15 @@ void NativeParserF::GetCallTips(const wxString& name, bool onlyUseAssoc, bool on
     }
     for (int i=resCountOld; i<int(result->GetCount()); ++i)
     {
-        callTips.Add(result->Item(i)->m_Args);
+        if (result->Item(i)->m_TokenKind == tkVariable)
+        {
+            wxString callTipArr;
+            GetCallTipsForVariable(result->Item(i), callTipArr);
+            if (!callTipArr.IsEmpty())
+                callTips.Add(callTipArr);
+        }
+        else
+            callTips.Add(result->Item(i)->m_Args);
     }
 }
 
@@ -779,6 +807,31 @@ void NativeParserF::GetCallTipsForTypeBoundProc(TokensArrayFlat* result, wxArray
     else
     {
         callTips.Add(result->Item(1)->m_Args);
+    }
+}
+
+void NativeParserF::GetCallTipsForVariable(TokenFlat* token, wxString& callTip)
+{
+    callTip = wxEmptyString;
+    if (!(token->m_TokenKind == tkVariable))
+        return;
+
+    int dstart = token->m_TypeDefinition.Find(_T("dimension"));
+    if (dstart != wxNOT_FOUND)
+    {
+        wxString dim = token->m_TypeDefinition.Mid(dstart+9);
+        if (dim.size() > 0 && dim[0] == '(')
+        {
+            int last = dim.Find(')');
+            if (last != wxNOT_FOUND)
+                callTip = dim.Mid(0,last+1);
+        }
+    }
+    else if (token->m_Args.StartsWith(_T("(")))
+    {
+        int last = token->m_Args.Find(')');
+        if (last != wxNOT_FOUND)
+            callTip = token->m_Args.Mid(0,last+1);
     }
 }
 

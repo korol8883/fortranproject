@@ -72,6 +72,7 @@ FPOptionsDlg::FPOptionsDlg(wxWindow* parent, NativeParserF* np, FortranProject* 
     UpdateSliderLabel();
 
     XRCCTRL(*this, "chkComRight", wxCheckBox)->SetValue(cfg->ReadBool(_T("/include_comments_variable"), true));
+    XRCCTRL(*this, "chkCallTipsArrays", wxCheckBox)->SetValue(cfg->ReadBool(_T("/call_tip_arrays"), true));
 
     XRCCTRL(*this, "chkNoFortranInfo", wxCheckBox)->SetValue(!cfg->ReadBool(_T("/use_log_window"), true));
     XRCCTRL(*this, "chkComAbove", wxCheckBox)->SetValue(cfg->ReadBool(_T("/include_comments_above"), true));
@@ -188,6 +189,7 @@ void FPOptionsDlg::OnApply()
     cfg->Write(_T("/keywords_case"), (int)XRCCTRL(*this, "rbCase", wxRadioBox)->GetSelection());
 
     cfg->Write(_T("/include_comments_variable"), (bool)XRCCTRL(*this, "chkComRight", wxCheckBox)->GetValue());
+    cfg->Write(_T("/call_tip_arrays"), (bool)XRCCTRL(*this, "chkCallTipsArrays", wxCheckBox)->GetValue());
 
     cfg->Write(_T("/use_log_window"), (bool)!XRCCTRL(*this, "chkNoFortranInfo", wxCheckBox)->GetValue());
     cfg->Write(_T("/include_comments_above"), (bool)XRCCTRL(*this, "chkComAbove", wxCheckBox)->GetValue());

@@ -280,6 +280,13 @@
 									<flag>wxTOP|wxLEFT|wxRIGHT|wxEXPAND|wxALIGN_LEFT|wxALIGN_TOP</flag>
 									<border>8</border>
 								</object>
+								<object class="sizeritem">
+									<object class="wxCheckBox" name="chkCallTipsArrays">
+										<label>Show call-tips for arrays</label>
+									</object>
+									<flag>wxALL|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL</flag>
+									<border>8</border>
+								</object>
 							</object>
 						</object>
 						<label>Code completion</label>

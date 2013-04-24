@@ -55,6 +55,7 @@ class NativeParserF : public wxEvtHandler
         void GetCallTips(const wxString& name, bool onlyUseAssoc, bool onlyPublicNames, wxArrayString& callTips, TokensArrayFlat* result);
         void GetCallTipsForGenericTypeBoundProc(TokensArrayFlat* result, wxArrayString& callTips, wxArrayInt& idxFuncSub);
         void GetCallTipsForTypeBoundProc(TokensArrayFlat* result, wxArrayString& callTips);
+        void GetCallTipsForVariable(TokenFlat* token, wxString& callTip);
         int CountCommas(const wxString& lineText, int start, bool nesting=true);
         void CollectInformationForCallTip(int& commasAll, int& commasUntilPos, wxString& lastName, bool& isempty, bool& isAfterPercent, TokensArrayFlat* result);
         void CountCommasInEditor(int& commasAll, int& commasUntilPos, wxString& lastName, bool& isempty, wxString& lineText);

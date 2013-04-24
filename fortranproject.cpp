@@ -1312,6 +1312,14 @@ void FortranProject::ShowCallTip()
         }
         else if (result->GetCount() > 0 && result->Item(0)->m_TokenKind == tkInterface)
             m_pNativeParser->GetCallTipsForGenericTypeBoundProc(result, callTipsOneLine, idxFuncSub);
+        else if (result->GetCount() > 0 && result->Item(0)->m_TokenKind == tkVariable &&
+                 Manager::Get()->GetConfigManager(_T("fortran_project"))->ReadBool(_T("/call_tip_arrays"), true))
+        {
+            wxString callTip;
+            m_pNativeParser->GetCallTipsForVariable(result->Item(0), callTip);
+            if (!callTip.IsEmpty())
+                callTipsOneLine.Add(callTip);
+        }
     }
     else if (!lastName.IsEmpty())
     {
@@ -1358,7 +1366,13 @@ void FortranProject::ShowCallTip()
         }
     }
 
-    if (!definition.IsEmpty() && isUnique && (!isAfterPercent || ( isAfterPercent && result->GetCount() >= 2 && (result->Item(0)->m_TokenKind == tkProcedure) )))
+
+    if (!definition.IsEmpty() && isUnique && token->m_TokenKind == tkVariable)
+    {
+        m_pNativeParser->GetCallTipHighlight(definition, commasPos, start, end);
+    }
+    else if (!definition.IsEmpty() && isUnique &&
+        (!isAfterPercent || ( isAfterPercent && result->GetCount() >= 2 && (result->Item(0)->m_TokenKind == tkProcedure) )))
     {
         m_pNativeParser->GetCallTipHighlight(definition, commasPos, start, end);
         if (isAfterPercent)

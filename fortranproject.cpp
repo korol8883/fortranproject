@@ -1080,7 +1080,7 @@ int FortranProject::CodeComplete()
         std::set< wxString, std::less<wxString> > unique_strings; // check against this before inserting a new string in the list
         for (size_t i=0; i<result->GetCount(); ++i)
         {
-            TokenF* token = result->Item(i);
+            TokenFlat* token = result->Item(i);
             if (token->m_Name.StartsWith(_T("%%")) || token->m_Name.IsEmpty())
                 continue;
             // check for unique_strings
@@ -1378,16 +1378,17 @@ void FortranProject::ShowCallTip()
         if (isAfterPercent)
             token = result->Item(1);
 
-        if (token->m_TokenKind == tkSubroutine || token->m_TokenKind == tkFunction)
+        if (token->m_TokenKind == tkSubroutine || token->m_TokenKind == tkFunction || token->m_TokenKind == tkType)
         {
-            wxString argName = definition.Mid(start,end-start);
-            argName = argName.BeforeFirst(_T(','));
-            argName = argName.BeforeFirst(_T(')'));
-            argName.Replace(_T("["),_T(" "));
-            argName.Replace(_T("]"),_T(" "));
-            argName.Trim().Trim(false);
             if (isUnique)
             {
+                wxString argName = definition.Mid(start,end-start);
+                argName = argName.BeforeFirst(_T(','));
+                argName = argName.BeforeFirst(_T(')'));
+                argName.Replace(_T("["),_T(" "));
+                argName.Replace(_T("]"),_T(" "));
+                argName.Trim().Trim(false);
+
                 wxString argDecl;
                 wxString argDescription;
                 bool found = m_pNativeParser->GetParser()->FindTokenDeclaration(*token, argName, argDecl, argDescription);
@@ -1703,7 +1704,7 @@ void FortranProject::ShowInfoLog(TokensArrayFlat* result, bool isAfterPercent)
                 logMsg << token->m_Rename << _T(" => ") << token->m_DisplayName << _T("\n");
             }
 
-            if (token->m_TokenKind == tkSubroutine || token->m_TokenKind == tkFunction)
+            if (token->m_TokenKind == tkSubroutine || token->m_TokenKind == tkFunction || token->m_TokenKind == tkType)
             {
                 if (m_pNativeParser->GetParser()->FindInfoLog(*token,m_LogComAbove,m_LogComBelow,m_LogDeclar,m_LogComVariab,logMsg1,readFile))
                 {
@@ -1953,7 +1954,10 @@ void FortranProject::OnMenuEditPaste(wxCommandEvent& event)
         event.Skip();
         return;
     }
-    m_pNativeParser->GetWorkspaceBrowser()->OnMenuEditPaste(event);
+    if (m_pNativeParser->GetWorkspaceBrowser())
+        m_pNativeParser->GetWorkspaceBrowser()->OnMenuEditPaste(event);
+    else
+        event.Skip();
 }
 
 

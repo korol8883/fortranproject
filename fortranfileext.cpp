@@ -51,7 +51,7 @@ void FortranFileExt::RereadFileExtensions()
     while ( tkz.HasMoreTokens() )
     {
         wxString token = tkz.GetNextToken();
-        m_FortranExtFixed.insert(token);
+        m_FortranExtFixed.insert(token.Lower());
     }
 
     m_FortranExtFree.clear();
@@ -60,7 +60,7 @@ void FortranFileExt::RereadFileExtensions()
     while ( tkz.HasMoreTokens() )
     {
         wxString token = tkz.GetNextToken();
-        m_FortranExtFree.insert(token);
+        m_FortranExtFree.insert(token.Lower());
     }
 }
 

@@ -665,9 +665,10 @@ void NativeParserF::GetCallTips(const wxString& name, bool onlyUseAssoc, bool on
 {
     int tokKind;
     if (Manager::Get()->GetConfigManager(_T("fortran_project"))->ReadBool(_T("/call_tip_arrays"), true))
-        tokKind = tkFunction | tkSubroutine | tkInterface | tkVariable;
+        tokKind = tkFunction | tkSubroutine | tkInterface | tkType | tkVariable;
     else
-        tokKind = tkFunction | tkSubroutine | tkInterface;
+        tokKind = tkFunction | tkSubroutine | tkInterface | tkType;
+
     int resCountOld = result->GetCount();
     if (onlyUseAssoc)
     {
@@ -728,7 +729,9 @@ void NativeParserF::GetCallTips(const wxString& name, bool onlyUseAssoc, bool on
             i--;
         }
     }
-    for (int i=resCountOld; i<int(result->GetCount()); ++i)
+
+    resCount = result->GetCount();
+    for (int i=resCountOld; i<resCount; ++i)
     {
         if (result->Item(i)->m_TokenKind == tkVariable)
         {
@@ -736,6 +739,30 @@ void NativeParserF::GetCallTips(const wxString& name, bool onlyUseAssoc, bool on
             GetCallTipsForVariable(result->Item(i), callTipArr);
             if (!callTipArr.IsEmpty())
                 callTips.Add(callTipArr);
+        }
+        else if (result->Item(i)->m_TokenKind == tkType)
+        {
+            if (resCountOld+1 != int(result->GetCount()))
+            {
+                // remove 'type' if it is not unique
+                result->RemoveAt(i);
+                resCount--;
+                i--;
+            }
+            else
+            {
+                // Default structure-constructor
+                wxString callTipType;
+                GetCallTipsForType(result->Item(i), callTipType);
+                if (!callTipType.IsEmpty())
+                    callTips.Add(callTipType);
+                else
+                {
+                    result->RemoveAt(i);
+                    resCount--;
+                    i--;
+                }
+            }
         }
         else
             callTips.Add(result->Item(i)->m_Args);
@@ -835,6 +862,33 @@ void NativeParserF::GetCallTipsForVariable(TokenFlat* token, wxString& callTip)
     }
 }
 
+void NativeParserF::GetCallTipsForType(TokenFlat* token, wxString& callTip)
+{
+    callTip = wxEmptyString;
+    if (!(token->m_TokenKind == tkType))
+        return;
+
+    if (token->m_IsAbstract || !token->m_ExtendsType.IsEmpty())  // no default constructor for Abstract or Extended type
+        return;
+    TokensArrayFlatClass tokensTmp;
+    TokensArrayFlat* resultTmp = tokensTmp.GetTokens();
+    m_Parser.GetTypeComponentsInFile(token->m_Filename, token->m_LineStart, token->m_Name, resultTmp);
+
+    wxString names;
+    for (size_t i=0; i<resultTmp->GetCount(); i++)
+    {
+        if (resultTmp->Item(i)->m_TokenKind != tkVariable)
+            continue;
+
+        names << resultTmp->Item(i)->m_DisplayName << _T(", ");
+    }
+
+    if (!names.IsEmpty())
+    {
+        callTip << _T("(") << names.Mid(0,names.Length()-2) << _T(")");
+    }
+}
+
 void NativeParserF::BreakUpInLines(wxString& str, const wxString& original_str, int chars_per_line)
 {
     if (chars_per_line == -1 || original_str.Length() <= (size_t)chars_per_line)
@@ -920,7 +974,7 @@ void NativeParserF::RereadOptions()
     }
     else
     {
-        m_pWorkspaceBrowser->RereadOptions();
+        //m_pWorkspaceBrowser->RereadOptions();
     }
 
     m_Parser.RereadOptions();

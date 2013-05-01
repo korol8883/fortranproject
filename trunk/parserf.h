@@ -37,7 +37,6 @@ class ParserF
         bool FindTypeBoundProcedures(const TokenFlat& interToken, const wxArrayString& searchArr, TokensArrayFlat& resTokenArr);
         bool FindMatchTokenInSameModule(const TokenFlat& procedureToken, const wxString& search, TokensArrayFlat& result, int tokenKindMask, int noChildrenOf);
         size_t FindMatchTokensDeclared(const wxString& search, TokensArrayFlat& result, int tokenKindMask, bool partialMatch=false, int noChildrenOf=0, bool onlyPublicNames=false, bool noIncludeFiles=false);
-        void FindMatchChildrenDeclared(TokensArrayF &m_Children, wxString search, TokensArrayFlat& result, int tokenKindMask, bool partialMatch=false, int noChildrenOf=0, bool onlyPublicNames=false);
         size_t FindMatchTokens(wxString filename, wxString search, TokensArrayF& result);
         void Clear();
         void ObtainUsedDeclaredModules(const wxString& fileName, StringSet* fileUseModules, StringSet* fileDeclaredModules, StringSet* fileIncludes);
@@ -67,6 +66,7 @@ class ParserF
         void GetPossitionOfDummyArgument(const wxString& args, const wxString& arg, int& start, int& end);
         void GetCallTipHighlight(const wxString& calltip, int commasWas, int& start, int& end);
         void FindUseAssociatedTokens(bool onlyPublicNames, cbEditor* ed, const wxString& search, bool partialMatch, TokensArrayFlat& result, int tokenKindMask, bool changeDisplayName, TokensArrayFlat* useWithRenameTok=NULL);
+        void GetTypeComponentsInFile(const wxString& fileName, const unsigned int line, const wxString& nameType, TokensArrayFlat* result);
         bool IsIncludeFile(wxString fileName);
         bool HasIncludeFiles();
         TokenF* FindFile(const wxString& filename);
@@ -84,6 +84,7 @@ class ParserF
         TokensArrayF* FindFileTokens(const wxString& filename);
         TokenF* FindModuleSubmoduleToken(const wxString& moduleName);
         void ObtainUDModulesToken(TokenF* token, StringSet* fileUseModules, StringSet* fileDeclaredModules, StringSet* fileIncludes);
+        void FindMatchChildrenDeclared(TokensArrayF &m_Children, wxString search, TokensArrayFlat& result, int tokenKindMask, bool partialMatch=false, int noChildrenOf=0, bool onlyPublicNames=false);
         bool FindLineScope(unsigned int line, int& lineStart, int tokenKindMask, TokensArrayF& children, TokenF* &pToken);
         void FindLineScopeLN(cbEditor* ed, int& lineStart, TokenFlat* &token, int endPos);
         bool CutBlocks(const wxChar& ch, wxString& line);

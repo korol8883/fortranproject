@@ -141,9 +141,9 @@ TokenFlat::TokenFlat(const TokenF* tok)
     }
     else if (m_TokenKind == tkProcedure || m_TokenKind == tkType)
     {
-        m_PartLast = tok->m_PartLast;
         m_Pass = tok->m_Pass;
         m_IsAbstract = tok->m_IsAbstract;
+        m_ExtendsType = tok->m_ExtendsType;
     }
     m_PartLast = tok->m_PartLast;
 }
@@ -175,6 +175,7 @@ TokenFlat::TokenFlat(const TokenFlat* tok)
         m_PartLast = tok->m_PartLast;
         m_Pass = tok->m_Pass;
         m_IsAbstract = tok->m_IsAbstract;
+        m_ExtendsType = tok->m_ExtendsType;
     }
     m_PartLast = tok->m_PartLast;
     m_Rename = tok->m_Rename;

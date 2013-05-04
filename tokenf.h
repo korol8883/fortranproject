@@ -51,6 +51,7 @@ enum TokenKindF
     tkSubmodule = 0x200000,
     tkSelectTypeChild = 0x400000,
     tkSelectTypeDefault = 0x800000,
+    tkProcedureFinal = 0x1000000,
 };
 
 enum TokenAccessKind

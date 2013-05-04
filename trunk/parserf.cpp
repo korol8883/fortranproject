@@ -1716,9 +1716,17 @@ bool ParserF::FindTokenDeclaration(TokenFlat& token, const wxString& argName, wx
     {
         if (pChildren->Item(i)->m_Name.IsSameAs(argNameLw))
         {
-            argDecl << pChildren->Item(i)->m_TypeDefinition << _T(" :: ")
-                    << pChildren->Item(i)->m_DisplayName << pChildren->Item(i)->m_Args;
-            argDescription << pChildren->Item(i)->m_PartLast;
+            if (pChildren->Item(i)->m_TokenKind == tkProcedure)
+            {
+                argDecl << _T("procedure(") << pChildren->Item(i)->m_PartLast << _T(") :: ")
+                        << pChildren->Item(i)->m_DisplayName;
+            }
+            else
+            {
+                argDecl << pChildren->Item(i)->m_TypeDefinition << _T(" :: ")
+                        << pChildren->Item(i)->m_DisplayName << pChildren->Item(i)->m_Args;
+                argDescription << pChildren->Item(i)->m_PartLast;
+            }
             found = true;
             break;
         }
@@ -1996,8 +2004,16 @@ bool ParserF::FindInfoLog(TokenFlat& token, bool logComAbove, bool logComBelow, 
             {
                 if (parsResult->Item(i)->m_Name.IsSameAs(arg1))
                 {
-                    msg1 << _T("    ") << parsResult->Item(i)->m_TypeDefinition << _T(" :: ")
-                        << parsResult->Item(i)->m_DisplayName << parsResult->Item(i)->m_Args;
+                    if (parsResult->Item(i)->m_TokenKind == tkProcedure)
+                    {
+                        msg1 << _T("    ") << parsResult->Item(i)->m_TypeDefinition
+                             << _T(" :: ") << parsResult->Item(i)->m_DisplayName;
+                    }
+                    else
+                    {
+                        msg1 << _T("    ") << parsResult->Item(i)->m_TypeDefinition << _T(" :: ")
+                             << parsResult->Item(i)->m_DisplayName << parsResult->Item(i)->m_Args;
+                    }
                     idxOrder.push_back(i);
                     argMsgArr.Add(msg1);
                     int ln = msg1.Len();
@@ -2008,22 +2024,6 @@ bool ParserF::FindInfoLog(TokenFlat& token, bool logComAbove, bool logComBelow, 
             }
         }
     }
-    else if (token.m_TokenKind == tkType)
-    {
-//        for (size_t i=0; i<parsResult->GetCount(); i++)
-//        {
-//            wxString msg1;
-//            msg1 << _T("    ") << parsResult->Item(i)->m_TypeDefinition << _T(" :: ")
-//                << parsResult->Item(i)->m_DisplayName << parsResult->Item(i)->m_Args;
-//            idxOrder.push_back(i);
-//            argMsgArr.Add(msg1);
-//            int ln = msg1.Len();
-//            if (ln > maxLenArg)
-//                maxLenArg = ln;
-//        }
-
-//        msg << txtRange;
-    }
 
     if (token.m_TokenKind != tkType)
     {
@@ -2033,7 +2033,8 @@ bool ParserF::FindInfoLog(TokenFlat& token, bool logComAbove, bool logComBelow, 
         for (size_t j=0; j<argMsgArr.Count(); j++)
         {
             msg << argMsgArr.Item(j);
-            if (logComVariab)
+            if (logComVariab &&
+                parsResult->Item(idxOrder[j])->m_TokenKind != tkProcedure)
             {
                 wxString spaces;
                 int nspaces = maxLenArg - argMsgArr.Item(j).Len() + 1;

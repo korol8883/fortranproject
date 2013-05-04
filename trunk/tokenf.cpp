@@ -80,6 +80,7 @@ wxString TokenF::GetTokenKindString()
         case tkSubmodule: return _("submodule");
         case tkSelectTypeChild: return _("select type");
         case tkSelectTypeDefault: return _("select type");
+        case tkProcedureFinal: return _("final procedure");
 	}
 	return _("other");
 }

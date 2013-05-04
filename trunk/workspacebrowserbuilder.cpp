@@ -133,6 +133,9 @@ WorkspaceBrowserBuilder::WorkspaceBrowserBuilder(ParserF* parser, wxTreeCtrl* tr
     bmp = cbLoadBitmap(prefix2 + _T("typedef_abstract_private.png"), wxBITMAP_TYPE_PNG);
     m_pImlist->Add(bmp);
     m_ImgNr["type_abstract_private"] = 33;
+    bmp = cbLoadBitmap(prefix2 + _T("dtor_public.png"), wxBITMAP_TYPE_PNG);
+    m_pImlist->Add(bmp);
+    m_ImgNr["procedure_final"] = 34;
 
     m_ImgNr["none"] = -1;
 
@@ -605,10 +608,15 @@ int WorkspaceBrowserBuilder::AddTypeChildren(wxTreeCtrl* tree, wxTreeItemId pare
         {
             if (sorted)
             {
+                wxString name;
+                if (token->m_DisplayName.StartsWith(_T("%%")))
+                    name = token->m_DisplayName.Mid(2);
+                else
+                    name = token->m_DisplayName;
                 size_t j;
                 for (j=0; j<otherTokens.GetCount(); j++)
                 {
-                    if (token->m_DisplayName.CmpNoCase(otherTokens.Item(j)->m_DisplayName) < 0)
+                    if (name.CmpNoCase(otherTokens.Item(j)->m_DisplayName) < 0)
                         break;
                 }
                 otherTokens.Insert(token, j);
@@ -629,7 +637,12 @@ int WorkspaceBrowserBuilder::AddTypeChildren(wxTreeCtrl* tree, wxTreeItemId pare
 
     for (size_t i=0; i<otherTokens.GetCount(); ++i)
     {
-        AddNodeIfNotThere(tree, parent, otherTokens.Item(i)->m_DisplayName,
+        wxString name;
+        if (otherTokens.Item(i)->m_DisplayName.StartsWith(_T("%%")))
+            name = otherTokens.Item(i)->m_DisplayName.Mid(2);
+        else
+            name = otherTokens.Item(i)->m_DisplayName;
+        AddNodeIfNotThere(tree, parent, name,
                           GetTokenKindImageIdx(otherTokens.Item(i)), new TreeDataF(sfToken, otherTokens.Item(i)), false);
         count++;
     }
@@ -1063,6 +1076,8 @@ int WorkspaceBrowserBuilder::GetTokenKindImageIdx(TokenF* token)
             }
 
         case tkSubmodule: return m_ImgNr["submodule"];
+
+        case tkProcedureFinal: return m_ImgNr["procedure_final"];
 
         default: return m_ImgNr["none"];
     }

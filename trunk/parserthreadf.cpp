@@ -180,6 +180,10 @@ bool ParserThreadF::Parse()
             // something is wrong with code or parser
             m_Tokens.SkipToOneOfChars(";", true);
         }
+        else if (tok_low.Matches(_T("procedure")) && nex_low(0,1).Matches(_T("(")))
+        {
+            ParseTypeBoundProcedures(token, true, false);
+        }
         else
         {
             bool needDefault = true;
@@ -1017,7 +1021,7 @@ void ParserThreadF::ParseDeclarations(bool breakAtEnd, bool breakAtContains)
         }
         else if (m_LastTokenName.IsSameAs(_T("procedure")))
         {
-            ParseTypeBoundProcedures(m_LastTokenName, true);
+            ParseTypeBoundProcedures(m_LastTokenName, true, false);
         }
 
         wxArrayString lineTok = m_Tokens.PeekTokensToEOL();
@@ -1705,6 +1709,10 @@ void ParserThreadF::GoThroughBody()
         {
         	HandleSelectCaseConstruct();
         }
+        else if (tok_low.Matches(_T("procedure")) && nex_low(0,1).Matches(_T("(")))
+        {
+            ParseTypeBoundProcedures(token, true, false);
+        }
         else
         {
             bool needDefault = true;
@@ -1725,10 +1733,12 @@ void ParserThreadF::HandleProcedureList()
     }
 }
 
-void ParserThreadF::ParseTypeBoundProcedures(const wxString& firstWord, bool breakAtEOL)
+void ParserThreadF::ParseTypeBoundProcedures(const wxString& firstWord, bool breakAtEOL, bool pass)
 {
     TokenAccessKind defAccKind = taPublic;
     bool firstTime = true;
+    int nOperator = 0;
+    int nAssignment = 0;
     while (1)
     {
         TokenAccessKind tokAccK = defAccKind;
@@ -1743,6 +1753,7 @@ void ParserThreadF::ParseTypeBoundProcedures(const wxString& firstWord, bool bre
 
         if (firstTokenLw.IsEmpty())
             break;
+        wxString defString = firstTokenLw;
         unsigned int lineNum = m_Tokens.GetLineNumber();
         wxArrayString curLineArr = m_Tokens.GetTokensToEOL();
         bool isGen = firstTokenLw.IsSameAs(_T("generic"));
@@ -1759,21 +1770,26 @@ void ParserThreadF::ParseTypeBoundProcedures(const wxString& firstWord, bool bre
                 if (idx_a != wxNOT_FOUND && idx_b != wxNOT_FOUND && idx_a > idx_b+1)
                 {
                     interfaceName = strInter.Mid(idx_b+1,idx_a-idx_b-1);
+                    defString << strInter;
                 }
             }
-            bool pass = true;
             wxString passArg;
             int idx = curLineArr.Index(_T("::"));
             int startList;
             if (idx != wxNOT_FOUND)
             {
+                int startIdx = interfaceName.IsEmpty() ? 0 : 1;
+                for (int i=startIdx; i<idx; i++)
+                {
+                    defString << _T(", ") << curLineArr.Item(i).Lower();
+                }
+
                 for (int i=0; i<idx; i++)
                 {
                     wxString tok = curLineArr.Item(i).Lower();
                     if (tok.IsSameAs(_T("nopass")))
                     {
                         pass = false;
-                        break;
                     }
                     else if (tok.IsSameAs(_T("pass")))
                     {
@@ -1787,7 +1803,6 @@ void ParserThreadF::ParseTypeBoundProcedures(const wxString& firstWord, bool bre
                                 passArg = strArg.Mid(idx_b+1,idx_a-idx_b-1);
                             }
                         }
-                        break;
                     }
                     else if (tok.IsSameAs(_T("private")))
                     {
@@ -1837,16 +1852,38 @@ void ParserThreadF::ParseTypeBoundProcedures(const wxString& firstWord, bool bre
                     }
                     token->AddLineEnd(m_Tokens.GetLineNumber());
                     token->m_TokenAccess = tokAccK;
+                    token->m_TypeDefinition = defString;
                 }
             }
             else //isGen
             {
                 while (ic < countArr-2)
                 {
+                    wxString curNam;
                     wxString curNamLw = curLineArr.Item(ic).Lower();
                     if (curNamLw.IsSameAs(_T("operator")) || curNamLw.IsSameAs(_T("assignment")))
-                        break;
-                    if (curLineArr.Item(ic+1).IsSameAs(_T("=>")))
+                    {
+                        curNam.Append(_T("%%"));
+                        curNam.Append(curLineArr.Item(ic));
+                        if (curLineArr.Item(ic+1).StartsWith(_("(")))
+                        {
+                            ic++;
+                            curNam.Append(curLineArr.Item(ic));
+                        }
+                        if (curNamLw.IsSameAs(_T("operator")))
+                        {
+                            nOperator += 1;
+                            curNam << _T(" #") << nOperator;
+                        }
+                        else
+                        {
+                            nAssignment += 1;
+                            curNam << _T(" #") << nAssignment;
+                        }
+                        TokenF* token = DoAddToken(tkInterface, curNam, wxEmptyString, lineNum);
+                        token->AddLineEnd(m_Tokens.GetLineNumber());
+                    }
+                    else if (curLineArr.Item(ic+1).IsSameAs(_T("=>")))
                     {
                         wxString bindName = curLineArr.Item(ic);
                         TokenF* token = DoAddToken(tkInterface, bindName.Lower(), wxEmptyString, lineNum);
@@ -1874,6 +1911,18 @@ void ParserThreadF::ParseTypeBoundProcedures(const wxString& firstWord, bool bre
         else if ( firstTokenLw.IsSameAs(_T("private")) && curLineArr.Count() == 0 )
         {
             defAccKind = taPrivate;
+        }
+        else if ( firstTokenLw.IsSameAs(_T("final")) && curLineArr.Count() > 0 )
+        {
+            int idx = curLineArr.Index(_T("::"));
+            int startIdx = (idx == wxNOT_FOUND) ? 0 : idx+1;
+            for (size_t i=startIdx; i<curLineArr.Count(); i++)
+            {
+                wxString name = curLineArr.Item(i);
+                TokenF* token = DoAddToken(tkProcedureFinal, name.Lower(), wxEmptyString, lineNum);
+                token->m_DisplayName = name;
+                token->AddLineEnd(m_Tokens.GetLineNumber());
+            }
         }
 
         if (breakAtEOL)

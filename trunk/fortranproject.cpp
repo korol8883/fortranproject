@@ -1339,8 +1339,8 @@ void FortranProject::ShowCallTip()
     for (unsigned int i = 0; i < callTips.GetCount(); ++i)
     {
         bool empOk = true;
-        if (callTips[i].IsSameAs(_T("()")) && !isempt)
-            empOk = false;
+//        if (callTips[i].IsSameAs(_T("()")) && !isempt)
+//            empOk = false;
 
         if (!callTips[i].IsEmpty() && // non-empty
             empOk)

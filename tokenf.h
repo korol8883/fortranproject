@@ -89,9 +89,9 @@ class TokenF
 		TokenKindF m_TokenKind;
 		TokenAccessKind m_TokenAccess;
 
+		wxString m_PartFirst; // type of variable or function
 		//For function only
 		wxString m_ResultVariable;
-		wxString m_PartFirst;
 		wxString m_PartLast;
 
 		//For tkType only

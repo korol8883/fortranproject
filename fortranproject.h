@@ -141,6 +141,7 @@ class FortranProject : public cbCodeCompletionPlugin
         bool                               m_LogComVariab;
         bool                               m_LogOnlyUseAssoc;
         bool                               m_LogOnlyPublicNames;
+        bool                               m_LogShowTypeVariables;
 
         bool                               m_ComVariab;
 

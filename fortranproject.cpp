@@ -489,20 +489,31 @@ void FortranProject::BuildMenu(wxMenuBar* menuBar)
     if (m_FortranToolsMenu)
     {
         wxMenu* submenuJump = new wxMenu();
-        submenuJump->Append(idMenuGotoDeclaration, _("Jump to declaration\tCtrl-."));
-        submenuJump->Append(idMenuJumpBack, _("Jump back"));
-        submenuJump->Append(idMenuJumpHome, _("Jump last"));
-        submenuJump->Append(idMenuJumpForward, _("Jump forward"));
+        submenuJump->Append(idMenuGotoDeclaration, _("Jump to declaration"));
+
+        wxString prefix = ConfigManager::GetDataFolder() + _T("/images/fortranproject/");
+        wxBitmap bmp_back = cbLoadBitmap(prefix + _T("fprojectjumpback.png"), wxBITMAP_TYPE_PNG);
+        wxBitmap bmp_home = cbLoadBitmap(prefix + _T("fprojectjumphome.png"), wxBITMAP_TYPE_PNG);
+        wxBitmap bmp_forward = cbLoadBitmap(prefix + _T("fprojectjumpforward.png"), wxBITMAP_TYPE_PNG);
+        wxMenuItem* itemJumpBack = new wxMenuItem(submenuJump, idMenuJumpBack, _("Jump back"));
+        itemJumpBack->SetBitmap(bmp_back);
+        wxMenuItem* itemJumpHome = new wxMenuItem(submenuJump, idMenuJumpHome, _("Jump last"));
+        itemJumpHome->SetBitmap(bmp_home);
+        wxMenuItem* itemJumpForward = new wxMenuItem(submenuJump, idMenuJumpForward, _("Jump forward"));
+        itemJumpForward->SetBitmap(bmp_forward);
+        submenuJump->Append(itemJumpBack);
+        submenuJump->Append(itemJumpHome);
+        submenuJump->Append(itemJumpForward);
         submenuJump->Enable(idMenuJumpBack, false);
         submenuJump->Enable(idMenuJumpHome, false);
         submenuJump->Enable(idMenuJumpForward, false);
 
-        m_FortranToolsMenu->Append(idMenuJump, _("Jump"), submenuJump);
-        m_FortranToolsMenu->Append(idMenuNextCallTipPage, _("Next call tip\tCtrl-DOWN"));
-        m_FortranToolsMenu->Append(idMenuPrevCallTipPage, _("Prev call tip\tCtrl-UP"));
-        m_FortranToolsMenu->Append(idMenuGenerateMakefile, _("Generate Makefile"));
-        m_FortranToolsMenu->Append(idMenuChangeCase, _("Change case"));
-        m_FortranToolsMenu->Append(idMenuTab2Space, _("Tab2space"));
+        m_FortranToolsMenu->Insert(0, idMenuJump, _("Jump"), submenuJump);
+        m_FortranToolsMenu->Insert(1, idMenuNextCallTipPage, _("Next call tip\tCtrl-N"));
+        m_FortranToolsMenu->Insert(2, idMenuPrevCallTipPage, _("Prev call tip\tCtrl-P"));
+        m_FortranToolsMenu->Insert(3, idMenuGenerateMakefile, _("Generate Makefile"));
+        m_FortranToolsMenu->Insert(4, idMenuChangeCase, _("Change case"));
+        m_FortranToolsMenu->Insert(5, idMenuTab2Space, _("Tab2space"));
     }
 }
 
@@ -798,7 +809,7 @@ void FortranProject::EditorEventHook(cbEditor* editor, wxScintillaEvent& event)
 
     if (event.GetEventType() == wxEVT_SCI_AUTOCOMP_SELECTION)
     {
-        wxString itemText = event.GetText();
+        wxString itemText = event.GetText().BeforeFirst(':');
         control->AutoCompCancel();
         int pos = control->GetCurrentPos();
         int start = control->WordStartPosition(pos, true);
@@ -1083,11 +1094,16 @@ int FortranProject::CodeComplete()
             TokenFlat* token = result->Item(i);
             if (token->m_Name.StartsWith(_T("%%")) || token->m_Name.IsEmpty())
                 continue;
+
+            wxString tmpstr = token->m_Name;
+            if (m_LogShowTypeVariables && token->m_TokenKind == tkVariable)
+                tmpstr << _T(": ") << token->m_PartFirst; // add type of variable
+
             // check for unique_strings
-            if (unique_strings.find(token->m_Name) != unique_strings.end())
+            if (unique_strings.find(tmpstr) != unique_strings.end())
                 continue;
 
-            unique_strings.insert(token->m_Name);
+            unique_strings.insert(tmpstr);
             int iidx = m_pNativeParser->GetTokenKindImageIdx(token);
             if (already_registered.Index(iidx) == wxNOT_FOUND)
             {
@@ -1099,7 +1115,13 @@ int FortranProject::CodeComplete()
             }
             wxString tmp;
             if (iidx != -1)
-                tmp << token->m_DisplayName << wxString::Format(_T("?%d"), iidx);
+            {
+                if (m_LogShowTypeVariables && token->m_TokenKind == tkVariable)
+                    tmp << token->m_DisplayName << _T(": ") << token->m_PartFirst;
+                else
+                    tmp << token->m_DisplayName;
+                tmp << wxString::Format(_T("?%d"), iidx);
+            }
             else
                 tmp << token->m_DisplayName;
             items.Add(tmp);
@@ -1229,8 +1251,11 @@ int FortranProject::CodeComplete()
         control->AutoCompSetChooseSingle(cfg->ReadBool(_T("/auto_select_one"), false));
         control->AutoCompSetAutoHide(true);
         control->AutoCompSetDropRestOfWord(m_IsAutoPopup ? false : true);
-        wxString final = GetStringFromArray(items, _T(" "));
-        final.Trim(); //  remove last space
+        ed->GetControl()->AutoCompSetSeparator('\n');
+        ed->GetControl()->AutoCompSetMaxWidth(80);
+        ed->GetControl()->AutoCompSetMaxHeight(16);
+        wxString final = GetStringFromArray(items, _T("\n"));
+        final.Trim();
 
         control->AutoCompShow(pos - start, final);
 
@@ -1774,6 +1799,7 @@ void FortranProject::RereadOptions()
     m_UseSmartCC = cfg->ReadBool(_T("/use_smart_code_completion"), true);
     m_LogOnlyUseAssoc = cfg->ReadBool(_T("/only_use_associated"), true);
     m_LogOnlyPublicNames = !cfg->ReadBool(_T("/show_hidden_entities"), false);
+    m_LogShowTypeVariables = cfg->ReadBool(_T("/show_type_variables"), true);
 
     m_LogUseWindow = cfg->ReadBool(_T("/use_log_window"), true);
     m_LogComAbove = cfg->ReadBool(_T("/include_comments_above"), true);

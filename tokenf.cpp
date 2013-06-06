@@ -135,10 +135,10 @@ TokenFlat::TokenFlat(const TokenF* tok)
         m_ParentTokenKind = tok->m_pParent->m_TokenKind;
     }
 
+    m_PartFirst = tok->m_PartFirst;
     if (m_TokenKind == tkFunction)
     {
         m_ResultVariable = tok->m_ResultVariable;
-		m_PartFirst = tok->m_PartFirst;
     }
     else if (m_TokenKind == tkProcedure || m_TokenKind == tkType)
     {
@@ -166,10 +166,10 @@ TokenFlat::TokenFlat(const TokenFlat* tok)
     m_ParentDisplayName = tok->m_ParentDisplayName;
     m_ParentTokenKind = tok->m_ParentTokenKind;
 
+    m_PartFirst = tok->m_PartFirst;
     if (m_TokenKind == tkFunction)
     {
         m_ResultVariable = tok->m_ResultVariable;
-		m_PartFirst = tok->m_PartFirst;
     }
     else if (m_TokenKind == tkProcedure || m_TokenKind == tkType)
     {

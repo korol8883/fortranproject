@@ -41,6 +41,7 @@ FPOptionsDlg::FPOptionsDlg(wxWindow* parent, NativeParserF* np, FortranProject* 
     XRCCTRL(*this, "chkSmartCodeCompletion", wxCheckBox)->SetValue(cfg->ReadBool(_T("/use_smart_code_completion"), true));
     XRCCTRL(*this, "chkOnlyUseAssociated", wxCheckBox)->SetValue(cfg->ReadBool(_T("/only_use_associated"), true));
     XRCCTRL(*this, "chkShowHiddenEntities", wxCheckBox)->SetValue(cfg->ReadBool(_T("/show_hidden_entities"), false));
+    XRCCTRL(*this, "chkShowTypeVariables", wxCheckBox)->SetValue(cfg->ReadBool(_T("/show_type_variables"), true));
     XRCCTRL(*this, "chkAutoLaunch", wxCheckBox)->SetValue(cfg->ReadBool(_T("/auto_launch"), true));
     XRCCTRL(*this, "spnAutoLaunchChars", wxSpinCtrl)->SetValue(cfg->ReadInt(_T("/auto_launch_chars"), 2));
     XRCCTRL(*this, "spnMaxMatches", wxSpinCtrl)->SetValue(cfg->ReadInt(_T("/max_matches"), 16384));
@@ -153,6 +154,7 @@ void FPOptionsDlg::OnApply()
     cfg->Write(_T("/use_smart_code_completion"), (bool)XRCCTRL(*this, "chkSmartCodeCompletion", wxCheckBox)->GetValue());
     cfg->Write(_T("/only_use_associated"), (bool)XRCCTRL(*this, "chkOnlyUseAssociated", wxCheckBox)->GetValue());
     cfg->Write(_T("/show_hidden_entities"), (bool)XRCCTRL(*this, "chkShowHiddenEntities", wxCheckBox)->GetValue());
+    cfg->Write(_T("/show_type_variables"), (bool)XRCCTRL(*this, "chkShowTypeVariables", wxCheckBox)->GetValue());
     cfg->Write(_T("/auto_launch"), (bool)XRCCTRL(*this, "chkAutoLaunch", wxCheckBox)->GetValue());
     cfg->Write(_T("/auto_launch_chars"), (int)XRCCTRL(*this, "spnAutoLaunchChars", wxSpinCtrl)->GetValue());
     cfg->Write(_T("/max_matches"), (int)XRCCTRL(*this, "spnMaxMatches", wxSpinCtrl)->GetValue());

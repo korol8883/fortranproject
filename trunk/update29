@@ -1,5 +1,5 @@
 #! /bin/sh
-#
+# 
 
 mkdir -p ../../../devel29/share/codeblocks/images/fortranproject> /dev/null 2> /dev/null
 mkdir -p ../../../output29/share/codeblocks/images/fortranproject > /dev/null 2> /dev/null

@@ -1229,6 +1229,7 @@ void ParserThreadF::ParseDeclarationsSecondPart(wxString& token, bool& needDefau
         tok->m_PartLast = varComs.Item(i);
         tok->m_TokenAccess = taKind;
         tok->AddLineEnd(tok->m_LineStart);
+        tok->AddPartFirst(token);
         newTokenArr.Add(tok);
     }
 	return;

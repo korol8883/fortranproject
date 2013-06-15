@@ -282,6 +282,8 @@ void WorkspaceBrowserBuilder::MakeExpandedNodesArray(wxArrayString &expandedBott
 
     wxTreeItemIdValue cookie;
     wxTreeItemId root = m_pTreeBottom->GetRootItem();
+    if (!root.IsOk())
+        return;
     wxTreeItemId item = m_pTreeBottom->GetFirstChild(root, cookie);
     while (item.IsOk())
     {
@@ -311,7 +313,8 @@ void WorkspaceBrowserBuilder::ExpandBottomNodes(wxArrayString &expandedBottomNod
     for (size_t i=1; i<expandedBottomNodes.Count(); i+=2)
     {
         wxTreeItemId item = FindItemByName(m_pTreeBottom, expandedBottomNodes.Item(i-1), expandedBottomNodes.Item(i));
-        m_pTreeBottom->Expand(item);
+        if (item.IsOk())
+            m_pTreeBottom->Expand(item);
     }
 }
 
@@ -709,7 +712,7 @@ wxTreeItemId WorkspaceBrowserBuilder::AddNodeIfNotThere(wxTreeCtrl* tree, wxTree
 
     wxTreeItemId insert_after; // node to insert after; we 'll be looping all children so we might as well sort at the same time
     wxTreeItemId existing = tree->GetFirstChild(parent, cookie);
-    while (existing)
+    while (existing.IsOk())
     {
         wxString itemText = tree->GetItemText(existing);
         if (itemText.IsSameAs(name))
@@ -897,6 +900,8 @@ wxTreeItemId WorkspaceBrowserBuilder::FindItemByName(wxTreeCtrl* tree, wxString 
 
     wxTreeItemIdValue cookie;
     wxTreeItemId root = tree->GetRootItem();
+    if (!root.IsOk())
+        return root;
     wxTreeItemId item = tree->GetFirstChild(root, cookie);
     while (item.IsOk())
     {
@@ -1096,6 +1101,8 @@ void WorkspaceBrowserBuilder::MarkSymbol(const wxString& filename, int line)
     bool found = false;
     wxTreeItemIdValue cookie;
     wxTreeItemId root = m_pTreeTop->GetRootItem();
+    if(!root.IsOk())
+        return;
     wxTreeItemId item = m_pTreeTop->GetFirstChild(root, cookie);
     wxTreeItemId itemGlob;
     bool haveGlob = false;
@@ -1270,6 +1277,8 @@ bool WorkspaceBrowserBuilder::MarkBottomSymbol(const wxString& filename, int lin
     bool foundFile = false;
     wxTreeItemIdValue cookie;
     wxTreeItemId root = m_pTreeBottom->GetRootItem();
+    if (!root.IsOk())
+        return false;
     wxTreeItemId item = m_pTreeBottom->GetFirstChild(root, cookie);
     while (item.IsOk())
     {
@@ -1353,6 +1362,8 @@ void WorkspaceBrowserBuilder::UnmarkBottomSymbol()
     bool goInside = false;
     wxTreeItemIdValue cookie;
     wxTreeItemId root = m_pTreeBottom->GetRootItem();
+    if (!root.IsOk())
+        return;
     wxTreeItemId item = m_pTreeBottom->GetFirstChild(root, cookie);
     while (item.IsOk())
     {
@@ -1402,6 +1413,8 @@ void WorkspaceBrowserBuilder::MarkChildSymbol(wxTreeCtrl* tree, wxTreeItemId& ro
 {
     bool found = false;
     wxTreeItemIdValue cookie;
+    if (!root.IsOk())
+        return;
     wxTreeItemId item = tree->GetFirstChild(root, cookie);
     while (item.IsOk())
     {
@@ -1438,6 +1451,8 @@ bool WorkspaceBrowserBuilder::MarkGlobalSymbol(wxTreeCtrl* tree, wxTreeItemId& r
     bool found = false;
     bool foundFile  = false;
     wxTreeItemIdValue cookie;
+    if (!root.IsOk())
+        return false;
     wxTreeItemId item = tree->GetFirstChild(root, cookie);
     while (item.IsOk())
     {
@@ -1575,6 +1590,8 @@ void WorkspaceBrowserBuilder::MakeVisibleCurrent()
 
     wxTreeItemIdValue cookie;
     wxTreeItemId root = m_pTreeTop->GetRootItem();
+    if (!root.IsOk())
+        return;
     wxTreeItemId item = m_pTreeTop->GetFirstChild(root, cookie);
     while (item.IsOk())
     {
@@ -1590,6 +1607,8 @@ void WorkspaceBrowserBuilder::MakeVisibleCurrent()
     if (m_Options.visibleBottomTree)
     {
         root = m_pTreeBottom->GetRootItem();
+        if (!root.IsOk())
+            return;
         item = m_pTreeBottom->GetFirstChild(root, cookie);
         bool found = false;
         while (item.IsOk())

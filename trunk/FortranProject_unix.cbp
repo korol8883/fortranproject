@@ -32,8 +32,6 @@
 		<Compiler>
 			<Add option="-Wall" />
 			<Add option="-g" />
-			<Add option="-Ulinux" />
-			<Add option="-Uunix" />
 			<Add option="-Winvalid-pch" />
 			<Add option="-fexceptions" />
 			<Add option="-fPIC" />

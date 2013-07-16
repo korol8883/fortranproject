@@ -72,8 +72,8 @@ void NativeParserF::CreateWorkspaceBrowser()
             if (!m_WorkspaceBrowserIsFloating)
             {
                 // make this a tab in projectmanager notebook
-                m_pWorkspaceBrowser = new WorkspaceBrowserF(Manager::Get()->GetProjectManager()->GetNotebook(), this, &m_Parser);
-                Manager::Get()->GetProjectManager()->GetNotebook()->AddPage(m_pWorkspaceBrowser, _("FSymbols"));
+                m_pWorkspaceBrowser = new WorkspaceBrowserF(Manager::Get()->GetProjectManager()->GetUI().GetNotebook(), this, &m_Parser);
+                Manager::Get()->GetProjectManager()->GetUI().GetNotebook()->AddPage(m_pWorkspaceBrowser, _("FSymbols"));
             }
             else
             {
@@ -108,9 +108,9 @@ void NativeParserF::RemoveWorkspaceBrowser()
     {
         if (!m_WorkspaceBrowserIsFloating)
         {
-            int idx = Manager::Get()->GetProjectManager()->GetNotebook()->GetPageIndex(m_pWorkspaceBrowser);
+            int idx = Manager::Get()->GetProjectManager()->GetUI().GetNotebook()->GetPageIndex(m_pWorkspaceBrowser);
             if (idx != -1)
-                Manager::Get()->GetProjectManager()->GetNotebook()->RemovePage(idx);
+                Manager::Get()->GetProjectManager()->GetUI().GetNotebook()->RemovePage(idx);
         }
         else
         {
@@ -248,7 +248,7 @@ void NativeParserF::ForceReparseWorkspace()
     m_WorkspaceReparseTimer.Start(500, wxTIMER_ONE_SHOT);
 }
 
-void NativeParserF::OnReparseWorkspaceTimer(wxTimerEvent& event)
+void NativeParserF::OnReparseWorkspaceTimer(wxTimerEvent& /*event*/)
 {
     if (Manager::IsAppShuttingDown())
         return;
@@ -297,7 +297,7 @@ ArrayOfFortranSourceForm* NativeParserF::GetWSFileForms()
     return &m_WSFileForms;
 }
 
-void NativeParserF::OnUpdateWorkspaceBrowser(wxCommandEvent& event)
+void NativeParserF::OnUpdateWorkspaceBrowser(wxCommandEvent& /*event*/)
 {
     m_Parser.ConnectToNewTokens();
     UpdateWorkspaceBrowser();
@@ -377,8 +377,8 @@ void NativeParserF::UpdateProjectFilesDependency(cbProject* project)
 
         for (size_t i=0; i<pfs.size(); i++)
         {
-            wxString fn = pfs[i]->file.GetFullPath();
-            unsigned short int wt = pos->second->GetFileWeight(fn);
+            wxString fn2 = pfs[i]->file.GetFullPath();
+            unsigned short int wt = pos->second->GetFileWeight(fn2);
             pfs[i]->weight = wt;
         }
         if (pos->second->HasInfiniteDependences())
@@ -1046,7 +1046,7 @@ void NativeParserF::ReparseCurrentEditor()
     }
 }
 
-void NativeParserF::OnUpdateCurrentFileTokens(wxCommandEvent& event)
+void NativeParserF::OnUpdateCurrentFileTokens(wxCommandEvent& /*event*/)
 {
     m_Parser.ConnectToNewCurrentTokens();
 }

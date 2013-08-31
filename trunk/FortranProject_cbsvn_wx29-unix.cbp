@@ -44,7 +44,6 @@
 			<Add after="zip -j9 ../../../devel29/share/codeblocks/FortranProject.zip manifest.xml resources/workspacebrowserf.xrc resources/settings.xrc resources/fortranprojecttoolbar.xrc resources/changecase.xrc resources/tab2space.xrc" />
 			<Add after="zip -r9  ../../../devel29/share/codeblocks/FortranProject.zip images" />
 			<Add after="./update29" />
-			<Mode after="always" />
 		</ExtraCommands>
 		<Unit filename="bufferparserthread.cpp" />
 		<Unit filename="bufferparserthread.h" />

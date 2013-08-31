@@ -470,14 +470,14 @@ void FortranProject::BuildMenu(wxMenuBar* menuBar)
         Manager::Get()->GetLogManager()->DebugLog(_T("FortranProject: Could not find View menu!"));
 
 
-    pos = menuBar->FindMenu(_("&Fortran"));
+    pos = menuBar->FindMenu(_("Fortra&n"));
     if (pos == wxNOT_FOUND)
     {
         pos = menuBar->FindMenu(_("&Tools"));
         if (pos != wxNOT_FOUND)
         {
             m_FortranToolsMenu = new wxMenu();
-            menuBar->Insert(pos, m_FortranToolsMenu, _("&Fortran"));
+            menuBar->Insert(pos, m_FortranToolsMenu, _("Fortra&n"));
         }
         else
             Manager::Get()->GetLogManager()->DebugLog(_T("FortranProject: Could not find Tools menu!"));

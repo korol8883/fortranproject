@@ -498,6 +498,7 @@ void NativeParserF::CollectInformationForCallTip(int& commasAll, int& commasUnti
 
     m_Parser.ChangeLineIfRequired(ed, lineText);
 
+    lineText.Trim();
     TokensArrayFlatClass tokensTemp;
     TokensArrayFlat* resultTemp = tokensTemp.GetTokens();
     if (!m_Parser.FindMatchTypeComponents(ed, lineText, *resultTemp, false, false, isAfterPercent, true))

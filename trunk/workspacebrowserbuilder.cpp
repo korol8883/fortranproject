@@ -491,6 +491,7 @@ bool WorkspaceBrowserBuilder::AddChildrenNodes(wxTreeCtrl* tree, wxTreeItemId pa
     int childKM = tkFunction | tkProgram | tkSubroutine | tkPreprocessor | tkInterface | tkInterfaceExplicit | tkBlockData |
                     tkType | tkVariable | tkProcedure | tkAccessList;
     int interfaceMask = tkInterface | tkInterfaceExplicit;
+    int funChildKM = childKM ^ tkVariable;
 
     if (!m_Options.showLocalVariables && (parToken->m_TokenKind == tkSubroutine || parToken->m_TokenKind == tkFunction || parToken->m_TokenKind == tkProgram))
     {
@@ -512,9 +513,18 @@ bool WorkspaceBrowserBuilder::AddChildrenNodes(wxTreeCtrl* tree, wxTreeItemId pa
             {
                 wxTreeItemId idni = AddNodeIfNotThere(tree, parent, token->m_DisplayName, GetTokenKindImageIdx(token), new TreeDataF(sfToken, token), sorted);
                 count++;
-                if ((tree == m_pTreeTop && !m_Options.visibleBottomTree && HasChildren(token, childKM)))
+                if (tree == m_pTreeTop && !m_Options.visibleBottomTree)
                 {
-                    tree->SetItemHasChildren(idni);
+                    if (!m_Options.showLocalVariables && (token->m_TokenKind == tkSubroutine || token->m_TokenKind == tkFunction))
+                    {
+                        if (HasChildren(token, funChildKM))
+                            tree->SetItemHasChildren(idni);
+                    }
+                    else
+                    {
+                        if (HasChildren(token, childKM))
+                            tree->SetItemHasChildren(idni);
+                    }
                 }
                 else if(tree == m_pTreeBottom && HasChildren(token, childKM))
                 {

@@ -80,7 +80,7 @@ class ParserThreadF
 		void HandleSubmoduleProcedure();
 		void CheckParseOneDeclaration(wxString& token, wxString& tok_low, wxString& next, wxString& next_low,
                                 bool& needDefault, TokensArrayF& newTokenArr);
-		void ParseTypeBoundProcedures(const wxString& firstWord, bool breakAtEOL, bool pass=true);
+		void ParseTypeBoundProcedures(const wxString& firstWord, bool breakAtEOL, bool passIn=true);
 		void MakeArrayStringLower(wxArrayString &arr, wxArrayString &arrLw);
 		void ChangeTokenAccess(ModuleTokenF* modToken, TokenF* token);
 

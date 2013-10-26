@@ -1734,7 +1734,7 @@ void ParserThreadF::HandleProcedureList()
     }
 }
 
-void ParserThreadF::ParseTypeBoundProcedures(const wxString& firstWord, bool breakAtEOL, bool pass)
+void ParserThreadF::ParseTypeBoundProcedures(const wxString& firstWord, bool breakAtEOL, bool passIn)
 {
     TokenAccessKind defAccKind = taPublic;
     bool firstTime = true;
@@ -1742,6 +1742,7 @@ void ParserThreadF::ParseTypeBoundProcedures(const wxString& firstWord, bool bre
     int nAssignment = 0;
     while (1)
     {
+        bool pass = passIn;
         TokenAccessKind tokAccK = defAccKind;
         wxString firstTokenLw;
         if (firstTime && !firstWord.IsEmpty())
@@ -1832,8 +1833,10 @@ void ParserThreadF::ParseTypeBoundProcedures(const wxString& firstWord, bool bre
                     {
                         if (curLineArr.Item(ic+1).IsSameAs(_T("=>")))
                         {
-                            procName = curLineArr.Item(ic+2);
                             ic += 2;
+                            procName = curLineArr.Item(ic);
+                            if (ic+1 < countArr && curLineArr.Item(ic+1).StartsWith(_T("(")))
+                                ic++;
                         }
                     }
                     ic++;

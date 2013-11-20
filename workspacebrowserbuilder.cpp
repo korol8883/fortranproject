@@ -178,17 +178,18 @@ void WorkspaceBrowserBuilder::BuildTree()
     }
 
     wxString oldSelText;
+    wxString oldParentText;
+    bool oldParent_isRoot = false;
     wxTreeItemId oldSel = m_pTreeTop->GetSelection();
     if (oldSel.IsOk())
     {
         oldSelText = m_pTreeTop->GetItemText(oldSel);
-    }
-    wxTreeItemId oldParent = m_pTreeTop->GetItemParent(oldSel);
-    bool oldParent_isRoot = (root == oldParent);
-    wxString oldParentText;
-    if (oldParent.IsOk())
-    {
-        oldParentText = m_pTreeTop->GetItemText(oldParent);
+        wxTreeItemId oldParent = m_pTreeTop->GetItemParent(oldSel);
+        oldParent_isRoot = (root == oldParent);
+        if (oldParent.IsOk())
+        {
+            oldParentText = m_pTreeTop->GetItemText(oldParent);
+        }
     }
 
     m_pTreeTop->Hide();

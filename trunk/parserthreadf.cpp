@@ -1125,6 +1125,7 @@ void ParserThreadF::ParseDeclarationsSecondPart(wxString& token, bool& needDefau
     needDefault = true;
     TokenAccessKind taKind = taPublic;
     wxString defT = token;
+    wxString dims;
     wxArrayString linesArr;
     m_Tokens.SetDetailedParsing(true);
     wxArrayString lineTok = m_Tokens.GetTokensToEOL(&linesArr);
@@ -1159,6 +1160,11 @@ void ParserThreadF::ParseDeclarationsSecondPart(wxString& token, bool& needDefau
                 taKind = taPublic;
                 needDefault = false;
             }
+
+            if (tokLw.IsSameAs(_T("dimension")) && lineTok.Item(i+1).StartsWith(_T("(")))
+            {
+                dims.Append(lineTok.Item(i+1));
+            }
         }
     }
     else
@@ -1169,6 +1175,7 @@ void ParserThreadF::ParseDeclarationsSecondPart(wxString& token, bool& needDefau
     wxArrayString varNames;
     wxArrayString varArgs;
     wxArrayString varComs;
+    wxArrayString varDims;
     for (size_t i=idx+1; i<lineTok.GetCount(); )
     {
         wxString var1= lineTok.Item(i);
@@ -1178,6 +1185,7 @@ void ParserThreadF::ParseDeclarationsSecondPart(wxString& token, bool& needDefau
             continue;
         }
         wxString arg1;
+        wxString dim1;
         while (i+1 < lineTok.GetCount())
         {
             wxString s = lineTok.Item(i+1);
@@ -1189,7 +1197,9 @@ void ParserThreadF::ParseDeclarationsSecondPart(wxString& token, bool& needDefau
             else
                 break;
         }
-        if (i+1 < lineTok.GetCount() && (lineTok.Item(i+1).IsSameAs(_T("=>")) || lineTok.Item(i+1).IsSameAs(_T("=")) || lineTok.Item(i+1).IsSameAs(_T("*"))) )
+        dim1 << arg1;
+        if (i+1 < lineTok.GetCount() && (lineTok.Item(i+1).IsSameAs(_T("=>")) || lineTok.Item(i+1).IsSameAs(_T("="))
+                                         || lineTok.Item(i+1).IsSameAs(_T("*"))) )
         {
             i += 1;
             for (;i<lineTok.GetCount();i++)
@@ -1199,14 +1209,6 @@ void ParserThreadF::ParseDeclarationsSecondPart(wxString& token, bool& needDefau
                 else
                     arg1 << lineTok.Item(i);
             }
-//            if (i+1 < lineTok.GetCount())
-//            {
-//                wxString s = lineTok.Item(i+1);
-//                if (s.StartsWith(_T("(")) && s.EndsWith(_T(")")))
-//                {
-//                    i++;
-//                }
-//            }
             if(i >= lineTok.GetCount())
             {
                 i = lineTok.GetCount() - 1;
@@ -1221,6 +1223,10 @@ void ParserThreadF::ParseDeclarationsSecondPart(wxString& token, bool& needDefau
         varNames.Add(var1);
         varArgs.Add(arg1);
         varComs.Add(comStr);
+        if (dim1.IsEmpty())
+            varDims.Add(dims);
+        else
+            varDims.Add(dim1);
         i++;
     }
     for (size_t i=0; i<varNames.GetCount(); i++)
@@ -1229,7 +1235,15 @@ void ParserThreadF::ParseDeclarationsSecondPart(wxString& token, bool& needDefau
         tok->m_PartLast = varComs.Item(i);
         tok->m_TokenAccess = taKind;
         tok->AddLineEnd(tok->m_LineStart);
-        tok->AddPartFirst(token);
+        if (varDims.Item(i).IsEmpty())
+        {
+            tok->AddPartFirst(token);
+        }
+        else
+        {
+            wxString tokStr = token + _T(", ") + varDims.Item(i);
+            tok->AddPartFirst(tokStr);
+        }
         newTokenArr.Add(tok);
     }
 	return;

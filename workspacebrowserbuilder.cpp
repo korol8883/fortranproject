@@ -1110,6 +1110,7 @@ void WorkspaceBrowserBuilder::MarkSymbol(const wxString& filename, int line)
         return;
 
     bool found = false;
+    bool unmarked = true;
     wxTreeItemIdValue cookie;
     wxTreeItemId root = m_pTreeTop->GetRootItem();
     if(!root.IsOk())
@@ -1142,11 +1143,19 @@ void WorkspaceBrowserBuilder::MarkSymbol(const wxString& filename, int line)
                 {
                     if (m_pTreeTop->IsBold(item))
                     {
-                        MarkItem(m_pTreeTop, item, false);
-                        if (!m_Options.visibleBottomTree && m_pTreeTop->HasChildren(item))
+                        if (!data->m_pToken->m_Filename.IsSameAs(filename)
+                            || ((int)data->m_pToken->m_LineStart > line)
+                            || ((int)data->m_pToken->m_LineEnd < line))
                         {
-                            MarkChildSymbol(m_pTreeTop, item, line, false);
+                            MarkItem(m_pTreeTop, item, false);
+                            if (!m_Options.visibleBottomTree && m_pTreeTop->HasChildren(item))
+                            {
+                                MarkChildSymbol(m_pTreeTop, item, line, false);
+                            }
+                            unmarked = true;
                         }
+                        else
+                            unmarked = false;
                     }
                     if (!found)
                     {
@@ -1154,7 +1163,8 @@ void WorkspaceBrowserBuilder::MarkSymbol(const wxString& filename, int line)
                         {
                             if (((int)data->m_pToken->m_LineStart <= line) && ((int)data->m_pToken->m_LineEnd >= line))
                             {
-                                MarkItem(m_pTreeTop, item);
+                                if (unmarked)
+                                    MarkItem(m_pTreeTop, item);
                                 if ((m_pTreeTop->GetSelection() == item) && m_Options.visibleBottomTree)
                                 {
                                     MarkBottomSymbol(filename, line);
@@ -1192,7 +1202,8 @@ void WorkspaceBrowserBuilder::MarkSymbol(const wxString& filename, int line)
         {
             MarkChildSymbol(m_pTreeTop, itemGlob, line, false);
         }
-        MarkItem(m_pTreeTop, itemGlob, false);
+        if (m_pTreeTop->IsBold(itemGlob))
+            MarkItem(m_pTreeTop, itemGlob, false);
     }
     else if (haveGlob)
     {
@@ -1218,7 +1229,7 @@ void WorkspaceBrowserBuilder::MarkSymbol(const wxString& filename, int line)
             MarkItem(m_pTreeTop, itemGlob);
             found = true;
         }
-        else
+        else if (m_pTreeTop->IsBold(itemGlob))
         {
             MarkItem(m_pTreeTop, itemGlob, false);
         }
@@ -1235,7 +1246,8 @@ void WorkspaceBrowserBuilder::MarkSymbol(const wxString& filename, int line)
             MarkChildSymbol(m_pTreeTop, itemOthers, line, false);
             MarkGlobalSymbol(m_pTreeTop, itemOthers, filename, line);
         }
-        MarkItem(m_pTreeTop, itemOthers, false);
+        if (m_pTreeTop->IsBold(itemOthers))
+            MarkItem(m_pTreeTop, itemOthers, false);
     }
     else if (haveOthers)
     {
@@ -1261,7 +1273,7 @@ void WorkspaceBrowserBuilder::MarkSymbol(const wxString& filename, int line)
             MarkItem(m_pTreeTop, itemOthers);
             found = true;
         }
-        else
+        else if (m_pTreeTop->IsBold(itemOthers))
         {
             MarkItem(m_pTreeTop, itemOthers, false);
         }
@@ -1278,7 +1290,9 @@ void WorkspaceBrowserBuilder::MarkItem(wxTreeCtrl* tree, wxTreeItemId& item, boo
     if (item.IsOk())
     {
         tree->SetItemBold(item, mark);
+#ifdef __WXGTK__
         tree->Refresh();
+#endif
     }
 }
 
@@ -1286,6 +1300,7 @@ bool WorkspaceBrowserBuilder::MarkBottomSymbol(const wxString& filename, int lin
 {
     bool found = false;
     bool foundFile = false;
+    bool unmarked = true;
     wxTreeItemIdValue cookie;
     wxTreeItemId root = m_pTreeBottom->GetRootItem();
     if (!root.IsOk())
@@ -1301,15 +1316,24 @@ bool WorkspaceBrowserBuilder::MarkBottomSymbol(const wxString& filename, int lin
             {
                 if (m_pTreeBottom->IsBold(item))
                 {
-                    MarkItem(m_pTreeBottom, item, false);
+                    if (!data->m_pToken->m_Filename.IsSameAs(filename)
+                        || (int)data->m_pToken->m_LineStart > line
+                        || (int)data->m_pToken->m_LineEnd < line)
+                    {
+                        MarkItem(m_pTreeBottom, item, false);
+                        unmarked = true;
+                    }
+                    else
+                        unmarked = false;
                 }
                 if (!found)
                 {
-                    if(data->m_pToken->m_Filename.IsSameAs(filename))
+                    if (data->m_pToken->m_Filename.IsSameAs(filename))
                     {
                         if (((int)data->m_pToken->m_LineStart <= line) && ((int)data->m_pToken->m_LineEnd >= line))
                         {
-                            MarkItem(m_pTreeBottom, item);
+                            if (unmarked)
+                                MarkItem(m_pTreeBottom, item);
                             found = true;
                         }
                     }
@@ -1332,6 +1356,7 @@ bool WorkspaceBrowserBuilder::MarkBottomSymbol(const wxString& filename, int lin
 
         if (goInside)
         {
+            bool unmarked2 = true;
             wxTreeItemIdValue cookie2;
             wxTreeItemId item2 = m_pTreeBottom->GetFirstChild(item, cookie2);
             while (item2.IsOk())
@@ -1343,7 +1368,15 @@ bool WorkspaceBrowserBuilder::MarkBottomSymbol(const wxString& filename, int lin
                     {
                         if (m_pTreeBottom->IsBold(item2))
                         {
-                            MarkItem(m_pTreeBottom, item2, false);
+                            if (!data2->m_pToken->m_Filename.IsSameAs(filename)
+                                || (int)data2->m_pToken->m_LineStart > line
+                                || (int)data2->m_pToken->m_LineEnd < line)
+                            {
+                                MarkItem(m_pTreeBottom, item2, false);
+                                unmarked2 = true;
+                            }
+                            else
+                                unmarked2 = false;
                         }
                         if (!found)
                         {
@@ -1351,7 +1384,8 @@ bool WorkspaceBrowserBuilder::MarkBottomSymbol(const wxString& filename, int lin
                             {
                                 if (((int)data2->m_pToken->m_LineStart <= line) && ((int)data2->m_pToken->m_LineEnd >= line))
                                 {
-                                    MarkItem(m_pTreeBottom, item2);
+                                    if (unmarked2)
+                                        MarkItem(m_pTreeBottom, item2);
                                     found = true;
                                 }
                             }
@@ -1423,6 +1457,7 @@ void WorkspaceBrowserBuilder::UnmarkBottomSymbol()
 void WorkspaceBrowserBuilder::MarkChildSymbol(wxTreeCtrl* tree, wxTreeItemId& root, int line, bool mark)
 {
     bool found = false;
+    bool unmarked = true;
     wxTreeItemIdValue cookie;
     if (!root.IsOk())
         return;
@@ -1436,20 +1471,33 @@ void WorkspaceBrowserBuilder::MarkChildSymbol(wxTreeCtrl* tree, wxTreeItemId& ro
             {
                 if (tree->IsBold(item))
                 {
-                    MarkItem(tree, item, false);
+                    if (mark)
+                    {
+                        if (((int)data->m_pToken->m_LineStart > line) || ((int)data->m_pToken->m_LineEnd < line))
+                        {
+                            MarkItem(tree, item, false);
+                            unmarked = true;
+                        }
+                        else
+                            unmarked = false;
+                    }
+                    else
+                        MarkItem(tree, item, false);
                 }
                 if (!found && mark)
                 {
                     if (((int)data->m_pToken->m_LineStart <= line) && ((int)data->m_pToken->m_LineEnd >= line))
                     {
-                        MarkItem(tree, item);
+                        if (unmarked)
+                            MarkItem(tree, item);
                         found = true;
                     }
                 }
             }
             else if (data->m_SpecialFolder == sfFile)
             {
-                MarkItem(tree, item, mark);
+                if ((tree->IsBold(item) && !mark) || (!tree->IsBold(item) && mark))
+                    MarkItem(tree, item, mark);
                 MarkChildSymbol(tree, item, line, mark);
             }
         }

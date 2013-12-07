@@ -14,6 +14,8 @@
 #include "parserthreadf.h"
 #include "cbstyledtextctrl.h"
 #include <configmanager.h>
+#include <editormanager.h>
+#include <logmanager.h>
 #include "ccsmartfilter.h"
 #include <vector>
 

@@ -15,11 +15,14 @@
 #include "tab2space.h"
 #include <configurationpanel.h>
 #include <manager.h>
+#include <editorcolourset.h>
+#include <editormanager.h>
 #include <logmanager.h>
 #include <projectmanager.h>
 #include <cbstyledtextctrl.h>
 #include <wx/filename.h>
 #include <wx/tokenzr.h>
+#include <wx/xrc/xmlres.h>
 #include <vector>
 
 #include "editor_hooks.h"

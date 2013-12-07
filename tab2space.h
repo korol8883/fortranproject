@@ -2,6 +2,7 @@
 #define Tab2Space_H
 
 #include <sdk.h> // Code::Blocks SDK
+class cbEditor;
 
 //(*Headers(Tab2Space)
 #include <wx/checkbox.h>

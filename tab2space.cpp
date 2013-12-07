@@ -1,6 +1,11 @@
 #include "tab2space.h"
 
+#include <cbeditor.h>
+#include <cbproject.h>
 #include <cbstyledtextctrl.h>
+#include <editormanager.h>
+#include <logmanager.h>
+#include <projectmanager.h>
 #include <wx/tokenzr.h>
 
 #include <set>

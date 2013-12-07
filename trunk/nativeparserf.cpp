@@ -8,9 +8,11 @@
 #include "nativeparserf.h"
 #include <manager.h>
 #include <configmanager.h>
+#include <editormanager.h>
 #include <projectmanager.h>
 #include <pluginmanager.h>
 #include <logmanager.h>
+#include <cbauibook.h>
 #include <cbeditor.h>
 #include <cbproject.h>
 #include <cbexception.h>
@@ -25,7 +27,6 @@
 #include <tinyxml/tinyxml.h>
 #include <wx/string.h>
 #include <wx/tokenzr.h>
-//#include "wx/wxFlatNotebook/wxFlatNotebook.h"
 #include "cbstyledtextctrl.h"
 
 #include <wx/wfstream.h>
@@ -72,7 +73,8 @@ void NativeParserF::CreateWorkspaceBrowser()
             if (!m_WorkspaceBrowserIsFloating)
             {
                 // make this a tab in projectmanager notebook
-                m_pWorkspaceBrowser = new WorkspaceBrowserF(Manager::Get()->GetProjectManager()->GetUI().GetNotebook(), this, &m_Parser);
+                cbAuiNotebook* bk = Manager::Get()->GetProjectManager()->GetUI().GetNotebook();
+                m_pWorkspaceBrowser = new WorkspaceBrowserF(bk, this, &m_Parser);
                 Manager::Get()->GetProjectManager()->GetUI().GetNotebook()->AddPage(m_pWorkspaceBrowser, _("FSymbols"));
             }
             else

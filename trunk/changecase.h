@@ -3,6 +3,8 @@
 
 #include <sdk.h> // Code::Blocks SDK
 
+class cbEditor;
+
 //(*Headers(ChangeCase)
 #include <wx/checkbox.h>
 #include <wx/dialog.h>

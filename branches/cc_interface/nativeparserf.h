@@ -58,8 +58,8 @@ class NativeParserF : public wxEvtHandler
         void GetCallTipsForVariable(TokenFlat* token, wxString& callTip);
         void GetCallTipsForType(TokenFlat* token, wxString& callTip);
         int CountCommas(const wxString& lineText, int start, bool nesting=true);
-        void CollectInformationForCallTip(int& commasAll, int& commasUntilPos, wxString& lastName, bool& isempty, bool& isAfterPercent, TokensArrayFlat* result);
-        void CountCommasInEditor(int& commasAll, int& commasUntilPos, wxString& lastName, bool& isempty, wxString& lineText);
+        void CollectInformationForCallTip(int& commasAll, int& commasUntilPos, wxString& lastName, bool& isempty, bool& isAfterPercent, int& argsPos, TokensArrayFlat* result);
+        void CountCommasInEditor(int& commasAll, int& commasUntilPos, wxString& lastName, bool& isempty, wxString& lineText, int& pos);
         void GetCallTipHighlight(const wxString& calltip, int commasWas, int& start, int& end);
         void MarkCurrentSymbol();
         void RereadOptions();
@@ -83,7 +83,7 @@ class NativeParserF : public wxEvtHandler
         void RemoveProjectFilesDependency(cbProject* project);
 
         bool IsFileFortran(const wxString& filename, FortranSourceForm& fsForm);
-        void BreakUpInLines(wxString& str, const wxString& original_str, int chars_per_line);
+        //void BreakUpInLines(wxString& str, const wxString& original_str, int chars_per_line);
         wxString GetLastName(const wxString& line);
 
         void MakeWSFileList();

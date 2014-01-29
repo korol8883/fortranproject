@@ -15,6 +15,7 @@
 #include "tab2space.h"
 #include <configurationpanel.h>
 #include <manager.h>
+#include <ccmanager.h>
 #include <editorcolourset.h>
 #include <editormanager.h>
 #include <logmanager.h>
@@ -195,6 +196,8 @@ void FortranProject::OnAttach()
 
     pm->RegisterEventSink(cbEVT_DEBUGGER_STARTED, new cbEventFunctor<FortranProject, CodeBlocksEvent>(this, &FortranProject::OnDebuggerStarted));
     pm->RegisterEventSink(cbEVT_DEBUGGER_FINISHED, new cbEventFunctor<FortranProject, CodeBlocksEvent>(this, &FortranProject::OnDebuggerFinished));
+
+    pm->GetCCManager()->RegisterAutoLaunchChars(wxT("%"), this);
 
     m_IsDebugging = false;
     m_InitDone = true;

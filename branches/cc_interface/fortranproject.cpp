@@ -61,40 +61,9 @@ static const char * fortran_keyword_xpm[] = {
 "                ",
 "                "};
 
-// bitmap for other-than-Fortran keywords
-// it's pretty nice actually :)
-/* XPM */
-static const char * unknown_keyword_xpm[] = {
-"16 16 7 1",
-"     c None",
-".    c #FF8800",
-"+    c #FF8D0B",
-"@    c #FF9115",
-"#    c #FFA948",
-"$    c #FFC686",
-"%    c #FFFFFF",
-"                ",
-"                ",
-"      ....      ",
-"    ........    ",
-"   ..+@+.....   ",
-"   .+#$#+....   ",
-"  ..@$%$@.....  ",
-"  ..+#$#+.....  ",
-"  ...+@+......  ",
-"  ............  ",
-"   ..........   ",
-"   ..........   ",
-"    ........    ",
-"      ....      ",
-"                ",
-"                "};
-
 
 int idGotoDeclaration      = wxNewId();
 int idCodeCompleteTimer    = wxNewId();
-int idMenuNextCallTipPage  = wxNewId();
-int idMenuPrevCallTipPage  = wxNewId();
 int idMenuJump             = wxNewId();
 int idMenuGotoDeclaration  = wxNewId();
 int idMenuJumpBack         = wxNewId();
@@ -116,8 +85,6 @@ BEGIN_EVENT_TABLE(FortranProject, cbCodeCompletionPlugin)
     EVT_MENU(idMenuJumpBack, FortranProject::OnJumpBack)
     EVT_MENU(idMenuJumpHome, FortranProject::OnJumpHome)
     EVT_MENU(idMenuJumpForward, FortranProject::OnJumpForward)
-    //EVT_MENU(idMenuNextCallTipPage, FortranProject::OnNextPrevCallTipPage)
-    //EVT_MENU(idMenuPrevCallTipPage, FortranProject::OnNextPrevCallTipPage)
     EVT_MENU(idGotoDeclaration, FortranProject::OnGotoDeclaration)
     EVT_MENU(idViewSymbolsBrowser, FortranProject::OnViewWorkspaceBrowser)
     EVT_MENU(idMenuGenerateMakefile, FortranProject::OnGenerateMakefile)
@@ -231,8 +198,6 @@ void FortranProject::OnRelease(bool appShutDown)
     if (m_FortranToolsMenu)
     {
         m_FortranToolsMenu->Delete(idMenuJump);
-        m_FortranToolsMenu->Delete(idMenuNextCallTipPage);
-        m_FortranToolsMenu->Delete(idMenuPrevCallTipPage);
         m_FortranToolsMenu->Delete(idMenuGenerateMakefile);
         m_FortranToolsMenu->Delete(idMenuChangeCase);
         m_FortranToolsMenu->Delete(idMenuTab2Space);
@@ -414,9 +379,6 @@ void FortranProject::BuildMenu(wxMenuBar* menuBar)
     if (!IsAttached())
         return;
 
-    // No code completion if CodeCompletion plugin is active
-    cbPlugin* ccplug = Manager::Get()->GetPluginManager()->FindPluginByName(_T("CodeCompletion"));
-
     // add the fsymbolsbrowser window in the "View" menu
     int idx = menuBar->FindMenu(_("&View"));
     if (idx != wxNOT_FOUND)
@@ -483,8 +445,6 @@ void FortranProject::BuildMenu(wxMenuBar* menuBar)
         submenuJump->Enable(idMenuJumpForward, false);
 
         m_FortranToolsMenu->Insert(0, idMenuJump, _("Jump"), submenuJump);
-        m_FortranToolsMenu->Insert(1, idMenuNextCallTipPage, _("Next call tip\tCtrl-N"));
-        m_FortranToolsMenu->Insert(2, idMenuPrevCallTipPage, _("Prev call tip\tCtrl-P"));
         m_FortranToolsMenu->Insert(3, idMenuGenerateMakefile, _("Generate Makefile"));
         m_FortranToolsMenu->Insert(4, idMenuChangeCase, _("Change case"));
         m_FortranToolsMenu->Insert(5, idMenuTab2Space, _("Tab2space"));
@@ -816,7 +776,6 @@ void FortranProject::EditorEventHook(cbEditor* editor, wxScintillaEvent& event)
     }
 
     cbStyledTextCtrl* control = editor->GetControl();
-    ConfigManager* cfg = Manager::Get()->GetConfigManager(_T("fortran_project"));
 
     if (   (event.GetEventType() == wxEVT_SCI_CHARADDED)
         && (!control->AutoCompActive()) ) // not already active autocompletion
@@ -1270,26 +1229,23 @@ std::vector<FortranProject::CCCallTip> FortranProject::GetCallTips(int pos, int 
 
         if (token->m_TokenKind == tkSubroutine || token->m_TokenKind == tkFunction || token->m_TokenKind == tkType)
         {
-            if (isUnique)
-            {
-                wxString argName = definition.Mid(hlStart,hlEnd-hlStart);
-                argName = argName.BeforeFirst(_T(','));
-                argName = argName.BeforeFirst(_T(')'));
-                argName.Replace(_T("["),_T(" "));
-                argName.Replace(_T("]"),_T(" "));
-                argName.Trim().Trim(false);
+            wxString argName = definition.Mid(hlStart,hlEnd-hlStart);
+            argName = argName.BeforeFirst(_T(','));
+            argName = argName.BeforeFirst(_T(')'));
+            argName.Replace(_T("["),_T(" "));
+            argName.Replace(_T("]"),_T(" "));
+            argName.Trim().Trim(false);
 
-                wxString argDecl;
-                wxString argDescription;
-                bool found = m_pNativeParser->GetParser()->FindTokenDeclaration(*token, argName, argDecl, argDescription);
-                if (!found)
-                    found = m_pKeywordsParser->GetParser()->FindTokenDeclaration(*token, argName, argDecl, argDescription);
-                if (found)
-                {
-                    definition << _T('\n') << argDecl;
-                    if (m_ComVariab && !argDescription.IsEmpty())
-                        definition << _T('\n') << argDescription;
-                }
+            wxString argDecl;
+            wxString argDescription;
+            bool found = m_pNativeParser->GetParser()->FindTokenDeclaration(*token, argName, argDecl, argDescription);
+            if (!found)
+                found = m_pKeywordsParser->GetParser()->FindTokenDeclaration(*token, argName, argDecl, argDescription);
+            if (found)
+            {
+                definition << _T('\n') << argDecl;
+                if (m_ComVariab && !argDescription.IsEmpty())
+                    definition << _T('\n') << argDescription;
             }
         }
     }
@@ -1302,68 +1258,74 @@ std::vector<FortranProject::CCCallTip> FortranProject::GetCallTips(int pos, int 
         if (lastName.IsEmpty())
             return tips;
 
-        int idxPage = 0;
-        if (m_IdxCallTipPage.count(lastName) == 1)
-        {
-            idxPage = m_IdxCallTipPage[lastName];
-            if (idxPage+1 > int(callTips.GetCount()))
-                idxPage = 0;
-            else if (idxPage < 0)
-                idxPage = callTips.GetCount() - 1;
-        }
-        m_IdxCallTipPage[lastName] = idxPage;
+//        int idxPage = 0;
+//        if (m_IdxCallTipPage.count(lastName) == 1)
+//        {
+//            idxPage = m_IdxCallTipPage[lastName];
+//            if (idxPage+1 > int(callTips.GetCount()))
+//                idxPage = 0;
+//            else if (idxPage < 0)
+//                idxPage = callTips.GetCount() - 1;
+//        }
+//        m_IdxCallTipPage[lastName] = idxPage;
 
-        definition = _T("");
-        if (isAfterPercent)
-            definition << result->Item(idxFuncSub[idxPage])->m_DisplayName << _T('\n');
-        else
-            definition << result->Item(idxPage)->m_DisplayName << _T('\n');
-        int mStart = definition.length() + 2;
-
-        wxString ctdef = callTips.Item(idxPage);
-        int nCommas = m_pNativeParser->CountCommas(ctdef, 1, false);
-        int commasDif = commas - nCommas;
-        if (commasDif > 0)
+        for (size_t i=0; i < callTips.GetCount(); ++i)
         {
-            for (int i=0; i< commasDif; i++)
+            definition = _T("");
+            if (isAfterPercent)
+                definition << result->Item(idxFuncSub[i])->m_DisplayName << _T('\n');
+            else
+                definition << result->Item(i)->m_DisplayName << _T('\n');
+            int mStart = definition.length();
+
+            wxString ctdef = callTips.Item(i);
+            int nCommas = m_pNativeParser->CountCommas(ctdef, 1, false);
+            int commasDif = commas - nCommas;
+            if (commasDif > 0)
             {
-                ctdef << _T(", *???*");
+                for (int i=0; i< commasDif; i++)
+                {
+                    ctdef << _T(", *???*");
+                }
+                ctdef << _T(" ");
             }
-            ctdef << _T(" ");
-        }
-        definition << ctdef;
+            definition << ctdef;
 
-        m_pNativeParser->GetCallTipHighlight(ctdef, commasPos, hlStart, hlEnd);
-        if (isAfterPercent)
-            token = result->Item(idxFuncSub[idxPage]);
-        else
-            token = result->Item(idxPage);
-        if (token->m_TokenKind == tkSubroutine || token->m_TokenKind == tkFunction)
-        {
-            wxString argName = callTips.Item(idxPage).Mid(hlStart,hlEnd-hlStart);
-            argName = argName.BeforeFirst(_T(','));
-            argName = argName.BeforeFirst(_T(')'));
-            argName.Replace(_T("["),_T(" "));
-            argName.Replace(_T("]"),_T(" "));
-            argName.Trim().Trim(false);
-
-            wxString argDecl;
-            wxString argDescription;
-            if (m_pNativeParser->GetParser()->FindTokenDeclaration(*token, argName, argDecl, argDescription))
+            m_pNativeParser->GetCallTipHighlight(ctdef, commasPos, hlStart, hlEnd);
+            if (isAfterPercent)
+                token = result->Item(idxFuncSub[i]);
+            else
+                token = result->Item(i);
+            if (token->m_TokenKind == tkSubroutine || token->m_TokenKind == tkFunction)
             {
-                definition << _T('\n') << argDecl;
-                if (m_ComVariab && !argDescription.IsEmpty())
-                    definition << _T('\n') << argDescription;
+                wxString argName = callTips.Item(i).Mid(hlStart,hlEnd-hlStart);
+                argName = argName.BeforeFirst(_T(','));
+                argName = argName.BeforeFirst(_T(')'));
+                argName.Replace(_T("["),_T(" "));
+                argName.Replace(_T("]"),_T(" "));
+                argName.Trim().Trim(false);
+
+                wxString argDecl;
+                wxString argDescription;
+                if (m_pNativeParser->GetParser()->FindTokenDeclaration(*token, argName, argDecl, argDescription))
+                {
+                    definition << _T('\n') << argDecl;
+                    if (m_ComVariab && !argDescription.IsEmpty())
+                        definition << _T('\n') << argDescription;
+                }
             }
+            hlStart += mStart;
+            hlEnd   += mStart;
+            if (!definition.IsEmpty())
+                tips.push_back(CCCallTip(definition, hlStart, hlEnd));
         }
-        hlStart += mStart;
-        hlEnd   += mStart;
     }
 
-    if (!definition.IsEmpty())
-    {
+    if (isUnique && !definition.IsEmpty())
         tips.push_back(CCCallTip(definition, hlStart, hlEnd));
 
+    if (!tips.empty())
+    {
         if (m_LogUseWindow && (!m_WasCallTipInfoLog || !m_LastCallTipName.IsSameAs(lastName)))
             ShowInfoLog(result, isAfterPercent);
 
@@ -1373,37 +1335,6 @@ std::vector<FortranProject::CCCallTip> FortranProject::GetCallTips(int pos, int 
     }
 
     return tips;
-}
-
-void FortranProject::OnNextPrevCallTipPage(wxCommandEvent& event)
-{
-    event.Skip();
-
-    if (!IsAttached() || !m_InitDone)
-        return;
-
-    if (!Manager::Get()->GetEditorManager())
-        return;
-
-    cbEditor* ed = Manager::Get()->GetEditorManager()->GetBuiltinActiveEditor();
-    if (!ed)
-        return;
-
-    if (!ed->GetControl()->CallTipActive())
-        return;
-
-    int deltaIdx = -1;
-    if (event.GetId() == idMenuNextCallTipPage)
-        deltaIdx = 1;
-
-    if (m_IdxCallTipPage.count(m_LastCallTipName))
-    {
-        int idxPage = m_IdxCallTipPage[m_LastCallTipName];
-        m_IdxCallTipPage[m_LastCallTipName] = idxPage+deltaIdx;
-        ed->GetControl()->CallTipCancel();
-        CodeBlocksEvent evt(cbEVT_SHOW_CALL_TIP);
-        Manager::Get()->ProcessEvent(evt);
-    }
 }
 
 std::vector<FortranProject::CCToken> FortranProject::GetTokenAt(int position, cbEditor* ed, bool& allowCallTip)

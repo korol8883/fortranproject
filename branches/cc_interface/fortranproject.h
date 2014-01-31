@@ -86,7 +86,6 @@ class FortranProject : public cbCodeCompletionPlugin
         void OnReparseActiveEditor(CodeBlocksEvent& event);
         void OnEditorActivated(CodeBlocksEvent& event);
         void OnEditorClose(CodeBlocksEvent& event);
-        void OnNextPrevCallTipPage(wxCommandEvent& event);
 //        void OnEditorOpen(CodeBlocksEvent& event);
 //        void OnEditorClose(CodeBlocksEvent& event);
 //        void OnCodeCompleteTimer(wxTimerEvent& event);

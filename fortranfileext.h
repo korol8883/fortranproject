@@ -4,6 +4,8 @@
 
 #include "tokenizerf.h"
 #include "includedb.h"
+#include <editorcolourset.h>
+
 
 class FortranFileExt
 {
@@ -14,6 +16,7 @@ class FortranFileExt
 		void RereadOptions();
     private:
 		void RereadFileExtensions();
+		void RereadFileExtensionsLang(EditorColourSet* colSet, wxString langName, StringSet& extSet);
         bool m_ExtDone;
         StringSet m_FortranExtFree;
         StringSet m_FortranExtFixed;

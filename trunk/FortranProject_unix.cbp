@@ -3,7 +3,6 @@
 	<FileVersion major="1" minor="6" />
 	<Project>
 		<Option title="FortranProject (Unix)" />
-		<Option pch_mode="2" />
 		<Option compiler="gcc" />
 		<Build>
 			<Target title="default">
@@ -19,7 +18,7 @@
 				</Compiler>
 				<Linker>
 					<Add option="`wx-config --libs`" />
-					<Add library="libcodeblocks.a" />
+					<Add library="codeblocks" />
 					<Add directory="$(#cb)/devel" />
 				</Linker>
 				<ExtraCommands>
@@ -38,6 +37,7 @@
 			<Add option="-fPIC" />
 			<Add option="-DCB_PRECOMP" />
 			<Add option="-DcbDEBUG" />
+			<Add option="-DWX_PRECOMP" />
 		</Compiler>
 		<Unit filename="bufferparserthread.cpp" />
 		<Unit filename="bufferparserthread.h" />
@@ -105,15 +105,6 @@
 			<wxsmith version="1">
 				<gui name="wxWidgets" src="" main="" init_handlers="necessary" language="CPP" />
 			</wxsmith>
-			<DoxyBlocks>
-				<comment_style block="0" line="0" />
-				<doxyfile_project />
-				<doxyfile_build />
-				<doxyfile_warnings />
-				<doxyfile_output />
-				<doxyfile_dot />
-				<general />
-			</DoxyBlocks>
 		</Extensions>
 	</Project>
 </CodeBlocks_project_file>

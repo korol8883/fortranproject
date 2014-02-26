@@ -66,6 +66,7 @@ class ParserF
         void GetPossitionOfDummyArgument(const wxString& args, const wxString& arg, int& start, int& end);
         void GetCallTipHighlight(const wxString& calltip, int commasWas, int& start, int& end);
         void FindUseAssociatedTokens(bool onlyPublicNames, cbEditor* ed, const wxString& search, bool partialMatch, TokensArrayFlat& result, int tokenKindMask, bool changeDisplayName, TokensArrayFlat* useWithRenameTok=NULL);
+        void FindUseAssociatedTokens(bool onlyPublicNames, wxArrayString& address, const wxString& search, bool partialMatch, TokensArrayFlat& result, int tokenKindMask, bool changeDisplayName, TokensArrayFlat* useWithRenameTok=NULL);
         void GetTypeComponentsInFile(const wxString& fileName, const unsigned int line, const wxString& nameType, TokensArrayFlat* result);
         bool IsIncludeFile(wxString fileName);
         bool HasIncludeFiles();
@@ -110,6 +111,7 @@ class ParserF
         void ParseIntrinsicModules();
         void ChangeCaseChildren(TokensArrayF &children, int dispCase);
         TokenF* FindToken(const TokenFlat &token, TokensArrayF* children=NULL);
+        void GetAddressOfToken(TokenF* token, wxArrayString& address);
 
         TokensArrayF* m_pTokens;
         TokensArrayF* m_pIntrinsicModuleTokens;

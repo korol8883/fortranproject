@@ -422,8 +422,7 @@ bool ParserF::FindMatchTypeComponents(cbEditor* ed, const wxString& lineCur, Tok
             {
                 str = tkz2.GetNextToken();
             }
-            if (parts.Count() > 0)
-                parts.Empty();
+            parts.Empty();
         }
         parts.Add(str.Trim(false).Trim());
     }
@@ -432,9 +431,7 @@ bool ParserF::FindMatchTypeComponents(cbEditor* ed, const wxString& lineCur, Tok
     for (size_t i=0; i<parts.Count()-1; i++)
     {
         if (parts.Item(i).IsEmpty())
-        {
             return false; // something wrong
-        }
     }
     int nTypes = parts.Count() - 1;
     wxString searchName = parts.Item(parts.Count()-1);
@@ -496,11 +493,16 @@ bool ParserF::FindMatchTypeComponents(cbEditor* ed, const wxString& lineCur, Tok
 
     wxString nameTypeCom = nameType;
     TokenF* typeToken = NULL;
+    wxArrayString address;
     for (int i=1; i<=nTypes; i++)
     {
         TokensArrayFlatClass typesTmp;
         TokensArrayFlat* resultTypesTmp = typesTmp.GetTokens();
-        FindUseAssociatedTokens(onlyPublicNames, ed, nameType, false, *resultTypesTmp, tkType, false);
+        if (i == 1)
+            FindUseAssociatedTokens(onlyPublicNames, ed, nameType, false, *resultTypesTmp, tkType, false);
+        else
+            FindUseAssociatedTokens(onlyPublicNames, address, nameType, false, *resultTypesTmp, tkType, false);
+
         if (resultTypesTmp->Count() < 1)
             return false; // type was not found
 
@@ -511,6 +513,9 @@ bool ParserF::FindMatchTypeComponents(cbEditor* ed, const wxString& lineCur, Tok
                 break;
             if (!GetTypeOfComponent(typeToken, parts.Item(i), nameTypeCom))
                 return false; // something is wrong
+            address.Clear();
+            GetAddressOfToken(typeToken, address);
+            address.Add(parts.Item(i));
         }
         nameType = nameTypeCom;
     }
@@ -2437,8 +2442,16 @@ void ParserF::FindUseAssociatedTokens(bool onlyPublicNames, cbEditor* ed, const 
     if (address.Count() < 2)
         return; // file only
 
+    FindUseAssociatedTokens(onlyPublicNames, address, search, partialMatch, result, tokenKindMask, changeDisplayName, useWithRenameTok);
+}
+
+void ParserF::FindUseAssociatedTokens(bool onlyPublicNames, wxArrayString& address, const wxString& search, bool partialMatch, TokensArrayFlat& result, int tokenKindMask,
+                                      bool changeDisplayName, TokensArrayFlat* useWithRenameTok)
+{
     wxString searchLw = search.Lower();
     wxCriticalSectionLocker locker(s_CritSect);
+    if (address.Count() == 0)
+        return;
     TokensArrayF* children = FindFileTokens(address.Item(0));
     if (!children)
         return;
@@ -3819,5 +3832,16 @@ void ParserF::ChangeLineIfRequired(cbEditor* ed, wxString& curLine)
         }
         delete tokFl;
     }
+}
+
+void ParserF::GetAddressOfToken(TokenF* token, wxArrayString& address)
+{
+    if (token->m_TokenKind != tkFile && token->m_pParent)
+        GetAddressOfToken(token->m_pParent, address);
+
+    if (token->m_TokenKind == tkFile)
+        address.Add(token->m_Filename);
+    else
+        address.Add(token->m_Name);
 }
 

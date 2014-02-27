@@ -2,6 +2,10 @@
 #include <configmanager.h>
 #include <wx/tokenzr.h>
 
+#include <editormanager.h>
+#include <logmanager.h>
+
+
 FortranFileExt::FortranFileExt()
 {
     m_ExtDone = false;
@@ -41,26 +45,35 @@ bool FortranFileExt::IsFileFortran(const wxString& filename, FortranSourceForm& 
 
 void FortranFileExt::RereadFileExtensions()
 {
-    ConfigManager* cfg = Manager::Get()->GetConfigManager(_T("fortran_project"));
-    if (!cfg)
-        return;
+    EditorColourSet* colSet = Manager::Get()->GetEditorManager()->GetColourSet();
+    if (colSet)
+        colSet = new EditorColourSet(*colSet);
+    else
+        colSet = new EditorColourSet();
 
-    m_FortranExtFixed.clear();
-    wxString extl = cfg->Read(_T("/extension_fixed"), _T("for, f77, f, fpp"));
-    wxStringTokenizer tkz(extl, _T(" ;,*.\t\r\n"), wxTOKEN_STRTOK);
-    while ( tkz.HasMoreTokens() )
+    RereadFileExtensionsLang(colSet, _T("fortran77"), m_FortranExtFixed);
+    RereadFileExtensionsLang(colSet, _T("fortran"), m_FortranExtFree);
+}
+
+void FortranFileExt::RereadFileExtensionsLang(EditorColourSet* colSet, wxString langName, StringSet& extSet)
     {
-        wxString token = tkz.GetNextToken();
-        m_FortranExtFixed.insert(token.Lower());
+    extSet.clear();
+    HighlightLanguage lang = colSet->GetHighlightLanguage(langName);
+    const wxArrayString& fileMasks = colSet->GetFileMasks(lang);
+
+    wxString exts;
+    for (size_t i=0; i < fileMasks.GetCount(); i++)
+    {
+        exts << _T(" ") + fileMasks[i];
     }
 
-    m_FortranExtFree.clear();
-    extl = cfg->Read(_T("/extension_free"), _T("f90, f95, f03, f2k"));
-    tkz.SetString(extl, _T(" ;,*.\t\r\n"), wxTOKEN_STRTOK);
+    //Manager::Get()->GetLogManager()->DebugLog(_T("FortranProject ")+langName+_T("=")+exts);
+
+    wxStringTokenizer tkz(exts, _T(" ;,*.\t\r\n"), wxTOKEN_STRTOK);
     while ( tkz.HasMoreTokens() )
     {
         wxString token = tkz.GetNextToken();
-        m_FortranExtFree.insert(token.Lower());
+        extSet.insert(token.Lower());
     }
 }
 

@@ -63,9 +63,6 @@ FPOptionsDlg::FPOptionsDlg(wxWindow* parent, NativeParserF* np, FortranProject* 
     XRCCTRL(*this, "chkKL_8", wxCheckBox)->SetValue(cfg->ReadBool(_T("/lexer_keywords_set8"), false));
     XRCCTRL(*this, "chkKL_9", wxCheckBox)->SetValue(cfg->ReadBool(_T("/lexer_keywords_set9"), false));
 
-    XRCCTRL(*this, "txtFExtFixed", wxTextCtrl)->ChangeValue(cfg-> Read(_T("/extension_fixed"), _T("for, f77, f, fpp")));
-    XRCCTRL(*this, "txtFExtFree", wxTextCtrl)->ChangeValue(cfg->Read(_T("/extension_free"), _T("f90, f95, f2k, f03, f08")));
-
     XRCCTRL(*this, "rbCase", wxRadioBox)->SetSelection(cfg->ReadInt(_T("/keywords_case"), 0));
 
     int timerDelay = cfg->ReadInt(_T("/cc_delay"), 500);
@@ -116,8 +113,6 @@ void FPOptionsDlg::OnUpdateUI(wxUpdateUIEvent& event)
     XRCCTRL(*this, "spnAutoLaunchChars", wxSpinCtrl)->Enable(en && auto_launch);
     XRCCTRL(*this, "spnMaxMatches", wxSpinCtrl)->Enable(en);
     XRCCTRL(*this, "sliderDelay", wxSlider)->Enable(en);
-    XRCCTRL(*this, "txtFExtFixed", wxTextCtrl)->Enable(en);
-    XRCCTRL(*this, "txtFExtFree", wxTextCtrl)->Enable(en);
     XRCCTRL(*this, "rbCase", wxRadioBox)->Enable(en);
     XRCCTRL(*this, "chkKL_1", wxCheckBox)->Enable(en);
     XRCCTRL(*this, "chkKL_2", wxCheckBox)->Enable(en);
@@ -176,17 +171,6 @@ void FPOptionsDlg::OnApply()
     cfg->Write(_T("/lexer_keywords_set7"), (bool)XRCCTRL(*this, "chkKL_7", wxCheckBox)->GetValue());
     cfg->Write(_T("/lexer_keywords_set8"), (bool)XRCCTRL(*this, "chkKL_8", wxCheckBox)->GetValue());
     cfg->Write(_T("/lexer_keywords_set9"), (bool)XRCCTRL(*this, "chkKL_9", wxCheckBox)->GetValue());
-
-    wxString ext_fixed = XRCCTRL(*this, "txtFExtFixed", wxTextCtrl)->GetValue().Trim();
-    if (ext_fixed.IsEmpty())
-        ext_fixed = _T("for, f77, f, fpp");
-
-    wxString ext_free = XRCCTRL(*this, "txtFExtFree", wxTextCtrl)->GetValue().Trim();
-    if (ext_free.IsEmpty())
-        ext_free = _T("f90, f95, f2k, f03, f08");
-
-    cfg->Write(_T("/extension_fixed"), ext_fixed);
-    cfg->Write(_T("/extension_free"), ext_free);
 
     cfg->Write(_T("/keywords_case"), (int)XRCCTRL(*this, "rbCase", wxRadioBox)->GetSelection());
 

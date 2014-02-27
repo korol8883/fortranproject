@@ -171,44 +171,6 @@
 											<option>1</option>
 										</object>
 										<object class="sizeritem">
-											<object class="wxStaticBoxSizer">
-												<label>Fortran file extension</label>
-												<object class="sizeritem">
-													<object class="wxStaticText" name="ID_STATICTEXT4">
-														<label>Fixed form:</label>
-													</object>
-													<flag>wxALL|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
-													<border>5</border>
-												</object>
-												<object class="sizeritem">
-													<object class="wxTextCtrl" name="txtFExtFixed">
-														<value>Text</value>
-													</object>
-													<flag>wxALL|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
-													<border>5</border>
-													<option>1</option>
-												</object>
-												<object class="sizeritem">
-													<object class="wxStaticText" name="ID_STATICTEXT5">
-														<label>Free form:</label>
-													</object>
-													<flag>wxALL|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
-													<border>5</border>
-												</object>
-												<object class="sizeritem">
-													<object class="wxTextCtrl" name="txtFExtFree">
-														<value>Text</value>
-													</object>
-													<flag>wxALL|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
-													<border>5</border>
-													<option>1</option>
-												</object>
-											</object>
-											<flag>wxALL|wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
-											<border>5</border>
-											<option>1</option>
-										</object>
-										<object class="sizeritem">
 											<object class="wxRadioBox" name="rbCase">
 												<label>Keyword case</label>
 												<content>
@@ -218,6 +180,7 @@
 													<item>All lower</item>
 												</content>
 												<default>-1</default>
+												<style>wxRA_SPECIFY_ROWS</style>
 											</object>
 											<flag>wxALL|wxEXPAND|wxALIGN_LEFT|wxALIGN_TOP</flag>
 											<border>8</border>

@@ -508,7 +508,8 @@ bool ParserF::FindMatchTypeComponents(cbEditor* ed, const wxString& lineCur, Tok
 
         {
             wxCriticalSectionLocker locker(s_CritSect);
-            typeToken = GetTypeInFile(resultTypesTmp->Item(0)->m_Filename, resultTypesTmp->Item(0)->m_LineStart, nameType);
+            typeToken = GetTypeInFile(resultTypesTmp->Item(0)->m_Filename, resultTypesTmp->Item(0)->m_LineStart,
+                                      resultTypesTmp->Item(0)->m_Name);
             if (i == nTypes)
                 break;
             if (!GetTypeOfComponent(typeToken, parts.Item(i), nameTypeCom))

@@ -3048,7 +3048,10 @@ void ParserF::FindUseAssociatedTokens2(TokenF* useToken, const wxString &searchL
                 BoolArray1D* canSeeTmp = NULL;
                 for (size_t j=0; j<pT->GetCount(); j++)
                 {
-                    if ((*canSee)[j] && namesList->count(pT->Item(j)->m_Name) > 0)
+                    //if ((*canSee)[j] && namesList->count(pT->Item(j)->m_Name) > 0)
+                    if ((*canSee)[j] &&
+                        ((pT->Item(j)->m_Rename.IsEmpty() && namesList->count(pT->Item(j)->m_Name) > 0) ||
+                         (!pT->Item(j)->m_Rename.IsEmpty() && namesList->count(pT->Item(j)->m_Rename.Lower()) > 0)))
                     {
                         if (!has)
                         {

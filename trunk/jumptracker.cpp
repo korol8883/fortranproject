@@ -35,7 +35,7 @@ void JumpTracker::TakeJump(LineAddress& jumpStart, LineAddress& jumpFinish)
         m_JumpHome = m_JumpForward.front();
         m_JumpForward.pop_front();
     }
-    else if (m_JumpHome.IsSameAs(jumpFinish) && m_JumpBack.front().IsSameAs(jumpStart))
+    else if (m_JumpHome.IsSameAs(jumpFinish) && !m_JumpBack.empty() && m_JumpBack.front().IsSameAs(jumpStart))
     {
         // jump was repeated. Do nothing.
     }
@@ -45,7 +45,7 @@ void JumpTracker::TakeJump(LineAddress& jumpStart, LineAddress& jumpFinish)
         {
             m_JumpBack.push_front(m_JumpHome);
         }
-        if (!m_JumpHome.IsSameAs(jumpStart))
+        if (!m_JumpHome.IsSameAs(jumpStart) || m_JumpBack.empty())
         {
             m_JumpBack.push_front(jumpStart);
         }

@@ -512,7 +512,10 @@ bool WorkspaceBrowserBuilder::AddChildrenNodes(wxTreeCtrl* tree, wxTreeItemId pa
             }
             else
             {
-                wxTreeItemId idni = AddNodeIfNotThere(tree, parent, token->m_DisplayName, GetTokenKindImageIdx(token), new TreeDataF(sfToken, token), sorted);
+                wxString nameDisp = token->m_DisplayName;
+                if (token->m_TokenKind == tkVariable)
+                    nameDisp << _T(" : ") << token->m_PartFirst;
+                wxTreeItemId idni = AddNodeIfNotThere(tree, parent, nameDisp, GetTokenKindImageIdx(token), new TreeDataF(sfToken, token), sorted);
                 count++;
                 if (tree == m_pTreeTop && !m_Options.visibleBottomTree)
                 {
@@ -644,7 +647,9 @@ int WorkspaceBrowserBuilder::AddTypeChildren(wxTreeCtrl* tree, wxTreeItemId pare
 
     for (size_t i=0; i<varTokens.GetCount(); ++i)
     {
-        AddNodeIfNotThere(tree, parent, varTokens.Item(i)->m_DisplayName,
+        wxString nameDisp;
+        nameDisp << varTokens.Item(i)->m_DisplayName << _T(" : ") << varTokens.Item(i)->m_PartFirst;
+        AddNodeIfNotThere(tree, parent, nameDisp,
                           GetTokenKindImageIdx(varTokens.Item(i)), new TreeDataF(sfToken, varTokens.Item(i)), false);
         count++;
     }

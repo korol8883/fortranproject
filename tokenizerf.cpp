@@ -330,9 +330,9 @@ bool Tokenizerf::SkipBlock(const wxChar& ch, int maxLines)
             if (CurrentChar() == '"' || CurrentChar() == '\'')
             {
                 // this is the case that match is inside a string!
-                char ch = CurrentChar();
+                char chOne = CurrentChar();
                 MoveToNextChar();
-                SkipToChar(ch, true);
+                SkipToChar(chOne, true);
                 MoveToNextChar();
             }
             else

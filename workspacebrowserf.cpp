@@ -388,17 +388,17 @@ void WorkspaceBrowserF::OnSearch(wxCommandEvent& event)
 	TokensArrayF result;
     size_t count = FindMatchTokens(search, result);
 
-    size_t i=0;
-    while (i < count)
+    size_t j=0;
+    while (j < count)
     {
-        if (result.Item(i)->m_TokenKind == tkVariable)
+        if (result.Item(j)->m_TokenKind == tkVariable)
         {
-            result.RemoveAt(i);
+            result.RemoveAt(j);
             count--;
         }
         else
         {
-            i++;
+            j++;
         }
     }
 

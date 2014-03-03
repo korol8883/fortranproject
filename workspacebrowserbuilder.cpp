@@ -1627,9 +1627,9 @@ bool WorkspaceBrowserBuilder::IsLineInGlobals(const wxString& file, int line)
             if (foundFileToken)
             {
                 TokensArrayF* children = &token->m_Children;
-                for (size_t i=0; i < children->GetCount(); ++i)
+                for (size_t j=0; j < children->GetCount(); ++j)
                 {
-                    TokenF* childToken = children->Item(i);
+                    TokenF* childToken = children->Item(j);
                     if (childToken->m_TokenKind & tokenKindMask)
                     {
                         if ( ((int)childToken->m_LineStart <= line) && ((int)childToken->m_LineEnd >= line) )

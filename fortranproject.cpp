@@ -664,14 +664,14 @@ void FortranProject::OnGotoDeclaration(wxCommandEvent& event)
             jumpStart.Init(ed->GetFilename(), curLine, false);
         }
 
-        if (cbEditor* ed = Manager::Get()->GetEditorManager()->Open(pToken->m_Filename))
+        if (cbEditor* newed = Manager::Get()->GetEditorManager()->Open(pToken->m_Filename))
         {
-            ed->GotoLine(pToken->m_LineStart - 1);
+            newed->GotoLine(pToken->m_LineStart - 1);
 
             // Track jump history
-            cbStyledTextCtrl* control = ed->GetControl();
+            cbStyledTextCtrl* control = newed->GetControl();
             int curLine = control->LineFromPosition(control->GetCurrentPos());
-            jumpFinish.Init(ed->GetFilename(), curLine, true);
+            jumpFinish.Init(newed->GetFilename(), curLine, true);
             m_pNativeParser->GetJumpTracker()->TakeJump(jumpStart, jumpFinish);
             CheckEnableToolbar();
         }
@@ -1385,7 +1385,7 @@ void FortranProject::ShowCallTip()
             int commasDif = commas - nCommas;
             if (commasDif > 0)
             {
-                for (int i=0; i< commasDif; i++)
+                for (int idif=0; idif< commasDif; idif++)
                 {
                     definition << _T(", *???*");
                 }

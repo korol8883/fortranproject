@@ -272,10 +272,10 @@ void MakefileGen::GenerateMakefile(cbProject* project, ProjectDependencies* proj
 
     if(compiler)
     {
-        const wxArrayString& copt = compiler->GetCompilerOptions();
-        for(size_t i=0; i<copt.size(); i++)
+        const wxArrayString& copt2 = compiler->GetCompilerOptions();
+        for(size_t i=0; i<copt2.size(); i++)
         {
-            cflags << copt.Item(i) << _T(" ");
+            cflags << copt2.Item(i) << _T(" ");
         }
     }
 

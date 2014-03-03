@@ -50,7 +50,7 @@ void CCSmartFilter::GetTokenKind(wxArrayString& words, int& kindFilter, bool& al
         {
             words.RemoveAt(words.GetCount()-1);
             words.RemoveAt(words.GetCount()-1);
-            int woCount = words.GetCount();
+            woCount = words.GetCount();
             if (woCount > 0)
             {
                 wordLastLw = words.Item(woCount-1);

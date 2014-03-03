@@ -554,16 +554,16 @@ bool ParserF::FindMatchTypeComponents(cbEditor* ed, const wxString& lineCur, Tok
                             tokName = tokenCh->m_Name;
 
                         // what is kind of procedure ?
-                        TokensArrayFlatClass tokensTmp;
-                        TokensArrayFlat* resultTmp = tokensTmp.GetTokens();
+                        TokensArrayFlatClass tokensProc;
+                        TokensArrayFlat* resultProc = tokensTmp.GetTokens();
                         int kindMask = tkFunction | tkSubroutine;
 
                         int noInChildren = tkInterface | tkFunction | tkSubroutine;
-                        bool found = FindMatchTokenInSameModule(tokenCh, tokName, *resultTmp, kindMask, noInChildren);
+                        bool found = FindMatchTokenInSameModule(tokenCh, tokName, *resultProc, kindMask, noInChildren);
                         if (!found)
-                            FindMatchTokensDeclared(tokName, *resultTmp, kindMask, false, noInChildren);
-                        if (resultTmp->GetCount() > 0)
-                            tokTmp->m_TokenKind = resultTmp->Item(0)->m_TokenKind;
+                            FindMatchTokensDeclared(tokName, *resultProc, kindMask, false, noInChildren);
+                        if (resultProc->GetCount() > 0)
+                            tokTmp->m_TokenKind = resultProc->Item(0)->m_TokenKind;
                     }
                 }
                 else if (tokenCh->m_TokenKind == tkInterface)

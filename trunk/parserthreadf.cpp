@@ -1377,8 +1377,8 @@ void ParserThreadF::HandleSelectTypeConstruct()
             wxString defstr = tok_low;
             if (m_Tokens.GetToken().IsEmpty())
                 break;
-            wxString next = m_Tokens.PeekToken();
-            wxString nex_low = next.Lower();
+            next = m_Tokens.PeekToken();
+            nex_low = next.Lower();
             if (nex_low.StartsWith(_T("(")))
                 defstr << nex_low;
 

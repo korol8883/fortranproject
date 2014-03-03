@@ -3124,9 +3124,15 @@ module OpenMP
                        do, flush, master, ordered, parallel, sections, workshare, copyin, copyprivate, &
                        threadprivate, dynamic, guided, read, runtime, single, update, write, &
                        static, task, if, final, untied, none, mergeable, taskwait, taskyield, &
-                       num_threads, shared, section, nowait, &
+                       num_threads, section, nowait, &
                        endatomic, endcritical, enddo, endmaster, endordered, endparallel, endsections, &
-                       endsingle, endtask, endworkshare, paralleldo, parallelsections, parallelworkshare
+                       endsingle, endtask, endworkshare, paralleldo, parallelsections, parallelworkshare, &
+
+                       proc_bind, close, spread, simd, safelen, linear, aligned, declare, simdlen, lenear, &
+                       uniform, inbranch, notingranch, target, device, map, to, from, teams, num_teams, &
+                       thread_limit, distribute, dist_schedule, depend, in, out, inout, taskgroup, &
+                       seq_cst, max, min, iand, ior, ieor, cancel, cancellation, point, omp_priv
+
 end module
 
 module OpenACC

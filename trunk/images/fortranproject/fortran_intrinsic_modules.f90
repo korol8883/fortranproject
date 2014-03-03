@@ -312,3 +312,191 @@ module ieee_features
     type(ieee_features_type), parameter :: ieee_underflow_flag
 end module
 
+
+module omp_lib
+    integer, parameter :: omp_lock_kind
+    integer, parameter :: omp_nest_lock_kind
+    integer, parameter :: omp_sched_kind
+
+    integer, parameter :: openmp_version
+    integer(omp_sched_kind), parameter :: omp_sched_static
+    integer(omp_sched_kind), parameter :: omp_sched_dynamic
+    integer(omp_sched_kind), parameter :: omp_sched_guided
+    integer(omp_sched_kind), parameter :: omp_sched_auto
+
+    integer, parameter :: omp_proc_bind_kind
+    integer(omp_proc_bind_kind), parameter :: omp_proc_bind_false
+    integer(omp_proc_bind_kind), parameter :: omp_proc_bind_true
+    integer(omp_proc_bind_kind), parameter :: omp_proc_bind_master
+    integer(omp_proc_bind_kind), parameter :: omp_proc_bind_close
+    integer(omp_proc_bind_kind), parameter :: omp_proc_bind_spread
+
+    subroutine omp_init_lock (lock)
+        integer (omp_lock_kind), intent (out) :: lock
+    end subroutine omp_init_lock
+
+    subroutine omp_init_nest_lock (lock)
+        integer (omp_nest_lock_kind), intent (out) :: lock
+    end subroutine omp_init_nest_lock
+
+    subroutine omp_destroy_lock (lock)
+        integer (omp_lock_kind), intent (inout) :: lock
+    end subroutine omp_destroy_lock
+
+    subroutine omp_destroy_nest_lock (lock)
+        integer (omp_nest_lock_kind), intent (inout) :: lock
+    end subroutine omp_destroy_nest_lock
+
+    subroutine omp_set_lock (lock)
+        integer (omp_lock_kind), intent (inout) :: lock
+    end subroutine omp_set_lock
+
+    subroutine omp_set_nest_lock (lock)
+        integer (omp_nest_lock_kind), intent (inout) :: lock
+    end subroutine omp_set_nest_lock
+
+    subroutine omp_unset_lock (lock)
+        integer (omp_lock_kind), intent (inout) :: lock
+    end subroutine omp_unset_lock
+
+    subroutine omp_unset_nest_lock (lock)
+        integer (omp_nest_lock_kind), intent (inout) :: lock
+    end subroutine omp_unset_nest_lock
+
+    subroutine omp_set_dynamic (set)
+        logical, intent (in) :: set
+    end subroutine omp_set_dynamic
+
+    subroutine omp_set_nested (set)
+        logical, intent (in) :: set
+    end subroutine omp_set_nested
+
+    subroutine omp_set_num_threads (set)
+        integer, intent (in) :: set
+    end subroutine omp_set_num_threads
+
+    function omp_get_dynamic ()
+        logical (omp_logical_kind) :: omp_get_dynamic
+    end function omp_get_dynamic
+
+    function omp_get_nested ()
+        logical (omp_logical_kind) :: omp_get_nested
+    end function omp_get_nested
+
+    function omp_in_parallel ()
+        logical (omp_logical_kind) :: omp_in_parallel
+    end function omp_in_parallel
+
+    function omp_test_lock (lock)
+        logical (omp_logical_kind) :: omp_test_lock
+        integer (omp_lock_kind), intent (inout) :: lock
+    end function omp_test_lock
+
+    function omp_get_max_threads ()
+        integer :: omp_get_max_threads
+    end function omp_get_max_threads
+
+    function omp_get_num_procs ()
+        integer :: omp_get_num_procs
+    end function omp_get_num_procs
+
+    function omp_get_num_threads ()
+        integer :: omp_get_num_threads
+    end function omp_get_num_threads
+
+    function omp_get_thread_num ()
+        integer :: omp_get_thread_num
+    end function omp_get_thread_num
+
+    function omp_test_nest_lock (lock)
+        integer :: omp_test_nest_lock
+        integer (omp_nest_lock_kind), intent (inout) :: lock
+    end function omp_test_nest_lock
+
+    function omp_get_wtick ()
+        double precision :: omp_get_wtick
+    end function omp_get_wtick
+
+    function omp_get_wtime ()
+        double precision :: omp_get_wtime
+    end function omp_get_wtime
+
+    subroutine omp_set_schedule (kind, modifier)
+        integer (omp_sched_kind), intent (in) :: kind
+        integer, intent (in) :: modifier
+    end subroutine omp_set_schedule
+
+    subroutine omp_get_schedule (kind, modifier)
+        integer (omp_sched_kind), intent (out) :: kind
+        integer, intent (out) :: modifier
+    end subroutine omp_get_schedule
+
+    function omp_get_thread_limit ()
+        integer :: omp_get_thread_limit
+    end function omp_get_thread_limit
+
+    subroutine omp_set_max_active_levels (max_levels)
+        integer, intent (in) :: max_levels
+    end subroutine omp_set_max_active_levels
+
+    function omp_get_max_active_levels ()
+        integer :: omp_get_max_active_levels
+    end function omp_get_max_active_levels
+
+    function omp_get_level ()
+        integer :: omp_get_level
+    end function omp_get_level
+
+    function omp_get_ancestor_thread_num (level)
+        integer, intent (in) :: level
+        integer :: omp_get_ancestor_thread_num
+    end function omp_get_ancestor_thread_num
+
+    function omp_get_team_size (level)
+        integer, intent (in) :: level
+        integer :: omp_get_team_size
+    end function omp_get_team_size
+
+    function omp_get_active_level ()
+        integer :: omp_get_active_level
+    end function omp_get_active_level
+
+    function omp_in_final ()
+        logical :: omp_in_final
+    end function omp_in_final
+
+    function omp_get_cancellation()
+        logical :: omp_get_cancellation
+    end function
+
+    function omp_get_proc_bind()
+        integer(omp_proc_bind_kind) :: omp_get_proc_bind
+    end function
+
+    subroutine omp_set_default_device(device_num)
+        integer :: device_num
+    end subroutine
+
+    function omp_get_default_device()
+        integer :: omp_get_default_device
+    end function
+
+    function omp_get_num_devices()
+        integer :: omp_get_num_devices
+    end function
+
+    function omp_get_num_teams()
+        integer :: omp_get_num_teams
+    end function
+
+    function omp_get_team_num()
+        integer :: omp_get_team_num
+    end function
+
+    function omp_is_initial_device()
+        integer :: omp_is_initial_device
+    end function
+
+end module omp_lib
+
+

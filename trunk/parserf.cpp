@@ -555,7 +555,7 @@ bool ParserF::FindMatchTypeComponents(cbEditor* ed, const wxString& lineCur, Tok
 
                         // what is kind of procedure ?
                         TokensArrayFlatClass tokensProc;
-                        TokensArrayFlat* resultProc = tokensTmp.GetTokens();
+                        TokensArrayFlat* resultProc = tokensProc.GetTokens();
                         int kindMask = tkFunction | tkSubroutine;
 
                         int noInChildren = tkInterface | tkFunction | tkSubroutine;

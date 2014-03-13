@@ -43,13 +43,9 @@ class FortranProject : public cbCodeCompletionPlugin
         virtual void BuildModuleMenu(const ModuleType type, wxMenu* menu, const FileTreeData* data = 0);
         void OnViewWorkspaceBrowser(wxCommandEvent& event);
         virtual bool BuildToolBar(wxToolBar* toolBar);
-        virtual wxArrayString GetCallTips();
-        virtual int CodeComplete();
-        virtual void ShowCallTip();
-        void OnCodeComplete(wxCommandEvent& event);
-        void OnShowCallTip(wxCommandEvent& event);
-        virtual bool IsProviderFor(cbEditor *ed);
-        void CompleteCodeEvt(CodeBlocksEvent& event);
+        //void OnCodeComplete(wxCommandEvent& event);
+        //void OnShowCallTip(wxCommandEvent& event);
+        //void CompleteCodeEvt(CodeBlocksEvent& event);
         void ShowCallTipEvt(CodeBlocksEvent& event);
         void MakeCompleteCode();
 
@@ -64,6 +60,15 @@ class FortranProject : public cbCodeCompletionPlugin
         void CheckEnableToolbar();
 
         //virtual int Execute();
+
+        // override
+        virtual CCProviderStatus GetProviderStatusFor(cbEditor* ed);
+        virtual std::vector<CCToken> GetAutocompList(bool isAuto, cbEditor* ed, int& tknStart, int& tknEnd);
+        virtual void DoAutocomplete(const CCToken& token, cbEditor* ed);
+        virtual wxString GetDocumentation(const CCToken& token);
+        virtual std::vector<CCCallTip> GetCallTips(int pos, int style, cbEditor* ed, int& argsPos);
+        virtual std::vector<CCToken> GetTokenAt(int pos, cbEditor* ed, bool& allowCallTip);
+        virtual wxString OnDocumentationLink(wxHtmlLinkEvent& event, bool& dismissPopup);
 
     private:
 
@@ -81,13 +86,13 @@ class FortranProject : public cbCodeCompletionPlugin
         void OnReparseActiveEditor(CodeBlocksEvent& event);
         void OnEditorActivated(CodeBlocksEvent& event);
         void OnEditorClose(CodeBlocksEvent& event);
-        void OnNextPrevCallTipPage(wxCommandEvent& event);
 //        void OnEditorOpen(CodeBlocksEvent& event);
 //        void OnEditorClose(CodeBlocksEvent& event);
-        void OnCodeCompleteTimer(wxTimerEvent& event);
+//        void OnCodeCompleteTimer(wxTimerEvent& event);
         void OnReparseEditorTimer(wxTimerEvent& event);
-        void CodeCompletePreprocessor();
-        void DoCodeComplete();
+        void CodeCompletePreprocessor(int tknStart, int tknEnd, cbEditor* ed, std::vector<CCToken>& tokens);
+        void DoCodeComplete(int caretPos, cbEditor* ed, std::vector<CCToken>& tokens);
+        void CodeComplete(const int pos, cbEditor* ed, std::vector<CCToken>& tokens);
         void OnValueTooltip(CodeBlocksEvent& event);
         void WriteToLog(const wxString& text);
         void CreateLogWindow();
@@ -123,7 +128,6 @@ class FortranProject : public cbCodeCompletionPlugin
         wxToolBar*                         m_pToolbar;
 
         bool                               m_ShowedCallTip;
-        int                                m_CallTipPossition;
 
         bool                               m_WasCallTipActive;
 

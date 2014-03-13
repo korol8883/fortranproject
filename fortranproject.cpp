@@ -15,6 +15,7 @@
 #include "tab2space.h"
 #include <configurationpanel.h>
 #include <manager.h>
+#include <ccmanager.h>
 #include <editorcolourset.h>
 #include <editormanager.h>
 #include <logmanager.h>
@@ -60,42 +61,9 @@ static const char * fortran_keyword_xpm[] = {
 "                ",
 "                "};
 
-// bitmap for other-than-Fortran keywords
-// it's pretty nice actually :)
-/* XPM */
-static const char * unknown_keyword_xpm[] = {
-"16 16 7 1",
-"     c None",
-".    c #FF8800",
-"+    c #FF8D0B",
-"@    c #FF9115",
-"#    c #FFA948",
-"$    c #FFC686",
-"%    c #FFFFFF",
-"                ",
-"                ",
-"      ....      ",
-"    ........    ",
-"   ..+@+.....   ",
-"   .+#$#+....   ",
-"  ..@$%$@.....  ",
-"  ..+#$#+.....  ",
-"  ...+@+......  ",
-"  ............  ",
-"   ..........   ",
-"   ..........   ",
-"    ........    ",
-"      ....      ",
-"                ",
-"                "};
-
 
 int idGotoDeclaration      = wxNewId();
 int idCodeCompleteTimer    = wxNewId();
-int idMenuCodeComplete     = wxNewId();
-int idMenuShowCallTip      = wxNewId();
-int idMenuNextCallTipPage  = wxNewId();
-int idMenuPrevCallTipPage  = wxNewId();
 int idMenuJump             = wxNewId();
 int idMenuGotoDeclaration  = wxNewId();
 int idMenuJumpBack         = wxNewId();
@@ -117,10 +85,6 @@ BEGIN_EVENT_TABLE(FortranProject, cbCodeCompletionPlugin)
     EVT_MENU(idMenuJumpBack, FortranProject::OnJumpBack)
     EVT_MENU(idMenuJumpHome, FortranProject::OnJumpHome)
     EVT_MENU(idMenuJumpForward, FortranProject::OnJumpForward)
-    EVT_MENU(idMenuCodeComplete, FortranProject::OnCodeComplete)
-    EVT_MENU(idMenuShowCallTip, FortranProject::OnShowCallTip)
-    EVT_MENU(idMenuNextCallTipPage, FortranProject::OnNextPrevCallTipPage)
-    EVT_MENU(idMenuPrevCallTipPage, FortranProject::OnNextPrevCallTipPage)
     EVT_MENU(idGotoDeclaration, FortranProject::OnGotoDeclaration)
     EVT_MENU(idViewSymbolsBrowser, FortranProject::OnViewWorkspaceBrowser)
     EVT_MENU(idMenuGenerateMakefile, FortranProject::OnGenerateMakefile)
@@ -129,7 +93,6 @@ BEGIN_EVENT_TABLE(FortranProject, cbCodeCompletionPlugin)
 #ifndef __WXMSW__
     EVT_MENU(idMenuEditPaste, FortranProject::OnMenuEditPaste)
 #endif
-    EVT_TIMER(idCodeCompleteTimer, FortranProject::OnCodeCompleteTimer)
     EVT_TIMER(idReparseEditorTimer, FortranProject::OnReparseEditorTimer)
     EVT_TOOL(XRCID("idFortProjBack"), FortranProject::OnJumpBack)
     EVT_TOOL(XRCID("idFortProjHome"), FortranProject::OnJumpHome)
@@ -143,7 +106,6 @@ FortranProject::FortranProject() :
     m_pCodeCompletionLastEditor(0),
     m_pToolbar(0L),
     m_ShowedCallTip(false),
-    m_CallTipPossition(0),
     m_WasCallTipActive(false),
     m_IsAutoPopup(false),
     m_ActiveCalltipsNest(0),
@@ -186,7 +148,6 @@ void FortranProject::OnAttach()
 
     pm->RegisterEventSink(cbEVT_EDITOR_SAVE, new cbEventFunctor<FortranProject, CodeBlocksEvent>(this, &FortranProject::OnReparseActiveEditor));
     pm->RegisterEventSink(cbEVT_EDITOR_ACTIVATED, new cbEventFunctor<FortranProject, CodeBlocksEvent>(this, &FortranProject::OnEditorActivated));
-    pm->RegisterEventSink(cbEVT_EDITOR_TOOLTIP, new cbEventFunctor<FortranProject, CodeBlocksEvent>(this, &FortranProject::OnValueTooltip));
     pm->RegisterEventSink(cbEVT_EDITOR_CLOSE, new cbEventFunctor<FortranProject, CodeBlocksEvent>(this, &FortranProject::OnEditorClose));
 
     pm->RegisterEventSink(cbEVT_APP_STARTUP_DONE, new cbEventFunctor<FortranProject, CodeBlocksEvent>(this, &FortranProject::OnAppDoneStartup));
@@ -203,8 +164,7 @@ void FortranProject::OnAttach()
     pm->RegisterEventSink(cbEVT_DEBUGGER_STARTED, new cbEventFunctor<FortranProject, CodeBlocksEvent>(this, &FortranProject::OnDebuggerStarted));
     pm->RegisterEventSink(cbEVT_DEBUGGER_FINISHED, new cbEventFunctor<FortranProject, CodeBlocksEvent>(this, &FortranProject::OnDebuggerFinished));
 
-    pm->RegisterEventSink(cbEVT_COMPLETE_CODE, new cbEventFunctor<FortranProject, CodeBlocksEvent>(this, &FortranProject::CompleteCodeEvt));
-    pm->RegisterEventSink(cbEVT_SHOW_CALL_TIP, new cbEventFunctor<FortranProject, CodeBlocksEvent>(this, &FortranProject::ShowCallTipEvt));
+    pm->GetCCManager()->RegisterAutoLaunchChars(wxT("%"), this);
 
     m_IsDebugging = false;
     m_InitDone = true;
@@ -230,24 +190,14 @@ void FortranProject::OnRelease(bool appShutDown)
 
     RemoveLogWindow(appShutDown);
 
-    if (m_EditMenu)
+    if (m_ViewMenu)
     {
-        m_EditMenu->Delete(idMenuCodeComplete);
-        m_EditMenu->Delete(idMenuShowCallTip);
-        if (m_EditMenuSeparator)
-        {
-            m_EditMenu->Delete(m_EditMenuSeparator);
-        }
-        if (m_ViewMenu)
-        {
-            m_ViewMenu->Delete(idViewSymbolsBrowser);
-        }
+        m_ViewMenu->Delete(idViewSymbolsBrowser);
     }
+
     if (m_FortranToolsMenu)
     {
         m_FortranToolsMenu->Delete(idMenuJump);
-        m_FortranToolsMenu->Delete(idMenuNextCallTipPage);
-        m_FortranToolsMenu->Delete(idMenuPrevCallTipPage);
         m_FortranToolsMenu->Delete(idMenuGenerateMakefile);
         m_FortranToolsMenu->Delete(idMenuChangeCase);
         m_FortranToolsMenu->Delete(idMenuTab2Space);
@@ -429,23 +379,6 @@ void FortranProject::BuildMenu(wxMenuBar* menuBar)
     if (!IsAttached())
         return;
 
-    // No code completion if CodeCompletion plugin is active
-    cbPlugin* ccplug = Manager::Get()->GetPluginManager()->FindPluginByName(_T("CodeCompletion"));
-
-    int pos = menuBar->FindMenu(_("&Edit"));
-    if (pos != wxNOT_FOUND)
-    {
-        if (!ccplug) // don't create menu items if CC plugin found.
-        {
-            m_EditMenu = menuBar->GetMenu(pos);
-            m_EditMenuSeparator = m_EditMenu->AppendSeparator();
-            m_EditMenu->Append(idMenuCodeComplete, _("Complete code\tCtrl-Space"));
-            m_EditMenu->Append(idMenuShowCallTip, _("Show call tip\tCtrl-Shift-Space"));
-        }
-    }
-    else
-        Manager::Get()->GetLogManager()->DebugLog(_T("FortranProject: Could not find Edit menu!"));
-
     // add the fsymbolsbrowser window in the "View" menu
     int idx = menuBar->FindMenu(_("&View"));
     if (idx != wxNOT_FOUND)
@@ -473,7 +406,7 @@ void FortranProject::BuildMenu(wxMenuBar* menuBar)
         Manager::Get()->GetLogManager()->DebugLog(_T("FortranProject: Could not find View menu!"));
 
 
-    pos = menuBar->FindMenu(_("Fortra&n"));
+    int pos = menuBar->FindMenu(_("Fortra&n"));
     if (pos == wxNOT_FOUND)
     {
         pos = menuBar->FindMenu(_("&Tools"));
@@ -512,8 +445,6 @@ void FortranProject::BuildMenu(wxMenuBar* menuBar)
         submenuJump->Enable(idMenuJumpForward, false);
 
         m_FortranToolsMenu->Insert(0, idMenuJump, _("Jump"), submenuJump);
-        m_FortranToolsMenu->Insert(1, idMenuNextCallTipPage, _("Next call tip\tCtrl-N"));
-        m_FortranToolsMenu->Insert(2, idMenuPrevCallTipPage, _("Prev call tip\tCtrl-P"));
         m_FortranToolsMenu->Insert(3, idMenuGenerateMakefile, _("Generate Makefile"));
         m_FortranToolsMenu->Insert(4, idMenuChangeCase, _("Change case"));
         m_FortranToolsMenu->Insert(5, idMenuTab2Space, _("Tab2space"));
@@ -688,47 +619,48 @@ void FortranProject::OnGotoDeclaration(wxCommandEvent& event)
 } // end of OnGotoDeclaration
 
 
-void FortranProject::CodeCompletePreprocessor()
+void FortranProject::CodeCompletePreprocessor(int tknStart, int tknEnd, cbEditor* ed, std::vector<CCToken>& tokens)
 {
     if (!IsAttached() || !m_InitDone)
         return;
 
-    EditorManager* edMan = Manager::Get()->GetEditorManager();
-    cbEditor* ed = edMan->GetBuiltinActiveEditor();
-    if (!ed)
+    cbStyledTextCtrl* stc = ed->GetControl();
+    const wxString text = stc->GetTextRange(tknStart, tknEnd);
+
+    TokenF tp;
+    tp.m_TokenKind = tkPreprocessor;
+    int iidx = m_pNativeParser->GetTokenKindImageIdx(&tp);
+
+    wxStringVec macros;
+    macros.push_back(wxT("define"));
+    macros.push_back(wxT("elif"));
+    macros.push_back(wxT("elifdef"));
+    macros.push_back(wxT("elifndef"));
+    macros.push_back(wxT("else"));
+    macros.push_back(wxT("endif"));
+    macros.push_back(wxT("error"));
+    macros.push_back(wxT("if"));
+    macros.push_back(wxT("ifdef"));
+    macros.push_back(wxT("ifndef"));
+    macros.push_back(wxT("include"));
+    macros.push_back(wxT("line"));
+    macros.push_back(wxT("pragma"));
+    macros.push_back(wxT("undef"));
+    const wxString idxStr = F(wxT("\n%d"), iidx);
+    for (size_t i = 0; i < macros.size(); ++i)
+    {
+        if (text.IsEmpty() || macros[i][0] == text[0]) // ignore tokens that start with a different letter
+            tokens.push_back(CCToken(wxNOT_FOUND, macros[i], iidx));
+    }
+    stc->ClearRegisteredImages();
+    wxImageList* ilist = m_pNativeParser->GetImageList();
+    if (!ilist)
         return;
-
-    cbStyledTextCtrl* control = ed->GetControl();
-    const int curPos = control->GetCurrentPos();
-    const int start = control->WordStartPosition(curPos, true);
-    const int end = control->WordEndPosition(curPos, true);
-
-    wxArrayString tokens;
-    tokens.Add(_T("include"));
-    tokens.Add(_T("if"));
-    tokens.Add(_T("ifdef"));
-    tokens.Add(_T("ifndef"));
-    tokens.Add(_T("elif"));
-    tokens.Add(_T("elifdef"));
-    tokens.Add(_T("elifndef"));
-    tokens.Add(_T("else"));
-    tokens.Add(_T("endif"));
-    tokens.Add(_T("define"));
-    tokens.Add(_T("undef"));
-    tokens.Add(_T("pragma"));
-    tokens.Add(_T("error"));
-    tokens.Add(_T("line"));
-    tokens.Sort();
-    ed->GetControl()->ClearRegisteredImages();
-    ed->GetControl()->AutoCompSetIgnoreCase(false);
-    ed->GetControl()->AutoCompShow(end - start, GetStringFromArray(tokens, _T(" ")));
+    stc->RegisterImage(iidx, ilist->GetBitmap(iidx));
 }
 
-
-void FortranProject::DoCodeComplete()
+void FortranProject::DoCodeComplete(int caretPos, cbEditor* ed, std::vector<CCToken>& tokens)
 {
-    EditorManager* edMan = Manager::Get()->GetEditorManager();
-    cbEditor* ed = edMan->GetBuiltinActiveEditor();
     if (!ed)
         return;
 
@@ -741,14 +673,7 @@ void FortranProject::DoCodeComplete()
     int lineStartPos = control->PositionFromLine(lineCur);
     wxString curLine = control->GetTextRange(lineStartPos,pos).Trim(false);
 
-    if (lineFirstChar == _T('#'))
-    {
-        const int end = control->WordEndPosition(lineIndentPos + 1, true);
-        if (end >= pos)
-            CodeCompletePreprocessor();
-        return;
-    }
-    else if (lineFirstChar == _T('!'))
+    if (lineFirstChar == _T('!'))
     {
         wxString curLineLw = curLine.Lower();
         if (!curLineLw.StartsWith(_T("!$ ")) && !curLineLw.StartsWith(_T("!$\t")) && !curLineLw.StartsWith(_T("!$omp")) && !curLineLw.StartsWith(_T("!$acc")))
@@ -756,7 +681,7 @@ void FortranProject::DoCodeComplete()
     }
     else
     {
-        if (curLine.Find('!') != wxNOT_FOUND)
+        if (curLine.Find('!') != wxNOT_FOUND) // we are in comments
             return;
     }
 
@@ -766,20 +691,72 @@ void FortranProject::DoCodeComplete()
         && style != wxSCI_F_PREPROCESSOR )
         return;
 
-    CodeComplete();
+    CodeComplete(caretPos, ed, tokens);
 }
 
 
-void FortranProject::OnCodeCompleteTimer(wxTimerEvent& event)
+std::vector<FortranProject::CCToken> FortranProject::GetAutocompList(bool isAuto, cbEditor* ed, int& tknStart, int& tknEnd)
 {
-    if (Manager::Get()->GetEditorManager()->FindPageFromEditor(m_pCodeCompletionLastEditor) == -1)
-        return; // editor is invalid (probably closed already)
+    std::vector<CCToken> tokens;
 
-    // ask for code-completion *only* if the editor is still after the "%" operator
-    if (m_pCodeCompletionLastEditor->GetControl()->GetCurrentPos() == m_LastPosForCodeCompletion)
+    if (!IsAttached() || !m_InitDone)
+        return tokens;
+
+    if (   !ed
+        || !m_pNativeParser->IsFileFortran(ed->GetShortName())
+        || !Manager::Get()->GetConfigManager(_T("fortran_project"))->ReadBool(_T("/use_code_completion"), true))
+        return tokens;
+
+    cbStyledTextCtrl* stc = ed->GetControl();
+    const int style = stc->GetStyleAt(tknEnd);
+    const wxChar curChar = stc->GetCharAt(tknEnd - 1);
+
+    if (isAuto && curChar != wxT('%'))
+        return tokens;
+
+    const int lineIndentPos = stc->GetLineIndentPosition(stc->GetCurrentLine());
+    const wxChar lineFirstChar = stc->GetCharAt(lineIndentPos);
+
+    if (lineFirstChar == wxT('#'))
     {
-        DoCodeComplete();
-        m_LastPosForCodeCompletion = -1; // reset it
+        const int startPos = stc->WordStartPosition(lineIndentPos + 1, true);
+        const int endPos = stc->WordEndPosition(lineIndentPos + 1, true);
+        const wxString str = stc->GetTextRange(startPos, endPos);
+
+        if (endPos >= tknEnd && tknEnd > lineIndentPos)
+            CodeCompletePreprocessor(tknStart, tknEnd, ed, tokens);
+        return tokens;
+    }
+
+    if (   stc->IsString(style)
+        || stc->IsCharacter(style) )
+    {
+        return tokens;
+    }
+
+    DoCodeComplete(tknEnd, ed, tokens);
+    return tokens;
+}
+
+void FortranProject::DoAutocomplete(const CCToken& token, cbEditor* ed)
+{
+    cbStyledTextCtrl* control = ed->GetControl();
+
+    wxString itemText = token.name;
+    control->AutoCompCancel();
+    int pos = control->GetCurrentPos();
+    int start = control->WordStartPosition(pos, true);
+    control->SetTargetStart(start);
+    control->SetTargetEnd(pos);
+    control->ReplaceTarget(itemText);
+    pos = control->GetCurrentPos();
+    control->GotoPos(pos + itemText.size());
+
+    if (m_WasCallTipActive)
+    {
+        m_WasCallTipActive = false;
+        CodeBlocksEvent evt(cbEVT_SHOW_CALL_TIP);
+        Manager::Get()->ProcessEvent(evt);
     }
 }
 
@@ -800,53 +777,12 @@ void FortranProject::EditorEventHook(cbEditor* editor, wxScintillaEvent& event)
 
     cbStyledTextCtrl* control = editor->GetControl();
 
-    ConfigManager* cfg = Manager::Get()->GetConfigManager(_T("fortran_project"));
-    if (!cfg->ReadBool(_T("/use_code_completion"), true))
-    {
-        event.Skip();
-        return;
-    }
-
-    if (((event.GetKey() == '.') || (event.GetKey() == '%') || (event.GetKey() == '(')) && control->AutoCompActive())
-        control->AutoCompCancel();
-
-    if (event.GetEventType() == wxEVT_SCI_AUTOCOMP_SELECTION)
-    {
-        wxString itemText = event.GetText().BeforeFirst(':');
-        control->AutoCompCancel();
-        int pos = control->GetCurrentPos();
-        int start = control->WordStartPosition(pos, true);
-        control->SetTargetStart(start);
-        control->SetTargetEnd(pos);
-        control->ReplaceTarget(itemText);
-        pos = control->GetCurrentPos();
-        control->GotoPos(pos + itemText.size());
-    }
-
-    if (m_WasCallTipActive && !control->AutoCompActive())
-    {
-        m_WasCallTipActive = false;
-        ShowCallTip();
-    }
-
     if (   (event.GetEventType() == wxEVT_SCI_CHARADDED)
         && (!control->AutoCompActive()) ) // not already active autocompletion
     {
-        // a character was just added in the editor
-        m_TimerCodeCompletion.Stop();
         wxChar ch = event.GetKey();
-        int pos = control->GetCurrentPos();
-        int wordstart = control->WordStartPosition(pos, true);
-
-        // if more than 2 chars have been typed, invoke CC
-        int autoCCchars = cfg->ReadInt(_T("/auto_launch_chars"), 2);
-        bool autoCC = cfg->ReadBool(_T("/auto_launch"), true) &&
-                    pos - wordstart >= autoCCchars;
-
         // update calltip highlight while we type
-        if (control->CallTipActive())
-            ShowCallTip();
-        else
+        if (!control->CallTipActive())
             m_ActiveCalltipsNest = 0;
 
         // start calltip
@@ -854,53 +790,18 @@ void FortranProject::EditorEventHook(cbEditor* editor, wxScintillaEvent& event)
         {
             if (control->CallTipActive())
                 ++m_ActiveCalltipsNest;
-            ShowCallTip();
         }
         // end calltip
         else if (ch == _T(')'))
         {
-            // cancel any active calltip
             control->CallTipCancel();
             if (m_ActiveCalltipsNest > 0)
             {
                 --m_ActiveCalltipsNest;
-                ShowCallTip();
+                CodeBlocksEvent evt(cbEVT_SHOW_CALL_TIP);
+                Manager::Get()->ProcessEvent(evt);
             }
         }
-        else if (autoCC ||
-            (ch == _T('%')))
-        {
-            int style = control->GetStyleAt(pos);
-            if (style != wxSCI_F_DEFAULT && style != wxSCI_F_OPERATOR && style != wxSCI_F_IDENTIFIER
-                && style != wxSCI_F_OPERATOR2 && style != wxSCI_F_PREPROCESSOR)
-            {
-                event.Skip();
-                return;
-            }
-
-            int timerDelay = cfg->ReadInt(_T("/cc_delay"), 500);
-            if (autoCC || timerDelay == 0)
-            {
-                if (autoCC)
-                    m_IsAutoPopup = true;
-                DoCodeComplete();
-                if (autoCC)
-                    m_IsAutoPopup = false;
-            }
-            else
-            {
-                m_LastPosForCodeCompletion = pos;
-                m_pCodeCompletionLastEditor = editor;
-                m_TimerCodeCompletion.Start(timerDelay, wxTIMER_ONE_SHOT);
-            }
-        }
-    }
-    else if( m_ShowedCallTip && control->CallTipActive() &&
-             (m_CallTipPossition != control->GetCurrentPos()) &&
-             (m_CurrentLine == control->GetCurrentLine()) &&
-             (!control->AutoCompActive()) )
-    {
-        ShowCallTip();
     }
 
     if( control->GetCurrentLine() != m_CurrentLine )
@@ -956,51 +857,6 @@ bool FortranProject::BuildToolBar(wxToolBar* toolBar)
     return true;
 }
 
-wxArrayString FortranProject::GetCallTips()
-{
-    //NotImplemented(_T("FortranProject::GetCallTips()"));
-    wxArrayString str;
-    return str;
-}
-
-void FortranProject::OnCodeComplete(wxCommandEvent& event)
-{
-    event.Skip();
-    MakeCompleteCode();
-}
-
-void FortranProject::CompleteCodeEvt(CodeBlocksEvent& event)
-{
-    event.Skip();
-    MakeCompleteCode();
-}
-
-void FortranProject::MakeCompleteCode()
-{
-    cbEditor* ed = Manager::Get()->GetEditorManager()->GetBuiltinActiveEditor();
-    if (!ed
-        || !m_pNativeParser->IsFileFortran(ed->GetShortName())
-        || !Manager::Get()->GetConfigManager(_T("fortran_project"))->ReadBool(_T("/use_code_completion"), true))
-    {
-        return;
-    }
-    if (IsAttached() && m_InitDone)
-        DoCodeComplete();
-}
-
-void FortranProject::OnShowCallTip(wxCommandEvent& event)
-{
-    if (IsAttached() && m_InitDone)
-        ShowCallTip();
-    event.Skip();
-}
-
-void FortranProject::ShowCallTipEvt(CodeBlocksEvent& event)
-{
-    if (IsAttached() && m_InitDone)
-        ShowCallTip();
-    event.Skip();
-}
 
 static int SortCCList(const wxString& first, const wxString& second)
 {
@@ -1036,25 +892,18 @@ static int SortCCList(const wxString& first, const wxString& second)
 }
 
 
-int FortranProject::CodeComplete()
+void FortranProject::CodeComplete(const int pos, cbEditor* ed, std::vector<CCToken>& tokens)
 {
     if (!IsAttached() || !m_InitDone)
-        return -1;
+        return;
 
     ConfigManager* cfg = Manager::Get()->GetConfigManager(_T("fortran_project"));
-    EditorManager* edMan = Manager::Get()->GetEditorManager();
-    cbEditor* ed = edMan->GetBuiltinActiveEditor();
-    if (!ed)
-        return -3;
-
-    FileType ft = FileTypeOf(ed->GetShortName());
 
     ParserF* pParser = m_pNativeParser->GetParser();
     TokensArrayFlatClass tokensTmp;
     TokensArrayFlat* result = tokensTmp.GetTokens();
 
     cbStyledTextCtrl* control = ed->GetControl();
-    const int pos   = control->GetCurrentPos();
     const int start = control->WordStartPosition(pos, true);
     wxString NameUnderCursor = control->GetTextRange(start,pos);
     wxString NameUnderCursorLw = NameUnderCursor.Lower();
@@ -1080,17 +929,18 @@ int FortranProject::CodeComplete()
     int tokenKind;
 
     if (!pParser->FindMatchTokensForCodeCompletion(m_UseSmartCC, m_LogOnlyUseAssoc, m_LogOnlyPublicNames, NameUnderCursor, ed, *result, isAfterPercent, tokenKind))
-        return -1;
+        return;
 
     if (result->size() <= m_MaxMatch)
     {
         wxImageList* ilist = m_pNativeParser->GetImageList();
         if (!ilist)
-            return -6;
+            return;
         control->ClearRegisteredImages();
 
+        tokens.reserve(result->size());
         wxArrayString items; items.Alloc(result->size());
-        wxArrayInt already_registered;
+        std::set<int> already_registered;
         std::set< wxString, std::less<wxString> > unique_strings; // check against this before inserting a new string in the list
         for (size_t i=0; i<result->GetCount(); ++i)
         {
@@ -1108,12 +958,12 @@ int FortranProject::CodeComplete()
 
             unique_strings.insert(tmpstr);
             int iidx = m_pNativeParser->GetTokenKindImageIdx(token);
-            if (already_registered.Index(iidx) == wxNOT_FOUND)
+            if (already_registered.find(iidx) == already_registered.end())
             {
                 if (iidx != -1)
                 {
                     control->RegisterImage(iidx, ilist->GetBitmap(iidx));
-                    already_registered.Add(iidx);
+                    already_registered.insert(iidx);
                 }
             }
             wxString tmp;
@@ -1123,19 +973,18 @@ int FortranProject::CodeComplete()
                     tmp << token->m_DisplayName << _T(": ") << token->m_PartFirst;
                 else
                     tmp << token->m_DisplayName;
-                tmp << wxString::Format(_T("?%d"), iidx);
             }
             else
                 tmp << token->m_DisplayName;
-            items.Add(tmp);
+
+            tokens.push_back(CCToken(wxNOT_FOUND, tmp, token->m_DisplayName, 5, iidx));
         }
 
         EditorColourSet* theme = ed->GetColourSet();
         if (theme && !isAfterPercent && (!isDirective || (isDirective && pdir == cdOther)) )
         {
             int iidx = ilist->GetImageCount();
-            bool isF = ft==ftSource;
-            control->RegisterImage(iidx, wxBitmap(isF ? fortran_keyword_xpm : unknown_keyword_xpm));
+            control->RegisterImage(iidx, wxBitmap(fortran_keyword_xpm));
             // theme keywords
             HighlightLanguage lang = theme->GetLanguageForFilename(_T(".")+wxFileName(ed->GetFilename()).GetExt());
 
@@ -1176,8 +1025,7 @@ int FortranProject::CodeComplete()
                                 break;
                             }
                         }
-                        kw.Append(wxString::Format(_T("?%d"), iidx));
-                        items.Add(kw);
+                        tokens.push_back(CCToken(wxNOT_FOUND, kw, iidx));
                     }
                 }
             }
@@ -1217,15 +1065,14 @@ int FortranProject::CodeComplete()
                             break;
                         }
                     }
-                    kw.Append(wxString::Format(_T("?%d"), iidx));
-                    items.Add(kw);
+                    tokens.push_back(CCToken(wxNOT_FOUND, kw, iidx));
                 }
             }
         }
 
         if (items.GetCount() == 0)
         {
-            return -2;
+            return;
         }
         items.Sort(SortCCList);
 
@@ -1262,62 +1109,36 @@ int FortranProject::CodeComplete()
 
         control->AutoCompShow(pos - start, final);
 
-        return 0;
+        return;
     }
     else if (!control->CallTipActive())
     {
         wxString msg = _("Too many results.\n"
-                         "Please type at least one more character to narrow the scope down.");
+                             "Please edit results' limit in code-completion options,\n"
+                             "or type at least one more character to narrow the scope down.");
         control->CallTipShow(control->GetCurrentPos(), msg);
-        return -2;
+        return;
     }
 
-    return -5;
+    return;
 }
 
-bool FortranProject::IsProviderFor(cbEditor *ed)
+FortranProject::CCProviderStatus FortranProject::GetProviderStatusFor(cbEditor* ed)
 {
-    if (!ed
-        || !m_pNativeParser->IsFileFortran(ed->GetShortName())
-        || !Manager::Get()->GetConfigManager(_T("fortran_project"))->ReadBool(_T("/use_code_completion"), true))
-    {
-        return false;
-    }
-    return true;
+    if (ed && m_pNativeParser->IsFileFortran(ed->GetShortName()))
+        return ccpsActive;
+    return ccpsInactive;
 }
 
-void FortranProject::ShowCallTip()
+std::vector<FortranProject::CCCallTip> FortranProject::GetCallTips(int pos, int style, cbEditor* ed, int& argsPos)
 {
-    if (!IsAttached() || !m_InitDone)
-        return;
+    argsPos = wxSCI_INVALID_POSITION;
+    std::vector<FortranProject::CCCallTip> tips;
+    if (!IsAttached() || !m_InitDone || !ed)
+        return tips;
 
-    if (!Manager::Get()->GetEditorManager())
-        return;
-
-    cbEditor* ed = Manager::Get()->GetEditorManager()->GetBuiltinActiveEditor();
-    if (!ed)
-        return;
-
-    // calculate the size of the calltips window
-    int pos = ed->GetControl()->GetCurrentPos();
-    wxPoint p = ed->GetControl()->PointFromPosition(pos); // relative point
-    int pixelWidthPerChar = ed->GetControl()->TextWidth(wxSCI_STYLE_LINENUMBER, _T("W"));
-    int maxCalltipLineSizeInChars = (ed->GetSize().x - p.x) / pixelWidthPerChar;
-    if (maxCalltipLineSizeInChars < 64)
-    {
-        // if less than a threshold in chars, recalculate the starting position (instead of shrinking it even more)
-        p.x -= (64 - maxCalltipLineSizeInChars) * pixelWidthPerChar;
-        // but if it goes out of range, continue shrinking
-        if (p.x >= 0)
-        {
-            maxCalltipLineSizeInChars = 64;
-            pos = ed->GetControl()->PositionFromPoint(p);
-        }
-        // else, out of range
-    }
-
-    int start = 0;
-    int end = 0;
+    int hlStart = wxSCI_INVALID_POSITION;
+    int hlEnd   = wxSCI_INVALID_POSITION;
     int commas; // how many commas has the user typed so far?
     int commasPos; // how many commas until current position?
     bool isempt;
@@ -1329,7 +1150,7 @@ void FortranProject::ShowCallTip()
     bool isAfterPercent = false;
 
     wxString lastName;
-    m_pNativeParser->CollectInformationForCallTip(commas, commasPos, lastName, isempt, isAfterPercent, result);
+    m_pNativeParser->CollectInformationForCallTip(commas, commasPos, lastName, isempt, isAfterPercent, argsPos, result);
 
     if (isAfterPercent)
     {
@@ -1357,9 +1178,9 @@ void FortranProject::ShowCallTip()
     wxArrayString callTips;
     for (unsigned int i = 0; i < callTipsOneLine.GetCount(); ++i)
     {
-        wxString s;
-        m_pNativeParser->BreakUpInLines(s, callTipsOneLine.Item(i), maxCalltipLineSizeInChars);
-        callTips.Add(s);
+//        wxString s;
+//        m_pNativeParser->BreakUpInLines(s, callTipsOneLine.Item(i), maxCalltipLineSizeInChars);
+        callTips.Add(callTipsOneLine.Item(i));
     }
 
     bool isUnique = true;
@@ -1397,91 +1218,18 @@ void FortranProject::ShowCallTip()
 
     if (!definition.IsEmpty() && isUnique && token->m_TokenKind == tkVariable)
     {
-        m_pNativeParser->GetCallTipHighlight(definition, commasPos, start, end);
+        m_pNativeParser->GetCallTipHighlight(definition, commasPos, hlStart, hlEnd);
     }
     else if (!definition.IsEmpty() && isUnique &&
         (!isAfterPercent || ( isAfterPercent && result->GetCount() >= 2 && (result->Item(0)->m_TokenKind == tkProcedure) )))
     {
-        m_pNativeParser->GetCallTipHighlight(definition, commasPos, start, end);
+        m_pNativeParser->GetCallTipHighlight(definition, commasPos, hlStart, hlEnd);
         if (isAfterPercent)
             token = result->Item(1);
 
         if (token->m_TokenKind == tkSubroutine || token->m_TokenKind == tkFunction || token->m_TokenKind == tkType)
         {
-            if (isUnique)
-            {
-                wxString argName = definition.Mid(start,end-start);
-                argName = argName.BeforeFirst(_T(','));
-                argName = argName.BeforeFirst(_T(')'));
-                argName.Replace(_T("["),_T(" "));
-                argName.Replace(_T("]"),_T(" "));
-                argName.Trim().Trim(false);
-
-                wxString argDecl;
-                wxString argDescription;
-                bool found = m_pNativeParser->GetParser()->FindTokenDeclaration(*token, argName, argDecl, argDescription);
-                if (!found)
-                    found = m_pKeywordsParser->GetParser()->FindTokenDeclaration(*token, argName, argDecl, argDescription);
-                if (found)
-                {
-                    definition << _T('\n') << argDecl;
-                    if (m_ComVariab && !argDescription.IsEmpty())
-                        definition << _T('\n') << argDescription;
-                }
-            }
-        }
-    }
-    else if(!isUnique)
-    {
-        if (   (isAfterPercent && (callTips.GetCount() != idxFuncSub.GetCount()))
-            || (!isAfterPercent && (callTips.GetCount() != result->GetCount())) )
-            return;
-
-        if (lastName.IsEmpty())
-            return;
-
-        int idxPage = 0;
-        if (m_IdxCallTipPage.count(lastName) == 1)
-        {
-            idxPage = m_IdxCallTipPage[lastName];
-            if (idxPage+1 > int(callTips.GetCount()))
-                idxPage = 0;
-            else if (idxPage < 0)
-                idxPage = callTips.GetCount() - 1;
-        }
-        m_IdxCallTipPage[lastName] = idxPage;
-
-        definition = _T("");
-
-        definition << wxString::Format(_T("\u02C6%d of %d\u02C7 "),idxPage+1,callTips.GetCount());
-
-        if (isAfterPercent)
-            definition << result->Item(idxFuncSub[idxPage])->m_DisplayName << _T('\n');
-        else
-            definition << result->Item(idxPage)->m_DisplayName << _T('\n');
-        int mStart = definition.length() + 2;
-
-        wxString ctdef = callTips.Item(idxPage);
-        int nCommas = m_pNativeParser->CountCommas(ctdef, 1, false);
-        int commasDif = commas - nCommas;
-        if (commasDif > 0)
-        {
-            for (int i=0; i< commasDif; i++)
-            {
-                ctdef << _T(", *???*");
-            }
-            ctdef << _T(" ");
-        }
-        definition << ctdef;
-
-        m_pNativeParser->GetCallTipHighlight(ctdef, commasPos, start, end);
-        if (isAfterPercent)
-            token = result->Item(idxFuncSub[idxPage]);
-        else
-            token = result->Item(idxPage);
-        if (token->m_TokenKind == tkSubroutine || token->m_TokenKind == tkFunction)
-        {
-            wxString argName = callTips.Item(idxPage).Mid(start,end-start);
+            wxString argName = definition.Mid(hlStart,hlEnd-hlStart);
             argName = argName.BeforeFirst(_T(','));
             argName = argName.BeforeFirst(_T(')'));
             argName.Replace(_T("["),_T(" "));
@@ -1490,111 +1238,135 @@ void FortranProject::ShowCallTip()
 
             wxString argDecl;
             wxString argDescription;
-            if (m_pNativeParser->GetParser()->FindTokenDeclaration(*token, argName, argDecl, argDescription))
+            bool found = m_pNativeParser->GetParser()->FindTokenDeclaration(*token, argName, argDecl, argDescription);
+            if (!found)
+                found = m_pKeywordsParser->GetParser()->FindTokenDeclaration(*token, argName, argDecl, argDescription);
+            if (found)
             {
                 definition << _T('\n') << argDecl;
                 if (m_ComVariab && !argDescription.IsEmpty())
                     definition << _T('\n') << argDescription;
             }
         }
-        start += mStart;
-        end   += mStart;
     }
-
-    if (!definition.IsEmpty())
+    else if(!isUnique)
     {
-        ed->GetControl()->CallTipShow(pos, definition);
-        ed->GetControl()->CallTipSetHighlight(start, end);
+        if (   (isAfterPercent && (callTips.GetCount() != idxFuncSub.GetCount()))
+            || (!isAfterPercent && (callTips.GetCount() != result->GetCount())) )
+            return tips;
+
+        if (lastName.IsEmpty())
+            return tips;
+
+//        int idxPage = 0;
+//        if (m_IdxCallTipPage.count(lastName) == 1)
+//        {
+//            idxPage = m_IdxCallTipPage[lastName];
+//            if (idxPage+1 > int(callTips.GetCount()))
+//                idxPage = 0;
+//            else if (idxPage < 0)
+//                idxPage = callTips.GetCount() - 1;
+//        }
+//        m_IdxCallTipPage[lastName] = idxPage;
+
+        for (size_t i=0; i < callTips.GetCount(); ++i)
+        {
+            definition = _T("");
+            if (isAfterPercent)
+                definition << result->Item(idxFuncSub[i])->m_DisplayName << _T('\n');
+            else
+                definition << result->Item(i)->m_DisplayName << _T('\n');
+            int mStart = definition.length();
+
+            wxString ctdef = callTips.Item(i);
+            int nCommas = m_pNativeParser->CountCommas(ctdef, 1, false);
+            int commasDif = commas - nCommas;
+            if (commasDif > 0)
+            {
+                for (int i=0; i< commasDif; i++)
+                {
+                    ctdef << _T(", *???*");
+                }
+                ctdef << _T(" ");
+            }
+            definition << ctdef;
+
+            m_pNativeParser->GetCallTipHighlight(ctdef, commasPos, hlStart, hlEnd);
+            if (isAfterPercent)
+                token = result->Item(idxFuncSub[i]);
+            else
+                token = result->Item(i);
+            if (token->m_TokenKind == tkSubroutine || token->m_TokenKind == tkFunction)
+            {
+                wxString argName = callTips.Item(i).Mid(hlStart,hlEnd-hlStart);
+                argName = argName.BeforeFirst(_T(','));
+                argName = argName.BeforeFirst(_T(')'));
+                argName.Replace(_T("["),_T(" "));
+                argName.Replace(_T("]"),_T(" "));
+                argName.Trim().Trim(false);
+
+                wxString argDecl;
+                wxString argDescription;
+                if (m_pNativeParser->GetParser()->FindTokenDeclaration(*token, argName, argDecl, argDescription))
+                {
+                    definition << _T('\n') << argDecl;
+                    if (m_ComVariab && !argDescription.IsEmpty())
+                        definition << _T('\n') << argDescription;
+                }
+            }
+            hlStart += mStart;
+            hlEnd   += mStart;
+            if (!definition.IsEmpty())
+                tips.push_back(CCCallTip(definition, hlStart, hlEnd));
+        }
     }
-    else if (ed->GetControl()->CallTipActive())
-        ed->GetControl()->CallTipCancel();
 
-    if (m_LogUseWindow && (!m_WasCallTipInfoLog || !m_LastCallTipName.IsSameAs(lastName)))
-        ShowInfoLog(result, isAfterPercent);
+    if (isUnique && !definition.IsEmpty())
+        tips.push_back(CCCallTip(definition, hlStart, hlEnd));
 
-    m_ShowedCallTip = true;
-    m_CallTipPossition = ed->GetControl()->GetCurrentPos();
-    m_LastCallTipName = lastName;
-    m_WasCallTipInfoLog = true;
+    if (!tips.empty())
+    {
+        if (m_LogUseWindow && (!m_WasCallTipInfoLog || !m_LastCallTipName.IsSameAs(lastName)))
+            ShowInfoLog(result, isAfterPercent);
+
+        m_ShowedCallTip = true;
+        m_LastCallTipName = lastName;
+        m_WasCallTipInfoLog = true;
+    }
+
+    return tips;
 }
 
-void FortranProject::OnNextPrevCallTipPage(wxCommandEvent& event)
+std::vector<FortranProject::CCToken> FortranProject::GetTokenAt(int position, cbEditor* ed, bool& allowCallTip)
 {
-    event.Skip();
-
+    std::vector<CCToken> tokens;
     if (!IsAttached() || !m_InitDone)
-        return;
-
-    if (!Manager::Get()->GetEditorManager())
-        return;
-
-    cbEditor* ed = Manager::Get()->GetEditorManager()->GetBuiltinActiveEditor();
-    if (!ed)
-        return;
-
-    if (!ed->GetControl()->CallTipActive())
-        return;
-
-    int deltaIdx = -1;
-    if (event.GetId() == idMenuNextCallTipPage)
-        deltaIdx = 1;
-
-    if (m_IdxCallTipPage.count(m_LastCallTipName))
-    {
-        int idxPage = m_IdxCallTipPage[m_LastCallTipName];
-        m_IdxCallTipPage[m_LastCallTipName] = idxPage+deltaIdx;
-        ed->GetControl()->CallTipCancel();
-        ShowCallTip();
-    }
-}
-
-void FortranProject::OnValueTooltip(CodeBlocksEvent& event)
-{
-    event.Skip();
-
-    if (!IsAttached() || !m_InitDone || wxGetKeyState(WXK_CONTROL))
-        return;
-
-    EditorBase* base = event.GetEditor();
-    cbEditor* ed = base && base->IsBuiltinEditor() ? static_cast<cbEditor*>(base) : 0;
-    if (!ed || ed->IsContextMenuOpened())
-        return;
+        return tokens;
 
     if (!m_pNativeParser->IsFileFortran(ed->GetShortName()))
-        return;
+        return tokens;
 
-    if ((m_ShowedCallTip && ed->GetControl()->CallTipActive()) || ed->GetControl()->AutoCompActive())
-        return;
-
-    if (ed->GetControl()->CallTipActive())
-        ed->GetControl()->CallTipCancel();
-
-    if (wxWindow::FindFocus() != static_cast<wxWindow*>(ed->GetControl()))
-        return;
-
-    if (!Manager::Get()->GetConfigManager(_T("fortran_project"))->ReadBool(_T("eval_tooltip"), true))
-        return;
+    allowCallTip = false;
 
     cbStyledTextCtrl* control = ed->GetControl();
 
-    if (wxWindow::FindFocus() != static_cast<wxWindow*>(control))
-        return;
+    if ((m_ShowedCallTip && control->CallTipActive()) || control->AutoCompActive())
+        return tokens;
 
-    int style = event.GetInt();
+    if (!Manager::Get()->GetConfigManager(_T("fortran_project"))->ReadBool(_T("eval_tooltip"), true))
+        return tokens;
 
+    const int style = control->GetStyleAt(position);
     if (style != wxSCI_F_DEFAULT && style != wxSCI_F_OPERATOR && style != wxSCI_F_IDENTIFIER
             && style != wxSCI_F_OPERATOR2 && style != wxSCI_F_WORD && style != wxSCI_F_WORD2
             && style != wxSCI_F_WORD3)
-        return;
+        return tokens;
 
-    int pos = control->PositionFromPointClose(event.GetX(), event.GetY());
-    if (pos < 0 || pos >= control->GetLength())
-        return;
-    int endOfWord = control->WordEndPosition(pos, true);
-    int startOfWord = control->WordStartPosition(pos, true);
+    int endOfWord = control->WordEndPosition(position, true);
+    int startOfWord = control->WordStartPosition(position, true);
     wxString nameUnder = control->GetTextRange(startOfWord, endOfWord);
     if (nameUnder.IsEmpty())
-        return;
+        return tokens;
 
     ParserF* pParser = m_pNativeParser->GetParser();
     TokensArrayFlatClass tokensTmp;
@@ -1606,7 +1378,7 @@ void FortranProject::OnValueTooltip(CodeBlocksEvent& event)
         m_pKeywordsParser->GetTokensForToolTip(nameUnder, *result);
 
     if (result->size() > 32 || result->size() == 0)
-        return;
+        return tokens;
 
     bool type_bound = false;
     wxString msg;
@@ -1688,7 +1460,11 @@ void FortranProject::OnValueTooltip(CodeBlocksEvent& event)
 
     if (!m_IsDebugging)
     {
-        control->CallTipShow(pos, msg);
+        wxStringTokenizer tokenizer(msg, _T('\n'));
+        while ( tokenizer.HasMoreTokens() )
+        {
+            tokens.push_back(CCToken(wxNOT_FOUND, tokenizer.GetNextToken()));
+        }
         m_ShowedCallTip = false;
     }
 
@@ -1697,6 +1473,8 @@ void FortranProject::OnValueTooltip(CodeBlocksEvent& event)
         ShowInfoLog(result, isAfterPercent);
         m_WasCallTipInfoLog = false;
     }
+
+    return tokens;
 }
 
 void FortranProject::ShowInfoLog(TokensArrayFlat* result, bool isAfterPercent)
@@ -1987,6 +1765,16 @@ void FortranProject::OnMenuEditPaste(wxCommandEvent& event)
         m_pNativeParser->GetWorkspaceBrowser()->OnMenuEditPaste(event);
     else
         event.Skip();
+}
+
+wxString FortranProject::GetDocumentation(const CCToken& /* token */)
+{
+    return wxEmptyString;
+}
+
+wxString FortranProject::OnDocumentationLink(wxHtmlLinkEvent& event, bool& dismissPopup)
+{
+    return wxEmptyString;
 }
 
 

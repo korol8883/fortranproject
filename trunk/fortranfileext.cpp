@@ -56,7 +56,7 @@ void FortranFileExt::RereadFileExtensions()
 }
 
 void FortranFileExt::RereadFileExtensionsLang(EditorColourSet* colSet, wxString langName, StringSet& extSet)
-    {
+{
     extSet.clear();
     HighlightLanguage lang = colSet->GetHighlightLanguage(langName);
     const wxArrayString& fileMasks = colSet->GetFileMasks(lang);

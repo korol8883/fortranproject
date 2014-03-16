@@ -1582,7 +1582,7 @@ void ParserThreadF::HandleAccessList(TokenAccessKind taKind, bool& changeDefault
 {
     changeDefault = false;
     wxString curLine = m_Tokens.GetLineFortran().Lower().Trim(false);
-    int ipp;
+    int ipp = wxNOT_FOUND;
     if (taKind == taPrivate)
         ipp = curLine.Find(_T("private"));
     else if (taKind == taPublic)

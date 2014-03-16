@@ -22,7 +22,8 @@ typedef std::set<wxString> StringSet;
 
 enum CompilerDirective
 {
-    cdOther = 0,
+    cdNone = 0,
+    cdOther,
     cdOpenMP,
     cdOpenACC,
 };

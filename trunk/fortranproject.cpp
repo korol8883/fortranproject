@@ -444,10 +444,10 @@ void FortranProject::BuildMenu(wxMenuBar* menuBar)
         submenuJump->Enable(idMenuJumpHome, false);
         submenuJump->Enable(idMenuJumpForward, false);
 
+        m_FortranToolsMenu->Insert(0, idMenuTab2Space, _("Tab2space"));
+        m_FortranToolsMenu->Insert(0, idMenuChangeCase, _("Change case"));
+        m_FortranToolsMenu->Insert(0, idMenuGenerateMakefile, _("Generate Makefile"));
         m_FortranToolsMenu->Insert(0, idMenuJump, _("Jump"), submenuJump);
-        m_FortranToolsMenu->Insert(3, idMenuGenerateMakefile, _("Generate Makefile"));
-        m_FortranToolsMenu->Insert(4, idMenuChangeCase, _("Change case"));
-        m_FortranToolsMenu->Insert(5, idMenuTab2Space, _("Tab2space"));
     }
 }
 
@@ -908,15 +908,13 @@ void FortranProject::CodeComplete(const int pos, cbEditor* ed, std::vector<CCTok
     wxString NameUnderCursor = control->GetTextRange(start,pos);
     wxString NameUnderCursorLw = NameUnderCursor.Lower();
 
-    bool isDirective = false;
-    CompilerDirective pdir;
+    CompilerDirective pdir = cdNone;
     int lineCur = control->LineFromPosition(pos);
     int lineStartPos = control->PositionFromLine(lineCur);
     wxString curLine = control->GetTextRange(lineStartPos,pos).Trim(false).Lower();
 
     if (curLine.StartsWith(_T("!$")))
     {
-        isDirective = true;
         if (curLine.StartsWith(_T("!$omp")))
             pdir = cdOpenMP;
         else if (curLine.StartsWith(_T("!$acc")))
@@ -981,7 +979,7 @@ void FortranProject::CodeComplete(const int pos, cbEditor* ed, std::vector<CCTok
         }
 
         EditorColourSet* theme = ed->GetColourSet();
-        if (theme && !isAfterPercent && (!isDirective || (isDirective && pdir == cdOther)) )
+        if (theme && !isAfterPercent && (pdir == cdNone || pdir == cdOther) )
         {
             int iidx = ilist->GetImageCount();
             control->RegisterImage(iidx, wxBitmap(fortran_keyword_xpm));
@@ -1030,7 +1028,7 @@ void FortranProject::CodeComplete(const int pos, cbEditor* ed, std::vector<CCTok
                 }
             }
         }
-        else if (isDirective && (pdir == cdOpenMP || pdir == cdOpenACC))
+        else if (pdir == cdOpenMP || pdir == cdOpenACC)
         {
             int iidx = ilist->GetImageCount();
             control->RegisterImage(iidx, wxBitmap(fortran_keyword_xpm));
@@ -1146,7 +1144,7 @@ std::vector<FortranProject::CCCallTip> FortranProject::GetCallTips(int pos, int 
     wxArrayInt idxFuncSub;
     TokensArrayFlatClass tokensTmp;
     TokensArrayFlat* result = tokensTmp.GetTokens();
-    TokenFlat* token;
+    TokenFlat* token = NULL;
     bool isAfterPercent = false;
 
     wxString lastName;
@@ -1216,7 +1214,7 @@ std::vector<FortranProject::CCCallTip> FortranProject::GetCallTips(int pos, int 
     }
 
 
-    if (!definition.IsEmpty() && isUnique && token->m_TokenKind == tkVariable)
+    if (!definition.IsEmpty() && isUnique && token && token->m_TokenKind == tkVariable)
     {
         m_pNativeParser->GetCallTipHighlight(definition, commasPos, hlStart, hlEnd);
     }

@@ -456,6 +456,7 @@ bool ParserF::FindMatchTypeComponents(cbEditor* ed, const wxString& lineCur, Tok
     //if (resultTmp->Count() == 0)
     //    FindMatchVariablesInModules(name, *resultTmp, false); //Is it global variable defined in other modules?
 
+    wxArrayString address;
     wxString nameType;
     bool nameType_found = false;
     if (resultTmp->Count() == 0)
@@ -466,7 +467,7 @@ bool ParserF::FindMatchTypeComponents(cbEditor* ed, const wxString& lineCur, Tok
     {
         for (size_t i=0; i<resultTmp->Count(); i++)
         {
-            TokenF* tok = resultTmp->Item(i);
+            TokenFlat* tok = resultTmp->Item(i);
             if ( tok->m_TokenKind == tkVariable )
             {
                 wxString tDefLow = tok->m_TypeDefinition.Lower();
@@ -481,6 +482,7 @@ bool ParserF::FindMatchTypeComponents(cbEditor* ed, const wxString& lineCur, Tok
                         idx_a = nameType.Find(_T("("));
                         if (idx_a != wxNOT_FOUND) // parametrized type
                             nameType = nameType.Mid(0,idx_a).Trim();
+                        FindAddress(tok, address);
                         nameType_found = true;
                         break;
                     }
@@ -493,15 +495,11 @@ bool ParserF::FindMatchTypeComponents(cbEditor* ed, const wxString& lineCur, Tok
 
     wxString nameTypeCom = nameType;
     TokenF* typeToken = NULL;
-    wxArrayString address;
     for (int i=1; i<=nTypes; i++)
     {
         TokensArrayFlatClass typesTmp;
         TokensArrayFlat* resultTypesTmp = typesTmp.GetTokens();
-        if (i == 1)
-            FindUseAssociatedTokens(onlyPublicNames, ed, nameType, false, *resultTypesTmp, tkType, false);
-        else
-            FindUseAssociatedTokens(onlyPublicNames, address, nameType, false, *resultTypesTmp, tkType, false);
+        FindUseAssociatedTokens(onlyPublicNames, address, nameType, false, *resultTypesTmp, tkType, false);
 
         if (resultTypesTmp->Count() < 1)
             return false; // type was not found
@@ -797,6 +795,9 @@ void ParserF::FindLineScopeLN(cbEditor* ed, int& lineStart, TokenFlat* &token, i
                 lineStart = -1;
             }
         }
+
+        if (pToken)
+            pToken->m_Filename = UnixFilename(filename);
     }
 
     if (lineStart == -1)
@@ -2617,19 +2618,30 @@ void ParserF::FindUseAssociatedTokens(bool onlyPublicNames, wxArrayString& addre
     ClearBoolArray3D(m_CanBeSeenVisited);
 }
 
-
 void ParserF::FindAddress(cbEditor* ed, wxArrayString& address)
 {
     // Address is: fileName, module_name, sub_name and etc.
     int lineStart;
     TokenFlat* tokFl=NULL;
     FindLineScopeLN(ed, lineStart, tokFl, -1);
-    address.Add(UnixFilename(ed->GetFilename()));
     if (!tokFl)
     {
+        address.Add(UnixFilename(ed->GetFilename()));
         return;
     }
-    else if (tokFl->m_TokenKind == tkModule || tokFl->m_TokenKind == tkSubmodule)
+
+    FindAddress(tokFl, address);
+    if (tokFl)
+        delete tokFl;
+}
+
+void ParserF::FindAddress(TokenFlat* tokFl, wxArrayString& address)
+{
+    if (!tokFl)
+        return;
+    // Address is: fileName, module_name, sub_name and etc.
+    address.Add(tokFl->m_Filename);
+    if (tokFl->m_TokenKind == tkModule || tokFl->m_TokenKind == tkSubmodule)
     {
         address.Add(tokFl->m_Name);
     }
@@ -2649,7 +2661,7 @@ void ParserF::FindAddress(cbEditor* ed, wxArrayString& address)
         wxArrayString guess2;
         int lineDifStart = 0;
         bool foundGuess = false;
-        TokensArrayF* fileChildren = FindFileTokens(ed->GetFilename());
+        TokensArrayF* fileChildren = FindFileTokens(tokFl->m_Filename);
         if (fileChildren)
         {
             for (size_t i=0; i<fileChildren->GetCount(); i++)
@@ -2759,7 +2771,7 @@ void ParserF::FindAddress(cbEditor* ed, wxArrayString& address)
         int lineDifStart = 0;
         bool foundGuess = false;
         int tokenKindMask = tkFunction | tkProgram | tkSubroutine | tkModule | tkSubmodule;
-        TokensArrayF* fileChildren = FindFileTokens(ed->GetFilename());
+        TokensArrayF* fileChildren = FindFileTokens(tokFl->m_Filename);
         if (fileChildren)
         {
             for (size_t i=0; i<fileChildren->GetCount(); i++)
@@ -2858,9 +2870,6 @@ void ParserF::FindAddress(cbEditor* ed, wxArrayString& address)
             address.Add(guess.Item(i));
         }
     }
-
-    if (tokFl)
-        delete tokFl;
 }
 
 void ParserF::FindTokensForUse(const wxString& search, wxArrayString& firstWords, TokensArrayFlat& result, bool onlyPublicNames)

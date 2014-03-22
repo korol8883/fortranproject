@@ -102,6 +102,7 @@ class ParserF
                                              int noChildrenOf, bool partialMatch, bool onlyPublicNames, bool changeDisplayName, TokensArrayFlat* useWithRenameTok);
         void ChangeAssociatedName(wxString& line, TokenFlat* token);
         void FindAddress(cbEditor* ed, wxArrayString& address);
+        void FindAddress(TokenFlat* tokFl, wxArrayString& address);
         void FindTokensForUse(const wxString& search, wxArrayString& firstWords, TokensArrayFlat& result, bool onlyPublicNames);
         void AddUniqueResult(TokensArrayFlat& result, const TokenF* token);
         void AddUniqueResult(TokensArrayFlat& result, const TokenFlat* token);

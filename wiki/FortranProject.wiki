@@ -7,11 +7,6 @@ Development of FortranProject plugin. FortranProject plugin ads support of Fortr
 
 = Details =
 
-Add your content here.  Format your content with:
-  * Text in *bold* or _italic_
-  * Headings, paragraphs, and lists
-  * Automatic links to other wiki pages
-
  * FortranProject plugin enables the compilation of Fortran files directly from IDE. It cares about Fortran file dependencies. Alternatively, users can use own makefile for building of the project.
 
  * Plugin parses Fortran files and displays Symbols browser with defined program units (functions, subroutines, modules etc.).

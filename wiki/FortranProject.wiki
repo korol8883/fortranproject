@@ -2,7 +2,7 @@
 
 = Introduction =
 
-Development of FortranProject plugin. FortranProject plugin ads support of Fortran language to Code::Blocks IDE.
+FortranProject plugin ads support of Fortran language to Code::Blocks IDE.
 
 
 = Details =

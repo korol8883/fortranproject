@@ -664,41 +664,53 @@ void ParserF::FindMatchDeclarationsInCurrentScope(const wxString& search, cbEdit
     if (lineStart == -1)
         return;
 
-    cbStyledTextCtrl* control = ed->GetControl();
-    if (!control)
-        return;
-
-    wxString filename = ed->GetFilename();
-    FortranSourceForm fsForm;
-    if (!IsFileFortran(filename, fsForm))
-        return;
-
-    int curPos;
-    if (endPos == -1)
-        curPos = control->GetCurrentPos();
-    else
-        curPos = endPos;
-
-    wxString txtRange = control->GetTextRange(control->GetLineEndPosition(lineStart-1),curPos);
-
-    //Parse
-    TokensArrayClass tokensTmp;
-    TokensArrayF* parsResult = tokensTmp.GetTokens();
-    ParserThreadF thread = ParserThreadF(txtRange, parsResult, fsForm, true);
-    thread.ParseDeclarations();
-
-    //Add results
-    for (size_t i=0; i<parsResult->GetCount(); i++)
     {
-        if ((partialMatch && parsResult->Item(i)->m_Name.StartsWith(searchLw)) ||
-            (!partialMatch && parsResult->Item(i)->m_Name.IsSameAs(searchLw)))
+        cbStyledTextCtrl* control = ed->GetControl();
+        if (!control)
+            return;
+
+        int curPos = control->GetCurrentPos();
+        unsigned int curLine = control->LineFromPosition(curPos) + 1;
+        int tokenKindMask = tkFunction | tkProgram | tkSubroutine | tkModule | tkBlockConstruct |
+                        tkAssociateConstruct | tkSubmodule | tkSelectTypeChild | tkSelectTypeDefault | tkType;
+
+        wxCriticalSectionLocker locker(s_CritSect);
+        TokensArrayF* fileChildren = FindFileTokens(ed->GetFilename());
+        if (!fileChildren)
+            return;
+
+        TokenF* pToken = NULL;
+        if (!FindLineScope(curLine, lineStart, tokenKindMask, *fileChildren, pToken))
+            return;
+        if(!pToken)
+            return;
+        int filterMask = tkVariable;
+        TokensArrayF* pChildren = &pToken->m_Children;
+        //Add results
+        for (size_t i=0; i<pChildren->GetCount(); i++)
         {
-            if (parsResult->Item(i)->m_TokenKind != tkAccessList &&
-                parsResult->Item(i)->m_TokenKind != tkBlockConstruct)
+            if ((partialMatch && pChildren->Item(i)->m_Name.StartsWith(searchLw)) ||
+                (!partialMatch && pChildren->Item(i)->m_Name.IsSameAs(searchLw)))
             {
-                parsResult->Item(i)->m_Filename = filename;
-                parsResult->Item(i)->m_LineStart += lineStart - 1;
-                result.Add(new TokenFlat(parsResult->Item(i)));
+                if (pChildren->Item(i)->m_TokenKind & filterMask)
+                {
+                    result.Add(new TokenFlat(pChildren->Item(i)));
+                }
+            }
+        }
+        if (pToken->m_TokenKind == tkType && pToken->m_pParent && pToken->m_pParent->m_TokenKind & tokenKindMask)
+        {
+            pChildren = &pToken->m_pParent->m_Children;
+            for (size_t i=0; i<pChildren->GetCount(); i++)
+            {
+                if ((partialMatch && pChildren->Item(i)->m_Name.StartsWith(searchLw)) ||
+                    (!partialMatch && pChildren->Item(i)->m_Name.IsSameAs(searchLw)))
+                {
+                    if (pChildren->Item(i)->m_TokenKind & filterMask)
+                    {
+                        result.Add(new TokenFlat(pChildren->Item(i)));
+                    }
+                }
             }
         }
     }
@@ -1235,6 +1247,8 @@ void ParserF::FindMatchTokensForJump(cbEditor* ed, bool onlyUseAssoc, bool onlyP
         return;
     int lineStartPos = control->GetLineEndPosition(control->LineFromPosition(posEndOfWord) - 1) + 1;
     wxString curLine = control->GetTextRange(lineStartPos,posEndOfWord);
+
+    ChangeLineIfRequired(ed, curLine);
 
     if (!FindMatchTypeComponents(ed, curLine, result, false, onlyPublicNames, isAfterPercent, true))
         return;
@@ -2656,111 +2670,25 @@ void ParserF::FindAddress(TokenFlat* tokFl, wxArrayString& address)
     }
     else if (!tokFl->m_ParentName.IsEmpty())
     {
-        bool found = false;
         wxArrayString guess;
-        wxArrayString guess2;
-        int lineDifStart = 0;
-        bool foundGuess = false;
         TokensArrayF* fileChildren = FindFileTokens(tokFl->m_Filename);
         if (fileChildren)
         {
-            for (size_t i=0; i<fileChildren->GetCount(); i++)
+            TokenF* token = FindToken(*tokFl, fileChildren);
+            guess.Clear();
+            while (token)
             {
-                if (fileChildren->Item(i)->m_TokenKind == tkModule || fileChildren->Item(i)->m_TokenKind == tkSubmodule)
-                {
-                    TokensArrayF* modChildren = &(fileChildren->Item(i)->m_Children);
-                    for (size_t j=0; j<modChildren->Count(); j++)
-                    {
-                        if (modChildren->Item(j)->m_TokenKind == tokFl->m_ParentTokenKind && modChildren->Item(j)->m_Name.IsSameAs(tokFl->m_ParentName))
-                        {
-                            guess2.Clear();
-                            guess2.Add(fileChildren->Item(i)->m_Name);
-                            guess2.Add(modChildren->Item(j)->m_Name);
-
-                            TokensArrayF* procChil = &(modChildren->Item(j)->m_Children);
-                            for (size_t k=0; k<procChil->Count(); k++)
-                            {
-                                if (procChil->Item(k)->m_TokenKind == tokFl->m_TokenKind && procChil->Item(k)->m_Name.IsSameAs(tokFl->m_Name))
-                                {
-                                    if (procChil->Item(k)->m_LineStart == tokFl->m_LineStart)
-                                    {
-                                        guess.Clear();
-                                        guess.Add(fileChildren->Item(i)->m_Name);
-                                        guess.Add(modChildren->Item(j)->m_Name);
-                                        guess.Add(procChil->Item(k)->m_Name);
-                                        found = true;
-                                        break;
-                                    }
-                                    else
-                                    {
-                                        int lds = abs(procChil->Item(k)->m_LineStart - tokFl->m_LineStart);
-                                        if ((foundGuess && lineDifStart > lds) || !foundGuess)
-                                        {
-                                            guess.Clear();
-                                            guess.Add(fileChildren->Item(i)->m_Name);
-                                            guess.Add(modChildren->Item(j)->m_Name);
-                                            guess.Add(procChil->Item(k)->m_Name);
-                                            lineDifStart = lds;
-                                            foundGuess = true;
-                                        }
-                                    }
-                                }
-                            }
-                            if (found)
-                                break;
-                        }
-                    }
-                    if (found)
-                        break;
-                }
-                else if (fileChildren->Item(i)->m_TokenKind == tokFl->m_ParentTokenKind && fileChildren->Item(i)->m_Name.IsSameAs(tokFl->m_ParentName))
-                {
-                    guess2.Clear();
-                    guess2.Add(fileChildren->Item(i)->m_Name);
-                    TokensArrayF* procChil = &(fileChildren->Item(i)->m_Children);
-                    for (size_t j=0; j<procChil->GetCount(); j++)
-                    {
-                        if (procChil->Item(j)->m_TokenKind == tokFl->m_TokenKind && procChil->Item(j)->m_Name.IsSameAs(tokFl->m_Name))
-                        {
-                            if (procChil->Item(j)->m_LineStart == tokFl->m_LineStart)
-                            {
-                                guess.Clear();
-                                guess.Add(fileChildren->Item(i)->m_Name);
-                                guess.Add(tokFl->m_Name);
-                                found = true;
-                                break;
-                            }
-                            else
-                            {
-                                int lds = abs(procChil->Item(j)->m_LineStart - tokFl->m_LineStart);
-                                if ((foundGuess && lineDifStart > lds) || !foundGuess)
-                                {
-                                    guess.Clear();
-                                    guess.Add(fileChildren->Item(i)->m_Name);
-                                    guess.Add(tokFl->m_Name);
-                                    lineDifStart = lds;
-                                    foundGuess = true;
-                                }
-                            }
-                        }
-                    }
-                    if (found)
-                        break;
-                }
+                if (token->m_TokenKind != tkFile)
+                    guess.Add(token->m_Name);
+                token = token->m_pParent;
             }
         }
+
         if (guess.Count() > 0)
         {
-            for (size_t i=0; i<guess.GetCount(); i++)
+            for (int i=guess.GetCount()-1; i>=0; i--)
             {
-                address.Add(guess.Item(i));
-            }
-        }
-        else if (guess2.Count() > 0)
-        {
-            for (size_t i=0; i<guess2.Count(); i++)
-            {
-                address.Add(guess2.Item(i));
+                address.Add(guess.Item(size_t(i)));
             }
         }
     }

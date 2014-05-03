@@ -1458,11 +1458,7 @@ std::vector<FortranProject::CCToken> FortranProject::GetTokenAt(int position, cb
 
     if (!m_IsDebugging)
     {
-        wxStringTokenizer tokenizer(msg, _T('\n'));
-        while ( tokenizer.HasMoreTokens() )
-        {
-            tokens.push_back(CCToken(wxNOT_FOUND, tokenizer.GetNextToken()));
-        }
+        tokens.push_back(CCToken(wxNOT_FOUND, msg));
         m_ShowedCallTip = false;
     }
 

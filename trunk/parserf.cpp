@@ -1748,7 +1748,7 @@ bool ParserF::FindTokenDeclaration(TokenFlat& token, const wxString& argName, wx
             {
                 argDecl << pChildren->Item(i)->m_TypeDefinition << _T(" :: ")
                         << pChildren->Item(i)->m_DisplayName << pChildren->Item(i)->m_Args;
-                argDescription << pChildren->Item(i)->m_PartLast;
+                argDescription << pChildren->Item(i)->m_DocString;
             }
             found = true;
             break;

@@ -74,6 +74,7 @@ Tokenizerf::Tokenizerf(const wxString& filename, FortranSourceForm sourceForm)
 {
 	if (!m_Filename.IsEmpty())
 		Init(m_Filename, m_SourceForm);
+    m_LineStartIdx.push_back(0);
 }
 
 Tokenizerf::~Tokenizerf()
@@ -140,6 +141,8 @@ void Tokenizerf::BaseInit()
 	m_UndoWasNextLine = false;
 	m_PeekedWasNextLine = false;
 	m_WasPeeked = false;
+	m_LineStartIdx.clear();
+	m_LineStartIdx.push_back(0);
 }
 
 bool Tokenizerf::ReadFile()
@@ -183,6 +186,10 @@ void Tokenizerf::AdjustLineNumber()
     {
         ++m_LineNumber;
 		m_WasNextLine = false;
+		if (m_LineStartIdx.size() < m_LineNumber)
+        {
+            m_LineStartIdx.push_back(m_TokenIndex);
+        }
     }
 	if (CurrentChar() == '\n')
 	{
@@ -1021,4 +1028,20 @@ void Tokenizerf::SetDetailedParsing(bool detPars)
 void Tokenizerf::SetFilename(const wxString& filename)
 {
     m_Filename = filename;
+}
+
+wxString Tokenizerf::GetLine(unsigned int nl)
+{
+    // get line nl. Note, line numbers starts from 1.
+    if (nl == 0 && nl > m_LineStartIdx.size())
+        return wxEmptyString;
+
+    unsigned int endIndex;
+    if (nl >= m_LineStartIdx.size())
+        endIndex = m_Buffer.Len() - 1;
+    else
+        endIndex = m_LineStartIdx[nl];
+
+    wxString linenl = m_Buffer.Mid(m_LineStartIdx[nl-1], endIndex - m_LineStartIdx[nl-1]);
+    return linenl;
 }

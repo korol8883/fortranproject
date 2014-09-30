@@ -23,13 +23,14 @@
 					<Add option="-DcbDEBUG" />
 					<Add option="-DCB_PRECOMP" />
 					<Add option="-DWX_PRECOMP" />
+					<Add option="`wx-config --cflags`" />
 					<Add directory="../../../include" />
 					<Add directory="../../../sdk/wxscintilla/include" />
-					<Add option="`wx-config --cflags`" />
+					<Add directory="../FortranProject" />
 				</Compiler>
 				<Linker>
-					<Add library="codeblocks" />
 					<Add option="`wx-config --libs`" />
+					<Add library="codeblocks" />
 					<Add directory="../../../devel" />
 				</Linker>
 			</Target>
@@ -48,6 +49,8 @@
 		<Unit filename="ccsmartfilter.h" />
 		<Unit filename="changecase.cpp" />
 		<Unit filename="changecase.h" />
+		<Unit filename="docblock.cpp" />
+		<Unit filename="docblock.h" />
 		<Unit filename="farrays.cpp" />
 		<Unit filename="farrays.h" />
 		<Unit filename="finfowindow.cpp" />

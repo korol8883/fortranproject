@@ -17,7 +17,8 @@ ParserThreadF::ParserThreadF(const wxString& bufferOrFilename,
 	:
 	m_pTokens(tokens),
 	m_pLastParent(0L),
-	m_pIncludeDB(includeDB)
+	m_pIncludeDB(includeDB),
+	m_Briefend(_T("@brief_end@"))
 {
     m_InterfaceOperator = 0;
     m_InterfaceAssignment = 0;
@@ -49,7 +50,8 @@ ParserThreadF::ParserThreadF(const wxString& filename,
     :
 	m_pTokens(tokens),
 	m_pLastParent(0L),
-	m_pIncludeDB(includeDB)
+	m_pIncludeDB(includeDB),
+	m_Briefend(_T("@brief_end@"))
 {
     m_InterfaceOperator = 0;
     m_InterfaceAssignment = 0;
@@ -395,6 +397,14 @@ void ParserThreadF::HandleModule()
     else
         modToken = DoAddModuleToken(token);
     m_pLastParent = modToken;
+
+    // Parse documentation
+    m_ParentDocs.Clear();
+	DocBlock docs;
+	GetDocBlock(docs, false, modToken->m_LineStart);
+	if (docs.HasBrief() || docs.HasDescription())
+        modToken->m_DocString << docs.GetBrief() + m_Briefend + docs.GetDescription();
+
     wxArrayString privateNameList;
     wxArrayString publicNameList;
     wxArrayString protectedNameList;
@@ -687,6 +697,14 @@ void ParserThreadF::HandleModule()
         }
     }
 
+    if (modToken->m_DocString.IsEmpty())
+    {
+        unsigned int ln = modToken->m_LineStart + modToken->m_DefinitionLength - 1;
+        docs.Clear();
+        GetDocBlock(docs, true, ln); // look bellow the declaration for the non-doxyblocks documentation.
+        if (docs.HasBrief() || docs.HasDescription())
+            modToken->m_DocString << docs.GetBrief() + m_Briefend + docs.GetDescription();
+    }
 }
 
 void ParserThreadF::HandleSubmodule()
@@ -925,10 +943,24 @@ void ParserThreadF::HandleType(bool& needDefault, TokenF* &newToken)
     m_pLastParent->m_TokenAccess = taKind;
     m_pLastParent->m_IsAbstract = isAbstract;
 
+    // Parse documentation
+	DocBlock docs;
+	GetDocBlock(docs, false, m_pLastParent->m_LineStart);
+	if (docs.HasBrief() || docs.HasDescription())
+        m_pLastParent->m_DocString << docs.GetBrief() + m_Briefend + docs.GetDescription();
+
     ParseDeclarations(true, true);
 
     if (m_LastTokenName.IsSameAs(_T("contains")))
         ParseTypeBoundProcedures(wxEmptyString, false);
+
+    if (m_pLastParent->m_DocString.IsEmpty())
+    {
+        docs.Clear();
+        GetDocBlock(docs, true, m_pLastParent->m_LineStart); // look bellow the declaration for the non-doxyblocks documentation.
+        if (docs.HasBrief() || docs.HasDescription())
+            m_pLastParent->m_DocString << docs.GetBrief() + m_Briefend + docs.GetDescription();
+    }
 
     m_pLastParent->AddLineEnd(m_Tokens.GetLineNumber());
     newToken = m_pLastParent;
@@ -1214,12 +1246,11 @@ void ParserThreadF::ParseDeclarationsSecondPart(wxString& token, bool& needDefau
                 i = lineTok.GetCount() - 1;
             }
         }
-        wxString comStr;
-        int comInd = linesArr.Item(i).Find('!');
-        if (comInd != wxNOT_FOUND)
-        {
-            comStr = linesArr.Item(i).Mid(comInd).Trim();
-        }
+        wxString comStr = linesArr.Item(i).AfterFirst('!');
+        if (comStr.StartsWith(_T("<")) || comStr.StartsWith(_T(">")))
+            comStr = comStr.Mid(1);
+        comStr = comStr.Trim(true).Trim(false);
+
         varNames.Add(var1);
         varArgs.Add(arg1);
         varComs.Add(comStr);
@@ -1232,7 +1263,7 @@ void ParserThreadF::ParseDeclarationsSecondPart(wxString& token, bool& needDefau
     for (size_t i=0; i<varNames.GetCount(); i++)
     {
         TokenF* tok = DoAddToken(tkVariable, varNames[i], varArgs[i], defT);
-        tok->m_PartLast = varComs.Item(i);
+        tok->m_DocString = varComs.Item(i);
         tok->m_TokenAccess = taKind;
         tok->AddLineEnd(tok->m_LineStart);
         if (varDims.Item(i).IsEmpty())
@@ -1267,6 +1298,10 @@ void ParserThreadF::HandleSubmoduleProcedure()
 
 void ParserThreadF::HandleFunction(TokenKindF kind, TokenAccessKind taKind)
 {
+    m_ParentDocs.Clear();
+    unsigned int ln = m_Tokens.GetLineNumber();
+	GetDocBlock(m_ParentDocs, false, ln);
+
     wxString token;
     token = m_Tokens.GetTokenSameFortranLine();
 
@@ -1283,6 +1318,8 @@ void ParserThreadF::HandleFunction(TokenKindF kind, TokenAccessKind taKind)
         args = m_Tokens.GetTokenSameFortranLine();
     m_pLastParent = DoAddToken(kind, token, args, defStartLine);
     m_pLastParent->m_TokenAccess = taKind;
+    if (m_ParentDocs.HasBrief() || m_ParentDocs.HasDescription())
+        m_pLastParent->m_DocString << m_ParentDocs.GetBrief() + m_Briefend + m_ParentDocs.GetDescription();
 
     if (kind == tkFunction)
     {
@@ -1313,6 +1350,16 @@ void ParserThreadF::HandleFunction(TokenKindF kind, TokenAccessKind taKind)
     }
     GoThroughBody();
     m_pLastParent->AddLineEnd(m_Tokens.GetLineNumber());
+    AddParamDocs(m_pLastParent, m_ParentDocs);
+
+    if (m_pLastParent->m_DocString.IsEmpty())
+    {
+        ln = m_pLastParent->m_LineStart + m_pLastParent->m_DefinitionLength - 1;
+        DocBlock doc;
+        GetDocBlock(doc, true, ln); // look bellow the declaration for the non-doxyblocks documentation.
+        if (doc.HasBrief() || doc.HasDescription())
+            m_pLastParent->m_DocString << doc.GetBrief() + m_Briefend + doc.GetDescription();
+    }
 
     m_pLastParent = old_parent;
 }
@@ -1527,6 +1574,23 @@ void ParserThreadF::HandleInterface(TokenAccessKind taKind, TokenF* &tokNew, boo
     }
 
     m_pLastParent->AddLineEnd(m_Tokens.GetLineNumber());
+
+    if (isGeneric)
+    {
+        // Parse documentation
+        DocBlock docs;
+        GetDocBlock(docs, false, m_pLastParent->m_LineStart);
+        if (docs.HasBrief() || docs.HasDescription())
+            m_pLastParent->m_DocString << docs.GetBrief() + m_Briefend + docs.GetDescription();
+        else
+        {
+            docs.Clear();
+            GetDocBlock(docs, true, m_pLastParent->m_LineStart); // look bellow the declaration for the non-doxyblocks documentation.
+            if (docs.HasBrief() || docs.HasDescription())
+                m_pLastParent->m_DocString << docs.GetBrief() + m_Briefend + docs.GetDescription();
+        }
+    }
+
     m_pLastParent = old_parent;
 }
 
@@ -1771,7 +1835,8 @@ void ParserThreadF::ParseTypeBoundProcedures(const wxString& firstWord, bool bre
             break;
         wxString defString = firstTokenLw;
         unsigned int lineNum = m_Tokens.GetLineNumber();
-        wxArrayString curLineArr = m_Tokens.GetTokensToEOL();
+        wxArrayString linesArr;
+        wxArrayString curLineArr = m_Tokens.GetTokensToEOL(&linesArr);
         bool isGen = firstTokenLw.IsSameAs(_T("generic"));
         bool isProc = firstTokenLw.IsSameAs(_T("procedure"));
         if (curLineArr.Count() > 0 && (isProc || isGen) ) // &&
@@ -1841,6 +1906,15 @@ void ParserThreadF::ParseTypeBoundProcedures(const wxString& firstWord, bool bre
             {
                 while (ic < countArr)
                 {
+                    // Read docs
+                    wxString comStr = linesArr.Item(ic).AfterFirst('!');
+                    if (!comStr.IsEmpty())
+                    {
+                        if (comStr.StartsWith(_T("<")) || comStr.StartsWith(_T(">")))
+                            comStr = comStr.Mid(1);
+                        comStr = comStr.Trim(true).Trim(false);
+                    }
+
                     wxString bindName = curLineArr.Item(ic);
                     wxString procName;
                     if (ic+2 < countArr)
@@ -1871,6 +1945,7 @@ void ParserThreadF::ParseTypeBoundProcedures(const wxString& firstWord, bool bre
                     token->AddLineEnd(m_Tokens.GetLineNumber());
                     token->m_TokenAccess = tokAccK;
                     token->m_TypeDefinition = defString;
+                    token->m_DocString = comStr;
                 }
             }
             else //isGen
@@ -2030,6 +2105,248 @@ void ParserThreadF::SplitAssociateConstruct(const wxString& argLine, std::map<wx
             {
                 wxString assocName = block.Trim(true).Trim(false);
                 assocMap.insert(std::pair<wxString,wxString>(assocName, assocName));
+            }
+        }
+    }
+}
+
+void ParserThreadF::GetDocBlock(DocBlock &docs, bool lookDown, unsigned int ln)
+{
+    bool isSimpleDoc = false;
+    bool hasDoc = false;
+    wxArrayString docLines;
+    unsigned int loopStart;
+    if (lookDown)
+        loopStart = ln+1;
+    else
+        loopStart = ln-1;
+    unsigned int ii = loopStart;
+    unsigned int nLines = m_Tokens.GetLineCount();
+
+    while (ii >= 1 && ii <= nLines)
+    {
+        wxString line = m_Tokens.GetLine(ii).Trim(false);
+
+        if (ii == loopStart && !line.StartsWith(_T("!")))
+            isSimpleDoc = false;
+        else if (ii == loopStart && line.StartsWith(_T("!")))
+        {
+            if (!lookDown && (line.StartsWith(_T("!!")) || line.StartsWith(_T("!<")) || line.StartsWith(_T("!>"))))
+                isSimpleDoc = false;
+            else
+                isSimpleDoc = true;
+        }
+
+        if (line.StartsWith(_T("!")))
+        {
+            if (line.StartsWith(_T("!!")) || line.StartsWith(_T("!<")) || line.StartsWith(_T("!>")))
+            {
+                docLines.Add(line.Mid(2).Trim(true).Trim(false));
+            }
+            else if (isSimpleDoc)
+            {
+                docLines.Add(line.Mid(1).Trim(true).Trim(false));
+            }
+            else
+                break;
+
+            hasDoc = true;
+        }
+        else if (hasDoc && line.IsEmpty())
+            break;
+        else if (!line.IsEmpty())
+            break;
+
+        if (lookDown)
+            ii++;
+        else
+            ii--;
+    }
+
+    if (isSimpleDoc && docLines.GetCount()>0)
+    {
+        // Not Doxygen comments
+        // Take first 3 nonempty lines and use it as a doc-string
+        wxString docLine;
+        int isimp = 0;
+        if (lookDown)
+            loopStart = 0;
+        else
+            loopStart = docLines.GetCount()-1;
+        int j = loopStart;
+
+        while ((lookDown && j < (int) docLines.GetCount()) || (!lookDown && j >= 0))
+        {
+            size_t sidx = docLines[j].find_first_not_of(_T("! \t"));
+            if (sidx != wxString::npos)
+            {
+                size_t sidx2 = docLines[j].find_first_not_of(docLines[j].at(sidx)); // an attempt to avoid e.g. !********
+                if (sidx2 != wxString::npos)
+                {
+                    //if (isimp == 3) // take 3 lines at most
+                    if (docLine.size() > 400) // limit number of symbols
+                    {
+                        docLine << _T("...");
+                        break;
+                    }
+                    if (sidx2 > sidx+2)
+                        docLine << _T(" ") + docLines[j].Mid(sidx2);
+                    else
+                        docLine << _T(" ") + docLines[j].Mid(sidx);
+
+                    isimp += 1;
+                }
+                else if (!docLine.IsEmpty())
+                    break;
+            }
+            else if (!docLine.IsEmpty())
+                break;
+
+            if (lookDown)
+                j++;
+            else
+                j--;
+        }
+        if (!docLine.IsEmpty())
+            docs.AddDescription(docLine.Trim(false));
+
+    }
+    else if (docLines.GetCount()>0)
+    {
+        // Doxygen docs
+        wxString description;
+        wxString brief;
+        wxArrayString paramNames;
+        wxArrayString paramDescr;
+        bool inbrief = false;
+        bool indescription = false;
+        for (int i=docLines.GetCount()-1; i>=0; i--)
+        {
+            bool iscommand = false;
+
+            if (docLines[i].IsEmpty())
+            {
+                inbrief = false;
+                indescription = false;
+                continue;
+            }
+            else if (docLines[i].StartsWith(_T("\\")) || docLines[i].StartsWith(_T("@")))
+            {
+                inbrief = false;
+                indescription = false;
+                iscommand = true;
+            }
+
+            bool isbrief = false;
+            bool isparam = false;
+            if (iscommand)
+            {
+                size_t sidx = docLines[i].find(_T("brief"),1);
+                if (sidx == 1)
+                    isbrief = true;
+
+                if (!isbrief)
+                {
+                    size_t sidx = docLines[i].find(_T("param"),1);
+                    if (sidx == 1)
+                        isparam = true;
+                }
+            }
+
+            if (isbrief)
+            {
+                brief = docLines[i].Mid(6).Trim(false);
+                inbrief = true;
+                indescription = false;
+            }
+            else if (inbrief)
+            {
+                wxString repNoStr = TrimRepetitives(docLines[i]);
+                if (!repNoStr.IsEmpty())
+                    brief << _T(" ") << repNoStr;
+            }
+            else if (isparam)
+            {
+                wxString pline = docLines[i].Mid(6).Trim(false);
+                size_t sidx = pline.find_first_of(_T(" \t"));
+                if (sidx != wxString::npos)
+                {
+                    paramDescr.Add(pline.Mid(sidx+1).Trim(false));
+                    paramNames.Add(pline.Mid(0,sidx));
+                }
+                indescription = false;
+            }
+            else if (!iscommand && description.IsEmpty() && paramNames.Count() == 0)
+            {
+                indescription = true;
+            }
+
+            if (indescription)
+            {
+                wxString repNoStr = TrimRepetitives(docLines[i]);
+                if (!repNoStr.IsEmpty())
+                    description << repNoStr + _T(" ");
+            }
+
+        }
+
+        if (!description.IsEmpty())
+            docs.AddDescription(description.Trim());
+        if (!brief.IsEmpty())
+            docs.AddBrief(brief);
+        for (size_t i=0; i<paramDescr.size(); i++)
+        {
+            docs.AddParam(paramNames[i], paramDescr[i]);
+        }
+    }
+}
+
+wxString ParserThreadF::TrimRepetitives(wxString& inStr)
+{
+    // an attempt to avoid e.g. !********
+    wxString outStr;
+    size_t sidx = inStr.find_first_not_of(_T("! \t"));
+    if (sidx != wxString::npos)
+    {
+        size_t sidx2 = inStr.find_first_not_of(inStr.at(sidx),sidx);
+        if (sidx2 != wxString::npos)
+        {
+            if (sidx2 > sidx+2)
+                outStr = inStr.Mid(sidx2);
+            else
+                outStr = inStr.Mid(sidx);
+        }
+    }
+    return outStr;
+}
+
+wxString ParserThreadF::GetDocLine(unsigned int ln)
+{
+    wxString line = m_Tokens.GetLine(ln);
+    line = line.AfterFirst('!');
+    if (line.StartsWith(_T("<")) || line.StartsWith(_T(">")))
+        line = line.substr(1);
+    return line.Trim(true).Trim(false);
+}
+
+void ParserThreadF::AddParamDocs(TokenF* pParToken, DocBlock &docs)
+{
+    int npar = docs.GetParamCount();
+    if (npar == 0)
+        return;
+    int nadd = 0;
+    TokensArrayF* tokArr = &pParToken->m_Children;
+    for (size_t j=0; j<tokArr->GetCount(); j++)
+    {
+        if (tokArr->Item(j)->m_TokenKind == tkVariable && tokArr->Item(j)->m_DocString.IsEmpty())
+        {
+            wxString descr = docs.GetValue(tokArr->Item(j)->m_Name);
+            if (!descr.IsEmpty())
+            {
+                tokArr->Item(j)->m_DocString = descr;
+                nadd++;
+                if (nadd == npar)
+                    break;
             }
         }
     }

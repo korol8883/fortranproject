@@ -69,7 +69,6 @@ FPOptionsDlg::FPOptionsDlg(wxWindow* parent, NativeParserF* np, FortranProject* 
     XRCCTRL(*this, "sliderDelay", wxSlider)->SetValue(timerDelay / 100);
     UpdateSliderLabel();
 
-    XRCCTRL(*this, "chkComRight", wxCheckBox)->SetValue(cfg->ReadBool(_T("/include_comments_variable"), true));
     XRCCTRL(*this, "chkCallTipsArrays", wxCheckBox)->SetValue(cfg->ReadBool(_T("/call_tip_arrays"), true));
 
     XRCCTRL(*this, "chkNoFortranInfo", wxCheckBox)->SetValue(!cfg->ReadBool(_T("/use_log_window"), true));
@@ -77,6 +76,10 @@ FPOptionsDlg::FPOptionsDlg(wxWindow* parent, NativeParserF* np, FortranProject* 
     XRCCTRL(*this, "chkComBelow", wxCheckBox)->SetValue(cfg->ReadBool(_T("/include_comments_below"), true));
     XRCCTRL(*this, "chkDeclarLog", wxCheckBox)->SetValue(cfg->ReadBool(_T("/include_declarations_log"), true));
     XRCCTRL(*this, "chkLogComRight", wxCheckBox)->SetValue(cfg->ReadBool(_T("/include_log_comments_variable"), true));
+
+    XRCCTRL(*this, "rbDocAlways", wxRadioButton)->SetValue(cfg->ReadBool(_T("/show_docs_always"), false));
+    XRCCTRL(*this, "rbDocOnly", wxRadioButton)->SetValue(cfg->ReadBool(_T("/show_docs_only"), true));
+    XRCCTRL(*this, "rbDocNot", wxRadioButton)->SetValue(cfg->ReadBool(_T("/show_docs_not"), false));
 }
 
 FPOptionsDlg::~FPOptionsDlg()
@@ -174,7 +177,6 @@ void FPOptionsDlg::OnApply()
 
     cfg->Write(_T("/keywords_case"), (int)XRCCTRL(*this, "rbCase", wxRadioBox)->GetSelection());
 
-    cfg->Write(_T("/include_comments_variable"), (bool)XRCCTRL(*this, "chkComRight", wxCheckBox)->GetValue());
     cfg->Write(_T("/call_tip_arrays"), (bool)XRCCTRL(*this, "chkCallTipsArrays", wxCheckBox)->GetValue());
 
     cfg->Write(_T("/use_log_window"), (bool)!XRCCTRL(*this, "chkNoFortranInfo", wxCheckBox)->GetValue());
@@ -182,6 +184,10 @@ void FPOptionsDlg::OnApply()
     cfg->Write(_T("/include_comments_below"), (bool)XRCCTRL(*this, "chkComBelow", wxCheckBox)->GetValue());
     cfg->Write(_T("/include_declarations_log"), (bool)XRCCTRL(*this, "chkDeclarLog", wxCheckBox)->GetValue());
     cfg->Write(_T("/include_log_comments_variable"), (bool)XRCCTRL(*this, "chkLogComRight", wxCheckBox)->GetValue());
+
+    cfg->Write(_T("/show_docs_always"), (bool)XRCCTRL(*this, "rbDocAlways", wxRadioButton)->GetValue());
+    cfg->Write(_T("/show_docs_only"), (bool)XRCCTRL(*this, "rbDocOnly", wxRadioButton)->GetValue());
+    cfg->Write(_T("/show_docs_not"), (bool)XRCCTRL(*this, "rbDocNot", wxRadioButton)->GetValue());
 
     m_pNativeParser->RereadOptions();
     m_pFortranProject->RereadOptions();

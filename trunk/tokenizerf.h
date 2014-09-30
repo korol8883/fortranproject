@@ -9,7 +9,7 @@
 
 #include <wx/string.h>
 #include <filemanager.h>
-
+#include <vector>
 
 
 //bool cbRead(wxFile& file,wxString& st);
@@ -42,12 +42,14 @@ class Tokenizerf
 		unsigned int GetLineNumber(){ return m_LineNumber; }
 		unsigned int GetPeekedLineNumber(){ return m_PeekedLineNumber; }
 		unsigned int GetCurrentIndex(){ return m_TokenIndex; }
+		unsigned int GetLineCount(){ return m_LineStartIdx.size(); }
 		bool IsOK(){ return m_IsOK; }
 		bool SkipToOneOfChars(const char* chars, bool toLineEnd = false);
 		wxArrayString GetTokensToEOL(wxArrayString* arrStrLines = 0);
 		wxArrayString PeekTokensToEOL();
 		wxString GetCurrentLine();
 		wxString GetLineFortran();
+		wxString GetLine(unsigned int nl);
 		unsigned int GetLineStartIndex(unsigned int indexInLine);
 		unsigned int GetLineEndIndex(unsigned int indexInLine);
 		void SetDetailedParsing(bool detPars);
@@ -93,6 +95,7 @@ class Tokenizerf
 		FortranSourceForm m_SourceForm;
 		wxString m_PeekedToken;
 		bool m_DetailedParsing;
+		std::vector<unsigned int> m_LineStartIdx;
 };
 
 #endif // FTOKINIZER_H

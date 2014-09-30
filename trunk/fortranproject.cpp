@@ -13,6 +13,7 @@
 #include "jumptracker.h"
 #include "changecase.h"
 #include "tab2space.h"
+#include "docblock.h"
 #include <configurationpanel.h>
 #include <manager.h>
 #include <ccmanager.h>
@@ -586,30 +587,8 @@ void FortranProject::OnGotoDeclaration(wxCommandEvent& event)
 
     if (pToken)
     {
-        LineAddress jumpStart;
-        LineAddress jumpFinish;
-        if(ed)
-        {
-            cbStyledTextCtrl* control = ed->GetControl();
-            int curLine = control->LineFromPosition(control->GetCurrentPos());
-            jumpStart.Init(ed->GetFilename(), curLine, false);
-        }
-
-        if (cbEditor* newed = Manager::Get()->GetEditorManager()->Open(pToken->m_Filename))
-        {
-            newed->GotoLine(pToken->m_LineStart - 1);
-
-            // Track jump history
-            cbStyledTextCtrl* control = newed->GetControl();
-            int curLine = control->LineFromPosition(control->GetCurrentPos());
-            jumpFinish.Init(newed->GetFilename(), curLine, true);
-            m_pNativeParser->GetJumpTracker()->TakeJump(jumpStart, jumpFinish);
-            CheckEnableToolbar();
-        }
-        else
-        {
+        if (!GotoToken(pToken, ed))
             cbMessageBox(wxString::Format(_("Declaration not found: %s"), NameUnderCursor.c_str()), _("Warning"), wxICON_WARNING);
-        }
     }
     else
     {
@@ -617,6 +596,36 @@ void FortranProject::OnGotoDeclaration(wxCommandEvent& event)
     }
 
 } // end of OnGotoDeclaration
+
+
+bool FortranProject::GotoToken(TokenFlat* pToken, cbEditor* cured)
+{
+    LineAddress jumpStart;
+    LineAddress jumpFinish;
+    if(cured)
+    {
+        cbStyledTextCtrl* control = cured->GetControl();
+        int curLine = control->LineFromPosition(control->GetCurrentPos());
+        jumpStart.Init(cured->GetFilename(), curLine, false);
+    }
+
+    if (cbEditor* newed = Manager::Get()->GetEditorManager()->Open(pToken->m_Filename))
+    {
+        newed->GotoLine(pToken->m_LineStart - 1);
+
+        // Track jump history
+        cbStyledTextCtrl* control = newed->GetControl();
+        int curLine = control->LineFromPosition(control->GetCurrentPos());
+        jumpFinish.Init(newed->GetFilename(), curLine, true);
+        m_pNativeParser->GetJumpTracker()->TakeJump(jumpStart, jumpFinish);
+        CheckEnableToolbar();
+    }
+    else
+    {
+        return false;
+    }
+    return true;
+} // end of OnGotoToken
 
 
 void FortranProject::CodeCompletePreprocessor(int tknStart, int tknEnd, cbEditor* ed, std::vector<CCToken>& tokens)
@@ -900,8 +909,8 @@ void FortranProject::CodeComplete(const int pos, cbEditor* ed, std::vector<CCTok
     ConfigManager* cfg = Manager::Get()->GetConfigManager(_T("fortran_project"));
 
     ParserF* pParser = m_pNativeParser->GetParser();
-    TokensArrayFlatClass tokensTmp;
-    TokensArrayFlat* result = tokensTmp.GetTokens();
+    m_TokensCCList.Clear();
+    TokensArrayFlat* result = m_TokensCCList.GetTokens();
 
     cbStyledTextCtrl* control = ed->GetControl();
     const int start = control->WordStartPosition(pos, true);
@@ -926,7 +935,8 @@ void FortranProject::CodeComplete(const int pos, cbEditor* ed, std::vector<CCTok
     bool isAfterPercent;
     int tokenKind;
 
-    if (!pParser->FindMatchTokensForCodeCompletion(m_UseSmartCC, m_LogOnlyUseAssoc, m_LogOnlyPublicNames, NameUnderCursor, ed, *result, isAfterPercent, tokenKind))
+    if (!pParser->FindMatchTokensForCodeCompletion(m_UseSmartCC, m_LogOnlyUseAssoc, m_LogOnlyPublicNames,
+                                                   NameUnderCursor, ed, *result, isAfterPercent, tokenKind))
         return;
 
     if (result->size() <= m_MaxMatch)
@@ -975,7 +985,7 @@ void FortranProject::CodeComplete(const int pos, cbEditor* ed, std::vector<CCTok
             else
                 tmp << token->m_DisplayName;
 
-            tokens.push_back(CCToken(wxNOT_FOUND, tmp, token->m_DisplayName, 5, iidx));
+            tokens.push_back(CCToken(i, tmp, token->m_DisplayName, 5, iidx));
         }
 
         EditorColourSet* theme = ed->GetColourSet();
@@ -992,6 +1002,7 @@ void FortranProject::CodeComplete(const int pos, cbEditor* ed, std::vector<CCTok
                 if (!m_LexerKeywordsToInclude[i])
                     continue;
 
+                int oldSize = result->size();
                 wxString keywords = theme->GetKeywords(lang, i);
                 wxStringTokenizer tkz(keywords, _T(" \t\r\n"), wxTOKEN_STRTOK);
                 while (tkz.HasMoreTokens())
@@ -1001,6 +1012,11 @@ void FortranProject::CodeComplete(const int pos, cbEditor* ed, std::vector<CCTok
                     if ( (m_UseSmartCC && kw.Lower().StartsWith(NameUnderCursorLw) && m_pKeywordsParser->HasTokenSuitableKind(kw,tokenKind))
                          || (!m_UseSmartCC && kw.Lower().StartsWith(NameUnderCursorLw)) )
                     {
+                        // check for unique_strings
+                        if (unique_strings.find(kw) != unique_strings.end())
+                            continue;
+                        unique_strings.insert(kw);
+
                         switch (kwcase)
                         {
                             case 0:
@@ -1023,7 +1039,15 @@ void FortranProject::CodeComplete(const int pos, cbEditor* ed, std::vector<CCTok
                                 break;
                             }
                         }
-                        tokens.push_back(CCToken(wxNOT_FOUND, kw, iidx));
+                        m_pKeywordsParser->FindTokens(kw, *result);
+                        int newSize = result->size();
+                        if (newSize > oldSize && (result->Item(newSize-1)->m_TokenKind & tokenKind))
+                        {
+                            tokens.push_back(CCToken(newSize-1, kw, iidx));
+                            oldSize = newSize;
+                        }
+                        else
+                            tokens.push_back(CCToken(wxNOT_FOUND, kw, iidx));
                     }
                 }
             }
@@ -1242,8 +1266,8 @@ std::vector<FortranProject::CCCallTip> FortranProject::GetCallTips(int pos, int 
             if (found)
             {
                 definition << _T('\n') << argDecl;
-                if (m_ComVariab && !argDescription.IsEmpty())
-                    definition << _T('\n') << argDescription;
+                if (!argDescription.IsEmpty())
+                    definition << _T('\n') << _T("! ") << argDescription;
             }
         }
     }
@@ -1308,8 +1332,8 @@ std::vector<FortranProject::CCCallTip> FortranProject::GetCallTips(int pos, int 
                 if (m_pNativeParser->GetParser()->FindTokenDeclaration(*token, argName, argDecl, argDescription))
                 {
                     definition << _T('\n') << argDecl;
-                    if (m_ComVariab && !argDescription.IsEmpty())
-                        definition << _T('\n') << argDescription;
+                    if (!argDescription.IsEmpty())
+                        definition << _T('\n') << _T("! ") << argDescription;
                 }
             }
             hlStart += mStart;
@@ -1373,7 +1397,7 @@ std::vector<FortranProject::CCToken> FortranProject::GetTokenAt(int position, cb
     bool isAfterPercent = false;
     pParser->FindMatchTokensForToolTip(nameUnder, endOfWord, ed, m_LogOnlyUseAssoc, m_LogOnlyPublicNames, *result, isAfterPercent);
     if (result->IsEmpty())
-        m_pKeywordsParser->GetTokensForToolTip(nameUnder, *result);
+        m_pKeywordsParser->FindTokens(nameUnder, *result);
 
     if (result->size() > 32 || result->size() == 0)
         return tokens;
@@ -1390,8 +1414,6 @@ std::vector<FortranProject::CCToken> FortranProject::GetTokenAt(int position, cb
         if (token->m_TokenKind == tkVariable)
         {
             msg << token->m_TypeDefinition << _T(" :: ") << token->m_DisplayName << token->m_Args << _T("\n");
-            if (m_ComVariab && !token->m_PartLast.IsEmpty())
-                msg  << token->m_PartLast << _T("\n");
         }
         else if (token->m_TokenKind == tkType)
         {
@@ -1439,6 +1461,9 @@ std::vector<FortranProject::CCToken> FortranProject::GetTokenAt(int position, cb
         {
             msg << token->GetTokenKindString() << _T(" ") << token->m_DisplayName << token->m_Args << _T("\n");
         }
+        wxString doc = HtmlDoc::GetDocForTooltip(token);
+        if (!doc.IsEmpty())
+            msg << _T("! ") << doc << _T("\n");
     }
     if (result->GetCount() == 1 && !type_bound)
     {
@@ -1582,7 +1607,17 @@ void FortranProject::RereadOptions()
     m_LogDeclar = cfg->ReadBool(_T("/include_declarations_log"), true);
     m_LogComVariab = cfg->ReadBool(_T("/include_log_comments_variable"), true);
 
-    m_ComVariab = cfg->ReadBool(_T("/include_comments_variable"), true);
+    bool docsOpt = cfg->ReadBool(_T("/show_docs_always"), false);
+    if (docsOpt)
+        m_DocsShowOption = dsoAlways;
+    else
+    {
+        docsOpt = cfg->ReadBool(_T("/show_docs_only"), true);
+        if (docsOpt)
+            m_DocsShowOption = dsoOnly;
+        else
+            m_DocsShowOption = dsoNot;
+    }
 
     if (!m_pFortranLog && m_LogUseWindow)
     {
@@ -1761,14 +1796,54 @@ void FortranProject::OnMenuEditPaste(wxCommandEvent& event)
         event.Skip();
 }
 
-wxString FortranProject::GetDocumentation(const CCToken& /* token */)
+wxString FortranProject::GetDocumentation(const CCToken& tok)
 {
-    return wxEmptyString;
+    if (tok.id == wxNOT_FOUND || m_DocsShowOption == dsoNot)
+        return wxEmptyString;
+
+    TokensArrayFlat* tokens = m_TokensCCList.GetTokens();
+    if (tok.id >= int(tokens->GetCount()))
+        return wxEmptyString;
+
+    wxString doc;
+    TokenFlat* token = tokens->Item(tok.id);
+    //doc << token->m_DisplayName + _T("\n") + token->m_DocString;
+
+    bool hasDoc;
+    doc = HtmlDoc::GenerateHtmlDoc(token, tok.id, hasDoc);
+    if (m_DocsShowOption == dsoOnly && !hasDoc)
+        return wxEmptyString;
+
+    return doc;
 }
 
 wxString FortranProject::OnDocumentationLink(wxHtmlLinkEvent& event, bool& dismissPopup)
 {
-    return wxEmptyString;
+    bool isGoto = false;
+    long int tokenIdx;
+    wxString doc = HtmlDoc::OnDocumentationLink(event, dismissPopup, isGoto, tokenIdx);
+
+    if (isGoto)
+    {
+        TokensArrayFlat* tokens = m_TokensCCList.GetTokens();
+        if (tokenIdx >= long(tokens->GetCount()))
+            return wxEmptyString;
+
+        TokenFlat* pToken = tokens->Item(tokenIdx);
+        if ( pToken->m_Filename.EndsWith(UnixFilename(_T("/fortranproject/fortran_intrinsic_modules.f90")))
+          || pToken->m_Filename.EndsWith(UnixFilename(_T("/fortranproject/fortran_procedures.f90"))) )
+        {
+            // don't go to fortran_intrinsic_modules.f90
+            dismissPopup = false;
+            return doc;
+        }
+        cbEditor* ed = Manager::Get()->GetEditorManager()->GetBuiltinActiveEditor();
+        if (!ed)
+            return doc;
+        if (!GotoToken(pToken, ed))
+            dismissPopup = false;
+    }
+    return doc;
 }
 
 

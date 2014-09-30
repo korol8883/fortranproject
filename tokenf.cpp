@@ -147,6 +147,7 @@ TokenFlat::TokenFlat(const TokenF* tok)
         m_ExtendsType = tok->m_ExtendsType;
     }
     m_PartLast = tok->m_PartLast;
+    m_DocString = tok->m_DocString;
 }
 
 TokenFlat::TokenFlat(const TokenFlat* tok)
@@ -179,6 +180,7 @@ TokenFlat::TokenFlat(const TokenFlat* tok)
         m_ExtendsType = tok->m_ExtendsType;
     }
     m_PartLast = tok->m_PartLast;
+    m_DocString = tok->m_DocString;
     m_Rename = tok->m_Rename;
 }
 
@@ -206,6 +208,11 @@ TokensArrayFlatClass::TokensArrayFlatClass()
 }
 
 TokensArrayFlatClass::~TokensArrayFlatClass()
+{
+    this->Clear();
+}
+
+void TokensArrayFlatClass::Clear()
 {
     for(size_t i=0; i<m_Tokens.GetCount(); i++)
     {

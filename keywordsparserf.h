@@ -35,7 +35,7 @@ class KeywordsParserF
         ~KeywordsParserF();
         bool HasTokenSuitableKind(const wxString& name, int tokKind);
         void GetCallTips(const wxString& name, wxArrayString& callTips, TokensArrayFlat* result);
-        void GetTokensForToolTip(const wxString& name, TokensArrayFlat& result);
+        void FindTokens(const wxString& name, TokensArrayFlat& result);
         ParserF* GetParser(){ return &m_Parser; };
         const wxArrayString* GetKeywords(CompilerDirective cdir);
 

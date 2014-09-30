@@ -13,6 +13,7 @@
 #include "moduletokenf.h"
 #include "submoduletokenf.h"
 #include "includedb.h"
+#include "docblock.h"
 #include <set>
 
 
@@ -49,11 +50,14 @@ class ParserThreadF
 		IncludeDB* m_pIncludeDB;
 
 		wxString m_LastTokenName;
+		DocBlock m_ParentDocs;
 
 		unsigned int m_InterfaceOperator;
 		unsigned int m_InterfaceAssignment;
 		unsigned int m_InterfaceRead;
 		unsigned int m_InterfaceWrite;
+
+		const wxString m_Briefend;
 
         void InitSecondEndPart();
 		void HandleModule();
@@ -83,6 +87,10 @@ class ParserThreadF
 		void ParseTypeBoundProcedures(const wxString& firstWord, bool breakAtEOL, bool passIn=true);
 		void MakeArrayStringLower(wxArrayString &arr, wxArrayString &arrLw);
 		void ChangeTokenAccess(ModuleTokenF* modToken, TokenF* token);
+		void GetDocBlock(DocBlock &docs, bool lookDown, unsigned int ln);
+		wxString TrimRepetitives(wxString& inStr);
+		wxString GetDocLine(unsigned int ln);
+		void AddParamDocs(TokenF* pParToken, DocBlock &docs);
 
         std::set<wxString> m_KnownEndSecPart;
 };

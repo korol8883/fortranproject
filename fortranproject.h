@@ -27,6 +27,13 @@
 #include "finfowindow.h"
 #include "lineaddress.h"
 
+enum DocsShowOptions
+{
+    dsoAlways,
+    dsoOnly,
+    dsoNot
+};
+
 
 class FortranProject : public cbCodeCompletionPlugin
 {
@@ -83,6 +90,7 @@ class FortranProject : public cbCodeCompletionPlugin
         void OnCleanProjectStarted(CodeBlocksEvent& event);
         void OnCleanWorkspaceStarted(CodeBlocksEvent& event);
         void OnGotoDeclaration(wxCommandEvent& event);
+        bool GotoToken(TokenFlat* pToken, cbEditor* cured);
         void OnReparseActiveEditor(CodeBlocksEvent& event);
         void OnEditorActivated(CodeBlocksEvent& event);
         void OnEditorClose(CodeBlocksEvent& event);
@@ -147,7 +155,7 @@ class FortranProject : public cbCodeCompletionPlugin
         bool                               m_LogOnlyPublicNames;
         bool                               m_LogShowTypeVariables;
 
-        bool                               m_ComVariab;
+        DocsShowOptions                    m_DocsShowOption;
 
         FInfoWindow*                       m_pFortranLog;
 
@@ -157,6 +165,8 @@ class FortranProject : public cbCodeCompletionPlugin
 
         std::map<wxString,int>             m_IdxCallTipPage;
         wxTimer                            m_TimerReparseEditor;
+
+        TokensArrayFlatClass               m_TokensCCList;
 
         DECLARE_EVENT_TABLE()
 };

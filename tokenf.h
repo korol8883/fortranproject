@@ -104,6 +104,8 @@ class TokenF
 		TokenF* m_pParent;
 		TokensArrayF m_Children;
 
+		wxString m_DocString;
+
 	protected:
 	private:
 };
@@ -141,6 +143,7 @@ class TokensArrayFlatClass
     public:
         TokensArrayFlatClass();
         ~TokensArrayFlatClass();
+        void Clear();
         TokensArrayFlat* GetTokens(){return &m_Tokens;};
         TokensArrayFlat m_Tokens;
         bool HasTokensWithName(const wxString&, ArrOfSizeT&);

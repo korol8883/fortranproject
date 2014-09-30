@@ -239,13 +239,6 @@
 											<flag>wxBOTTOM|wxLEFT|wxRIGHT|wxEXPAND|wxALIGN_LEFT|wxALIGN_TOP</flag>
 											<border>8</border>
 										</object>
-										<object class="sizeritem">
-											<object class="wxCheckBox" name="chkComRight">
-												<label>Use comment on the right of variable declaration as a description of the variable</label>
-											</object>
-											<flag>wxALL|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL</flag>
-											<border>8</border>
-										</object>
 									</object>
 									<flag>wxTOP|wxLEFT|wxRIGHT|wxEXPAND|wxALIGN_LEFT|wxALIGN_TOP</flag>
 									<border>8</border>
@@ -281,14 +274,14 @@
 											<object class="wxCheckBox" name="chkFloatSB">
 												<label>Display as free floating/docking window</label>
 											</object>
-											<flag>wxBOTTOM|wxLEFT|wxRIGHT|wxEXPAND|wxALIGN_LEFT|wxALIGN_TOP</flag>
+											<flag>wxBOTTOM|wxLEFT|wxRIGHT|wxALIGN_LEFT|wxALIGN_TOP</flag>
 											<border>8</border>
 										</object>
 										<object class="sizeritem">
 											<object class="wxCheckBox" name="chkBottomTree">
 												<label>Display member list in separate tree</label>
 											</object>
-											<flag>wxBOTTOM|wxLEFT|wxRIGHT|wxEXPAND|wxALIGN_LEFT|wxALIGN_TOP</flag>
+											<flag>wxBOTTOM|wxLEFT|wxRIGHT|wxALIGN_LEFT|wxALIGN_TOP</flag>
 											<border>8</border>
 											<option>1</option>
 										</object>
@@ -296,7 +289,7 @@
 											<object class="wxCheckBox" name="chkSortSB">
 												<label>Sort symbols alphabetically</label>
 											</object>
-											<flag>wxBOTTOM|wxLEFT|wxRIGHT|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL</flag>
+											<flag>wxBOTTOM|wxLEFT|wxRIGHT|wxALIGN_LEFT|wxALIGN_TOP</flag>
 											<border>8</border>
 											<option>1</option>
 										</object>
@@ -304,7 +297,7 @@
 											<object class="wxCheckBox" name="chkLocVarSB">
 												<label>Show local variables</label>
 											</object>
-											<flag>wxBOTTOM|wxLEFT|wxRIGHT|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL</flag>
+											<flag>wxBOTTOM|wxLEFT|wxRIGHT|wxALIGN_LEFT|wxALIGN_TOP</flag>
 											<border>8</border>
 											<option>1</option>
 										</object>
@@ -312,7 +305,7 @@
 											<object class="wxCheckBox" name="chkInclSepar">
 												<label>Show &apos;include&apos; files separately</label>
 											</object>
-											<flag>wxBOTTOM|wxLEFT|wxRIGHT|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL</flag>
+											<flag>wxBOTTOM|wxLEFT|wxRIGHT|wxALIGN_LEFT|wxALIGN_TOP</flag>
 											<border>8</border>
 											<option>1</option>
 										</object>
@@ -325,7 +318,7 @@
 						<label>FSymbols browser</label>
 					</object>
 					<object class="notebookpage">
-						<object class="wxPanel" name="ID_PANEL1">
+						<object class="wxPanel" name="tabInfo">
 							<object class="wxBoxSizer">
 								<orient>wxVERTICAL</orient>
 								<object class="sizeritem">
@@ -378,6 +371,54 @@
 							</object>
 						</object>
 						<label>Fortran info</label>
+					</object>
+					<object class="notebookpage">
+						<object class="wxPanel" name="tabDocs">
+							<object class="wxBoxSizer">
+								<orient>wxVERTICAL</orient>
+								<object class="sizeritem">
+									<object class="wxStaticText" name="ID_STATICTEXT4">
+										<label>Show documentation window side-by-side to the code-completion list:</label>
+										<style>wxALIGN_LEFT</style>
+									</object>
+									<flag>wxALL|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL</flag>
+									<border>10</border>
+								</object>
+								<object class="sizeritem">
+									<object class="wxBoxSizer">
+										<orient>wxVERTICAL</orient>
+										<object class="sizeritem">
+											<object class="wxRadioButton" name="rbDocAlways">
+												<label>Always</label>
+												<style>wxRB_GROUP</style>
+											</object>
+											<flag>wxALL|wxEXPAND|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL</flag>
+											<border>5</border>
+											<option>1</option>
+										</object>
+										<object class="sizeritem">
+											<object class="wxRadioButton" name="rbDocOnly">
+												<label>Only when description is available</label>
+											</object>
+											<flag>wxALL|wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
+											<border>5</border>
+											<option>1</option>
+										</object>
+										<object class="sizeritem">
+											<object class="wxRadioButton" name="rbDocNot">
+												<label>Do not show</label>
+											</object>
+											<flag>wxALL|wxEXPAND|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL</flag>
+											<border>5</border>
+											<option>1</option>
+										</object>
+									</object>
+									<flag>wxLEFT|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL</flag>
+									<border>20</border>
+								</object>
+							</object>
+						</object>
+						<label>Documentation</label>
 					</object>
 				</object>
 				<flag>wxLEFT|wxEXPAND|wxALIGN_LEFT|wxALIGN_TOP</flag>

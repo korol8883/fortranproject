@@ -50,6 +50,7 @@
 		</VirtualTargets>
 		<ExtraCommands>
 			<Add after="zip -j9 ..\..\..\devel30\share\codeblocks\FortranProject.zip manifest.xml resources\workspacebrowserf.xrc resources\settings.xrc resources\fortranprojecttoolbar.xrc" />
+			<Add after="zip -j9 ..\..\..\devel30\share\codeblocks\FortranProject.zip resources\changecase.xrc resources\tab2space.xrc" />
 			<Add after="zip -r9 ..\..\..\devel30\share\codeblocks\FortranProject.zip images" />
 			<Add after=".\update30.bat" />
 			<Mode after="always" />
@@ -60,8 +61,8 @@
 		<Unit filename="ccsmartfilter.h" />
 		<Unit filename="changecase.cpp" />
 		<Unit filename="changecase.h" />
-                <Unit filename="docblock.cpp" />
-                <Unit filename="docblock.h" />
+		<Unit filename="docblock.cpp" />
+		<Unit filename="docblock.h" />
 		<Unit filename="farrays.cpp" />
 		<Unit filename="farrays.h" />
 		<Unit filename="finfowindow.cpp" />

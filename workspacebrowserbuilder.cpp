@@ -25,9 +25,7 @@ WorkspaceBrowserBuilder::WorkspaceBrowserBuilder(ParserF* parser, wxTreeCtrl* tr
     m_AtWork = false;
     m_pImlist = new wxImageList(16, 16);
     wxBitmap bmp;
-    wxString prefix;
     wxString prefix2;
-    prefix = ConfigManager::GetDataFolder() + _T("/images/codecompletion/");
     prefix2 = ConfigManager::GetDataFolder() + _T("/images/fortranproject/");
 
     bmp = cbLoadBitmap(prefix2 + _T("ctor_public.png"), wxBITMAP_TYPE_PNG);
@@ -60,7 +58,7 @@ WorkspaceBrowserBuilder::WorkspaceBrowserBuilder(ParserF* parser, wxTreeCtrl* tr
     bmp = cbLoadBitmap(prefix2 + _T("symbols_folder.png"), wxBITMAP_TYPE_PNG);
     m_pImlist->Add(bmp);
     m_ImgNr["symbols_folder"] = 9;
-    bmp = cbLoadBitmap(prefix + _T("preproc.png"), wxBITMAP_TYPE_PNG);
+    bmp = cbLoadBitmap(prefix2 + _T("preproc.png"), wxBITMAP_TYPE_PNG);
     m_pImlist->Add(bmp);
     m_ImgNr["preproc"] = 10;
     bmp = cbLoadBitmap(prefix2 + _T("var_public.png"), wxBITMAP_TYPE_PNG);

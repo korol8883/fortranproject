@@ -14,6 +14,7 @@
 #include "changecase.h"
 #include "tab2space.h"
 #include "docblock.h"
+#include "bindto.h"
 #include <configurationpanel.h>
 #include <manager.h>
 #include <ccmanager.h>
@@ -74,6 +75,7 @@ int idViewSymbolsBrowser   = wxNewId();
 int idMenuGenerateMakefile = wxNewId();
 int idMenuChangeCase       = wxNewId();
 int idMenuTab2Space        = wxNewId();
+int idMenuBindTo           = wxNewId();
 int idReparseEditorTimer   = wxNewId();
 
 #ifndef __WXMSW__
@@ -91,6 +93,7 @@ BEGIN_EVENT_TABLE(FortranProject, cbCodeCompletionPlugin)
     EVT_MENU(idMenuGenerateMakefile, FortranProject::OnGenerateMakefile)
     EVT_MENU(idMenuChangeCase, FortranProject::OnChangeCase)
     EVT_MENU(idMenuTab2Space, FortranProject::OnTab2Space)
+    EVT_MENU(idMenuBindTo, FortranProject::OnBindTo)
 #ifndef __WXMSW__
     EVT_MENU(idMenuEditPaste, FortranProject::OnMenuEditPaste)
 #endif
@@ -127,8 +130,6 @@ FortranProject::~FortranProject()
 
 void FortranProject::OnAttach()
 {
-    m_EditMenu = 0;
-    m_EditMenuSeparator = 0;
     m_ViewMenu = 0;
     m_FortranToolsMenu = 0;
 
@@ -202,6 +203,7 @@ void FortranProject::OnRelease(bool appShutDown)
         m_FortranToolsMenu->Delete(idMenuGenerateMakefile);
         m_FortranToolsMenu->Delete(idMenuChangeCase);
         m_FortranToolsMenu->Delete(idMenuTab2Space);
+        m_FortranToolsMenu->Delete(idMenuBindTo);
     }
 } // end of OnRelease
 
@@ -445,6 +447,7 @@ void FortranProject::BuildMenu(wxMenuBar* menuBar)
         submenuJump->Enable(idMenuJumpHome, false);
         submenuJump->Enable(idMenuJumpForward, false);
 
+        m_FortranToolsMenu->Insert(0, idMenuBindTo, _("Bind to C"));
         m_FortranToolsMenu->Insert(0, idMenuTab2Space, _("Tab2space"));
         m_FortranToolsMenu->Insert(0, idMenuChangeCase, _("Change case"));
         m_FortranToolsMenu->Insert(0, idMenuGenerateMakefile, _("Generate Makefile"));
@@ -1305,7 +1308,7 @@ std::vector<FortranProject::CCCallTip> FortranProject::GetCallTips(int pos, int 
             int commasDif = commas - nCommas;
             if (commasDif > 0)
             {
-                for (int i=0; i< commasDif; i++)
+                for (int j=0; j< commasDif; i++)
                 {
                     ctdef << _T(", *???*");
                 }
@@ -1573,11 +1576,6 @@ cbConfigurationPanel* FortranProject::GetConfigurationPanel(wxWindow* parent)
     return dlg;
 }
 
-int FortranProject::Configure()
-{
-    return 0;
-}
-
 void FortranProject::RereadOptions()
 {
     ConfigManager* cfg = Manager::Get()->GetConfigManager(_T("fortran_project"));
@@ -1739,6 +1737,12 @@ void FortranProject::OnTab2Space(wxCommandEvent& event)
 {
     Tab2Space tab2SpaceDlg(Manager::Get()->GetAppWindow());
     tab2SpaceDlg.ShowModal();
+}
+
+void FortranProject::OnBindTo(wxCommandEvent& event)
+{
+    Bindto bindto(Manager::Get()->GetAppWindow(), m_pNativeParser->GetParser());
+    bindto.ShowModal();
 }
 
 void FortranProject::OnReparseEditorTimer(wxTimerEvent& event)

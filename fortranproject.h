@@ -62,7 +62,6 @@ class FortranProject : public cbCodeCompletionPlugin
         virtual int GetConfigurationGroup() const { return cgEditor; }
         void ShowInfoLog(TokensArrayFlat* result, bool isAfterPercent);
         cbConfigurationPanel* GetConfigurationPanel(wxWindow* parent);
-        int Configure();
         void RereadOptions();
         void CheckEnableToolbar();
 
@@ -119,6 +118,7 @@ class FortranProject : public cbCodeCompletionPlugin
         void OnGenerateMakefile(wxCommandEvent& event);
         void OnChangeCase(wxCommandEvent& event);
         void OnTab2Space(wxCommandEvent& event);
+        void OnBindTo(wxCommandEvent& event);
 
         bool m_InitDone;
 
@@ -128,8 +128,6 @@ class FortranProject : public cbCodeCompletionPlugin
         int                                m_LastPosForCodeCompletion;
         wxTimer                            m_TimerCodeCompletion;
         cbEditor*                          m_pCodeCompletionLastEditor;
-        wxMenu*                            m_EditMenu;
-        wxMenuItem*                        m_EditMenuSeparator;
         wxMenu*                            m_ViewMenu;
         wxMenu*                            m_FortranToolsMenu;
 

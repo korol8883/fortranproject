@@ -874,6 +874,7 @@ void ParserThreadF::HandleType(bool& needDefault, TokenF* &newToken)
     wxString exTypeName;
     wxArrayString lineTok = m_Tokens.GetTokensToEOL();
     wxArrayString lineTokLw;
+    wxString wholeLine;
     bool isAbstract = false;
     MakeArrayStringLower(lineTok, lineTokLw);
     int idx = lineTok.Index(_T("::"));
@@ -924,6 +925,18 @@ void ParserThreadF::HandleType(bool& needDefault, TokenF* &newToken)
             //something wrong
             return;
         }
+
+        for (int i=0; i<idx; i++)
+        {
+            if (lineTokLw.Item(i+1).StartsWith(_T("(")) || i+1 == idx)
+                wholeLine << lineTokLw.Item(i);
+            else
+                wholeLine << lineTokLw.Item(i) << _T(",");
+
+        }
+        wholeLine << _T("::");
+        for (size_t i=idx+1; i<lineTokLw.size(); i++)
+            wholeLine << lineTokLw.Item(i);
     }
     else
     {
@@ -936,12 +949,15 @@ void ParserThreadF::HandleType(bool& needDefault, TokenF* &newToken)
             //something wrong
             return;
         }
+        for (size_t i=0; i<lineTokLw.size(); i++)
+            wholeLine << _T(" ") << lineTokLw.Item(i);
     }
     TokenF* old_parent = m_pLastParent;
     m_pLastParent = DoAddToken(tkType, typeName);
     m_pLastParent->m_ExtendsType = exTypeName;
     m_pLastParent->m_TokenAccess = taKind;
     m_pLastParent->m_IsAbstract = isAbstract;
+    m_pLastParent->m_TypeDefinition = wholeLine;
 
     // Parse documentation
 	DocBlock docs;
@@ -2247,7 +2263,7 @@ void ParserThreadF::GetDocBlock(DocBlock &docs, bool lookDown, unsigned int ln)
 
                 if (!isbrief)
                 {
-                    size_t sidx = docLines[i].find(_T("param"),1);
+                    sidx = docLines[i].find(_T("param"),1);
                     if (sidx == 1)
                         isparam = true;
                 }

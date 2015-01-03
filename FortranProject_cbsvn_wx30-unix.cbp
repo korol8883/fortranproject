@@ -45,14 +45,18 @@
 			<Add after="zip -r9  ../../../devel30/share/codeblocks/FortranProject.zip images" />
 			<Add after="./update30" />
 		</ExtraCommands>
+		<Unit filename="bindto.cpp" />
+		<Unit filename="bindto.h" />
+		<Unit filename="bindtonewtype.cpp" />
+		<Unit filename="bindtonewtype.h" />
 		<Unit filename="bufferparserthread.cpp" />
 		<Unit filename="bufferparserthread.h" />
 		<Unit filename="ccsmartfilter.cpp" />
 		<Unit filename="ccsmartfilter.h" />
 		<Unit filename="changecase.cpp" />
 		<Unit filename="changecase.h" />
-                <Unit filename="docblock.cpp" />
-                <Unit filename="docblock.h" />
+		<Unit filename="docblock.cpp" />
+		<Unit filename="docblock.h" />
 		<Unit filename="farrays.cpp" />
 		<Unit filename="farrays.h" />
 		<Unit filename="finfowindow.cpp" />
@@ -106,12 +110,18 @@
 		<Unit filename="workspacebrowserf.h" />
 		<Unit filename="workspaceparserthread.cpp" />
 		<Unit filename="workspaceparserthread.h" />
+		<Unit filename="wxsmith/BindtoNewType.wxs" />
+		<Unit filename="wxsmith/Bindto.wxs" />
 		<Extensions>
 			<code_completion />
 			<debugger />
 			<envvars />
 			<wxsmith version="1">
 				<gui name="wxWidgets" src="" main="" init_handlers="necessary" language="CPP" />
+				<resources>
+					<wxDialog wxs="wxsmith/Bindto.wxs" src="bindto.cpp" hdr="bindto.h" fwddecl="0" i18n="1" name="Bindto" language="CPP" />
+					<wxDialog wxs="wxsmith/BindtoNewType.wxs" src="bindtonewtype.cpp" hdr="bindtonewtype.h" fwddecl="0" i18n="1" name="BindtoNewType" language="CPP" />
+				</resources>
 			</wxsmith>
 		</Extensions>
 	</Project>

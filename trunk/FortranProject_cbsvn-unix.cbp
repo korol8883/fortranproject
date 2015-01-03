@@ -14,16 +14,17 @@
 				<Option host_application="codeblocks" />
 				<Option run_host_application_in_terminal="0" />
 				<Compiler>
+					<Add option="-Wshadow" />
 					<Add option="-Wall" />
 					<Add option="-ansi" />
 					<Add option="$(#CB_RELEASE_TYPE)" />
 					<Add option="-fPIC" />
 					<Add option="-fexceptions" />
 					<Add option="-Winvalid-pch" />
+					<Add option="`wx-config --cflags`" />
 					<Add option="-DcbDEBUG" />
 					<Add option="-DCB_PRECOMP" />
 					<Add option="-DWX_PRECOMP" />
-					<Add option="`wx-config --cflags`" />
 					<Add directory="../../../include" />
 					<Add directory="../../../sdk/wxscintilla/include" />
 					<Add directory="../FortranProject" />
@@ -43,6 +44,10 @@
 			<Add after="zip -r9  ../../../devel/share/codeblocks/FortranProject.zip images" />
 			<Add after="./update" />
 		</ExtraCommands>
+		<Unit filename="bindto.cpp" />
+		<Unit filename="bindto.h" />
+		<Unit filename="bindtonewtype.cpp" />
+		<Unit filename="bindtonewtype.h" />
 		<Unit filename="bufferparserthread.cpp" />
 		<Unit filename="bufferparserthread.h" />
 		<Unit filename="ccsmartfilter.cpp" />
@@ -104,12 +109,18 @@
 		<Unit filename="workspacebrowserf.h" />
 		<Unit filename="workspaceparserthread.cpp" />
 		<Unit filename="workspaceparserthread.h" />
+		<Unit filename="wxsmith/BindtoNewType.wxs" />
+		<Unit filename="wxsmith/Bindto.wxs" />
 		<Extensions>
 			<code_completion />
 			<debugger />
 			<envvars />
 			<wxsmith version="1">
 				<gui name="wxWidgets" src="" main="" init_handlers="necessary" language="CPP" />
+				<resources>
+					<wxDialog wxs="wxsmith/Bindto.wxs" src="bindto.cpp" hdr="bindto.h" fwddecl="0" i18n="1" name="Bindto" language="CPP" />
+					<wxDialog wxs="wxsmith/BindtoNewType.wxs" src="bindtonewtype.cpp" hdr="bindtonewtype.h" fwddecl="0" i18n="1" name="BindtoNewType" language="CPP" />
+				</resources>
 			</wxsmith>
 		</Extensions>
 	</Project>

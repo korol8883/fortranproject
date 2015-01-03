@@ -78,6 +78,10 @@ class ParserF
         void SetNewCurrentTokens(TokensArrayF* pTokens);
         void ConnectToNewCurrentTokens();
         void ChangeLineIfRequired(cbEditor* ed, wxString& curLine);
+        TokenF* FindTokenBetweenChildren(TokenF* pToken, const wxString& name);
+        void GetAddress(TokenF* token, wxArrayString& address);
+        TokenF* FindToken(const TokenFlat &token, TokensArrayF* children=NULL);
+
     protected:
     private:
         void FindMatchChildren(TokensArrayF &m_Children, wxString search, TokensArrayF& result, bool exact=false);
@@ -111,7 +115,6 @@ class ParserF
         void ClearTokens(TokensArrayF* pTokens);
         void ParseIntrinsicModules();
         void ChangeCaseChildren(TokensArrayF &children, int dispCase);
-        TokenF* FindToken(const TokenFlat &token, TokensArrayF* children=NULL);
         void GetAddressOfToken(TokenF* token, wxArrayString& address);
 
         TokensArrayF* m_pTokens;

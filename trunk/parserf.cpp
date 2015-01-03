@@ -2632,6 +2632,17 @@ void ParserF::FindUseAssociatedTokens(bool onlyPublicNames, wxArrayString& addre
     ClearBoolArray3D(m_CanBeSeenVisited);
 }
 
+void ParserF::GetAddress(TokenF* token, wxArrayString& address)
+{
+    if (token->m_TokenKind == tkFile)
+        address.Insert(token->m_Filename, 0);
+    else
+    {
+        address.Insert(token->m_Name,0);
+        GetAddress(token->m_pParent, address);
+    }
+}
+
 void ParserF::FindAddress(cbEditor* ed, wxArrayString& address)
 {
     // Address is: fileName, module_name, sub_name and etc.
@@ -3784,5 +3795,18 @@ void ParserF::GetAddressOfToken(TokenF* token, wxArrayString& address)
         address.Add(token->m_Filename);
     else
         address.Add(token->m_Name);
+}
+
+TokenF* ParserF::FindTokenBetweenChildren(TokenF* pToken, const wxString& name)
+{
+    TokensArrayF* pChildren = &pToken->m_Children;
+
+    wxString nameLw = name.Lower();
+    for (size_t i=0; i<pChildren->GetCount(); i++)
+    {
+        if (pChildren->Item(i)->m_Name.IsSameAs(nameLw))
+            return pChildren->Item(i);
+    }
+    return NULL;
 }
 

@@ -15,11 +15,35 @@
 //(*IdInit(Bindto)
 const long Bindto::ID_BTOACTIVEPROJECT = wxNewId();
 const long Bindto::ID_BTOCURRENTFILE = wxNewId();
+const long Bindto::ID_STATICTEXT2 = wxNewId();
+const long Bindto::ID_TEXTCTRL1 = wxNewId();
+const long Bindto::ID_STATICTEXT3 = wxNewId();
+const long Bindto::ID_STATICTEXT8 = wxNewId();
+const long Bindto::ID_STATICTEXT5 = wxNewId();
+const long Bindto::ID_PANEL2 = wxNewId();
 const long Bindto::ID_LV_TYPES = wxNewId();
 const long Bindto::ID_BUTTON_ADD = wxNewId();
 const long Bindto::ID_BUTTON_EDIT = wxNewId();
 const long Bindto::ID_BUTTON_REMOVE = wxNewId();
 const long Bindto::ID_BUTTON_DEFAULTS = wxNewId();
+const long Bindto::ID_PANEL1 = wxNewId();
+const long Bindto::ID_STATICTEXT1 = wxNewId();
+const long Bindto::ID_CHECKBOX4 = wxNewId();
+const long Bindto::ID_TEXTCTRL4 = wxNewId();
+const long Bindto::ID_CHECKBOX5 = wxNewId();
+const long Bindto::ID_TEXTCTRL5 = wxNewId();
+const long Bindto::ID_STATICTEXT4 = wxNewId();
+const long Bindto::ID_CHECKBOX6 = wxNewId();
+const long Bindto::ID_PANEL3 = wxNewId();
+const long Bindto::ID_STATICTEXT6 = wxNewId();
+const long Bindto::ID_CHECKBOX1 = wxNewId();
+const long Bindto::ID_TEXTCTRL2 = wxNewId();
+const long Bindto::ID_CHECKBOX2 = wxNewId();
+const long Bindto::ID_TEXTCTRL3 = wxNewId();
+const long Bindto::ID_STATICTEXT7 = wxNewId();
+const long Bindto::ID_STATICTEXT9 = wxNewId();
+const long Bindto::ID_PANEL4 = wxNewId();
+const long Bindto::ID_NOTEBOOK1 = wxNewId();
 //*)
 
 BEGIN_EVENT_TABLE(Bindto,wxDialog)
@@ -29,56 +53,156 @@ BEGIN_EVENT_TABLE(Bindto,wxDialog)
 END_EVENT_TABLE()
 
 wxString DIM_VAR_KEY = _T("<<@%%@>>");
+wxString PROCNAME_KEY = _T("$procname$");
+wxString MODULENAME_KEY = _T("$modulename$");
+wxString MODNAME_KEY = _T("$modname$");
 
 Bindto::Bindto(wxWindow* parent, ParserF* pParser)
 {
 	//(*Initialize(Bindto)
+	wxFlexGridSizer* FlexGridSizer1;
+	wxFlexGridSizer* FlexGridSizer2;
 	wxBoxSizer* BoxSizer3;
+	wxBoxSizer* BoxSizer10;
+	wxBoxSizer* BoxSizer7;
+	wxBoxSizer* BoxSizer11;
+	wxBoxSizer* BoxSizer13;
 	wxBoxSizer* BoxSizer2;
 	wxStaticText* StaticText1;
+	wxBoxSizer* BoxSizer9;
 	wxStaticText* StaticText3;
 	wxBoxSizer* BoxSizer4;
+	wxBoxSizer* BoxSizer8;
 	wxBoxSizer* BoxSizer1;
 	wxStaticText* StaticText2;
+	wxBoxSizer* BoxSizer12;
+	wxBoxSizer* BoxSizer14;
+	wxBoxSizer* BoxSizer6;
 	wxStdDialogButtonSizer* StdDialogButtonSizer1;
 	wxBoxSizer* BoxSizer5;
 
 	Create(parent, wxID_ANY, _("Bind To"), wxDefaultPosition, wxDefaultSize, wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER, _T("wxID_ANY"));
 	BoxSizer1 = new wxBoxSizer(wxVERTICAL);
-	BoxSizer2 = new wxBoxSizer(wxVERTICAL);
-	StaticText1 = new wxStaticText(this, wxID_ANY, _("This tool generates a wrapping for Fortran code to be called from the C language."), wxDefaultPosition, wxDefaultSize, 0, _T("wxID_ANY"));
-	BoxSizer2->Add(StaticText1, 0, wxALL|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL, 5);
-	StaticText2 = new wxStaticText(this, wxID_ANY, _("Generate wrapping for:"), wxDefaultPosition, wxDefaultSize, 0, _T("wxID_ANY"));
-	BoxSizer2->Add(StaticText2, 0, wxTOP|wxLEFT|wxRIGHT|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL, 5);
+	BoxSizer6 = new wxBoxSizer(wxHORIZONTAL);
+	nb_settings = new wxNotebook(this, ID_NOTEBOOK1, wxDefaultPosition, wxDefaultSize, 0, _T("ID_NOTEBOOK1"));
+	Panel2 = new wxPanel(nb_settings, ID_PANEL2, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL, _T("ID_PANEL2"));
+	BoxSizer7 = new wxBoxSizer(wxVERTICAL);
+	StaticText1 = new wxStaticText(Panel2, wxID_ANY, _("This tool generates a wrapping for Fortran code to be called from the C language."), wxDefaultPosition, wxDefaultSize, 0, _T("wxID_ANY"));
+	BoxSizer7->Add(StaticText1, 0, wxALL|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL, 5);
+	StaticText2 = new wxStaticText(Panel2, wxID_ANY, _("Generate wrapping for:"), wxDefaultPosition, wxDefaultSize, 0, _T("wxID_ANY"));
+	BoxSizer7->Add(StaticText2, 0, wxTOP|wxLEFT|wxRIGHT|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL, 5);
 	BoxSizer3 = new wxBoxSizer(wxHORIZONTAL);
 	BoxSizer3->Add(30,0,0, wxALL|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL, 5);
-	rb_ActiveProject = new wxRadioButton(this, ID_BTOACTIVEPROJECT, _("Active project"), wxDefaultPosition, wxDefaultSize, wxRB_GROUP, wxDefaultValidator, _T("ID_BTOACTIVEPROJECT"));
+	rb_ActiveProject = new wxRadioButton(Panel2, ID_BTOACTIVEPROJECT, _("Active project"), wxDefaultPosition, wxDefaultSize, wxRB_GROUP, wxDefaultValidator, _T("ID_BTOACTIVEPROJECT"));
 	BoxSizer3->Add(rb_ActiveProject, 0, wxALL|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL, 5);
-	rb_CurrentFile = new wxRadioButton(this, ID_BTOCURRENTFILE, _("Current file"), wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, _T("ID_BTOCURRENTFILE"));
+	rb_CurrentFile = new wxRadioButton(Panel2, ID_BTOCURRENTFILE, _("Current file"), wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, _T("ID_BTOCURRENTFILE"));
 	BoxSizer3->Add(rb_CurrentFile, 0, wxALL|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL, 5);
-	BoxSizer2->Add(BoxSizer3, 0, wxALL|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL, 5);
+	BoxSizer7->Add(BoxSizer3, 0, wxALL|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL, 5);
+	BoxSizer8 = new wxBoxSizer(wxHORIZONTAL);
+	StaticText5 = new wxStaticText(Panel2, ID_STATICTEXT2, _("BIND(C, name=#):"), wxDefaultPosition, wxDefaultSize, 0, _T("ID_STATICTEXT2"));
+	BoxSizer8->Add(StaticText5, 0, wxALL|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5);
+	tc_bindCName = new wxTextCtrl(Panel2, ID_TEXTCTRL1, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, _T("ID_TEXTCTRL1"));
+	tc_bindCName->SetToolTip(_("Write how the names called from C code will be constructed.\nVariables \"$procname$\", \"$modulename$\" and \"$modname$\" will be changed procedure, module and truncated module names corespondingly."));
+	BoxSizer8->Add(tc_bindCName, 1, wxALL|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5);
+	BoxSizer7->Add(BoxSizer8, 0, wxEXPAND|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL, 5);
+	StaticText6 = new wxStaticText(Panel2, ID_STATICTEXT3, _(" Note: $procname$ is changed to the original name of procedure;"), wxDefaultPosition, wxDefaultSize, 0, _T("ID_STATICTEXT3"));
+	BoxSizer7->Add(StaticText6, 0, wxALL|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL, 0);
+	StaticText11 = new wxStaticText(Panel2, ID_STATICTEXT8, _("         $modulename$ is changed to the name of module;"), wxDefaultPosition, wxDefaultSize, 0, _T("ID_STATICTEXT8"));
+	BoxSizer7->Add(StaticText11, 0, wxALL|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL, 0);
+	StaticText8 = new wxStaticText(Panel2, ID_STATICTEXT5, _("         $modname$ is changed to the truncated name of module."), wxDefaultPosition, wxDefaultSize, 0, _T("ID_STATICTEXT5"));
+	BoxSizer7->Add(StaticText8, 0, wxALL|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL, 0);
+	Panel2->SetSizer(BoxSizer7);
+	BoxSizer7->Fit(Panel2);
+	BoxSizer7->SetSizeHints(Panel2);
+	Panel1 = new wxPanel(nb_settings, ID_PANEL1, wxPoint(314,298), wxDefaultSize, wxTAB_TRAVERSAL, _T("ID_PANEL1"));
+	BoxSizer2 = new wxBoxSizer(wxVERTICAL);
 	BoxSizer4 = new wxBoxSizer(wxVERTICAL);
-	StaticText3 = new wxStaticText(this, wxID_ANY, _("Binding types"), wxDefaultPosition, wxDefaultSize, 0, _T("wxID_ANY"));
+	StaticText3 = new wxStaticText(Panel1, wxID_ANY, _("Binding types"), wxDefaultPosition, wxDefaultSize, 0, _T("wxID_ANY"));
 	BoxSizer4->Add(StaticText3, 0, wxTOP|wxLEFT|wxRIGHT|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL, 5);
-	lv_Types = new wxListView(this, ID_LV_TYPES, wxDefaultPosition, wxSize(500,300), wxLC_REPORT|wxLC_SINGLE_SEL|wxLC_VRULES|wxSUNKEN_BORDER, wxDefaultValidator, _T("ID_LV_TYPES"));
+	lv_Types = new wxListView(Panel1, ID_LV_TYPES, wxDefaultPosition, wxSize(500,300), wxLC_REPORT|wxLC_SINGLE_SEL|wxLC_VRULES|wxSUNKEN_BORDER, wxDefaultValidator, _T("ID_LV_TYPES"));
 	BoxSizer4->Add(lv_Types, 1, wxTOP|wxBOTTOM|wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5);
 	BoxSizer5 = new wxBoxSizer(wxHORIZONTAL);
-	bt_Add = new wxButton(this, ID_BUTTON_ADD, _("Add"), wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, _T("ID_BUTTON_ADD"));
+	bt_Add = new wxButton(Panel1, ID_BUTTON_ADD, _("Add"), wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, _T("ID_BUTTON_ADD"));
 	bt_Add->SetToolTip(_("Add a new type"));
 	BoxSizer5->Add(bt_Add, 0, wxALL|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL, 5);
-	bt_Edit = new wxButton(this, ID_BUTTON_EDIT, _("Edit"), wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, _T("ID_BUTTON_EDIT"));
+	bt_Edit = new wxButton(Panel1, ID_BUTTON_EDIT, _("Edit"), wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, _T("ID_BUTTON_EDIT"));
 	bt_Edit->SetToolTip(_("Edit selected type"));
 	BoxSizer5->Add(bt_Edit, 0, wxALL|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL, 5);
-	bt_Remove = new wxButton(this, ID_BUTTON_REMOVE, _("Remove"), wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, _T("ID_BUTTON_REMOVE"));
+	bt_Remove = new wxButton(Panel1, ID_BUTTON_REMOVE, _("Remove"), wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, _T("ID_BUTTON_REMOVE"));
 	bt_Remove->SetToolTip(_("Remove selected type"));
 	BoxSizer5->Add(bt_Remove, 0, wxALL|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL, 5);
 	BoxSizer5->Add(-1,-1,1, wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5);
-	bt_Defaults = new wxButton(this, ID_BUTTON_DEFAULTS, _("Defaults"), wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, _T("ID_BUTTON_DEFAULTS"));
+	bt_Defaults = new wxButton(Panel1, ID_BUTTON_DEFAULTS, _("Defaults"), wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, _T("ID_BUTTON_DEFAULTS"));
 	bt_Defaults->SetToolTip(_("Restore default binding types"));
 	BoxSizer5->Add(bt_Defaults, 0, wxALL|wxALIGN_RIGHT|wxALIGN_CENTER_VERTICAL, 5);
 	BoxSizer4->Add(BoxSizer5, 0, wxALL|wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5);
 	BoxSizer2->Add(BoxSizer4, 1, wxTOP|wxBOTTOM|wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5);
-	BoxSizer1->Add(BoxSizer2, 1, wxALL|wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5);
+	Panel1->SetSizer(BoxSizer2);
+	BoxSizer2->Fit(Panel1);
+	BoxSizer2->SetSizeHints(Panel1);
+	Panel3 = new wxPanel(nb_settings, ID_PANEL3, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL, _T("ID_PANEL3"));
+	BoxSizer10 = new wxBoxSizer(wxVERTICAL);
+	StaticText4 = new wxStaticText(Panel3, ID_STATICTEXT1, _("Recognize subroutine, which name starts/ends with # as a constructor:"), wxDefaultPosition, wxDefaultSize, 0, _T("ID_STATICTEXT1"));
+	BoxSizer10->Add(StaticText4, 0, wxALL|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL, 5);
+	BoxSizer11 = new wxBoxSizer(wxHORIZONTAL);
+	BoxSizer12 = new wxBoxSizer(wxHORIZONTAL);
+	BoxSizer12->Add(30,0,0, wxALL|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5);
+	FlexGridSizer2 = new wxFlexGridSizer(2, 2, 2, 1);
+	cb_ctorStart = new wxCheckBox(Panel3, ID_CHECKBOX4, _("Constructor starts with:"), wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, _T("ID_CHECKBOX4"));
+	cb_ctorStart->SetValue(false);
+	FlexGridSizer2->Add(cb_ctorStart, 1, wxALL|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL, 0);
+	tc_ctorStart = new wxTextCtrl(Panel3, ID_TEXTCTRL4, _("Text"), wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, _T("ID_TEXTCTRL4"));
+	FlexGridSizer2->Add(tc_ctorStart, 1, wxALL|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL, 0);
+	cb_ctorEnd = new wxCheckBox(Panel3, ID_CHECKBOX5, _("Constructor ends with:"), wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, _T("ID_CHECKBOX5"));
+	cb_ctorEnd->SetValue(false);
+	FlexGridSizer2->Add(cb_ctorEnd, 1, wxALL|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL, 0);
+	tc_ctorEnd = new wxTextCtrl(Panel3, ID_TEXTCTRL5, _("Text"), wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, _T("ID_TEXTCTRL5"));
+	FlexGridSizer2->Add(tc_ctorEnd, 1, wxALL|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL, 0);
+	BoxSizer12->Add(FlexGridSizer2, 1, wxALL|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 0);
+	BoxSizer11->Add(BoxSizer12, 1, wxALL|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 0);
+	BoxSizer10->Add(BoxSizer11, 0, wxALL|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL, 0);
+	StaticText7 = new wxStaticText(Panel3, ID_STATICTEXT4, _("  Note: Every function which returns the variable of derived type is a constructor."), wxDefaultPosition, wxDefaultSize, 0, _T("ID_STATICTEXT4"));
+	BoxSizer10->Add(StaticText7, 0, wxTOP|wxLEFT|wxRIGHT|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL, 5);
+	cb_ctorDef = new wxCheckBox(Panel3, ID_CHECKBOX6, _("Create a constructor for every derived type found in a module if no another is found"), wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, _T("ID_CHECKBOX6"));
+	cb_ctorDef->SetValue(false);
+	BoxSizer10->Add(cb_ctorDef, 0, wxALL|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL, 5);
+	Panel3->SetSizer(BoxSizer10);
+	BoxSizer10->Fit(Panel3);
+	BoxSizer10->SetSizeHints(Panel3);
+	Panel4 = new wxPanel(nb_settings, ID_PANEL4, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL, _T("ID_PANEL4"));
+	BoxSizer9 = new wxBoxSizer(wxVERTICAL);
+	StaticText9 = new wxStaticText(Panel4, ID_STATICTEXT6, _("Recognize procedure, which name starts/ends with # as a destructor:"), wxDefaultPosition, wxDefaultSize, 0, _T("ID_STATICTEXT6"));
+	BoxSizer9->Add(StaticText9, 0, wxALL|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL, 5);
+	BoxSizer13 = new wxBoxSizer(wxHORIZONTAL);
+	BoxSizer14 = new wxBoxSizer(wxHORIZONTAL);
+	BoxSizer14->Add(30,0,0, wxALL|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL, 5);
+	FlexGridSizer1 = new wxFlexGridSizer(2, 2, 2, 0);
+	cb_dtorStart = new wxCheckBox(Panel4, ID_CHECKBOX1, _("Destructor starts with:"), wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, _T("ID_CHECKBOX1"));
+	cb_dtorStart->SetValue(false);
+	FlexGridSizer1->Add(cb_dtorStart, 1, wxALL|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL, 0);
+	tc_dtorStart = new wxTextCtrl(Panel4, ID_TEXTCTRL2, _("Text"), wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, _T("ID_TEXTCTRL2"));
+	FlexGridSizer1->Add(tc_dtorStart, 1, wxALL|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 0);
+	cb_dtorEnd = new wxCheckBox(Panel4, ID_CHECKBOX2, _("Destructor ends with:"), wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, _T("ID_CHECKBOX2"));
+	cb_dtorEnd->SetValue(false);
+	FlexGridSizer1->Add(cb_dtorEnd, 1, wxALL|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL, 0);
+	tc_dtorEnd = new wxTextCtrl(Panel4, ID_TEXTCTRL3, _("Text"), wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, _T("ID_TEXTCTRL3"));
+	FlexGridSizer1->Add(tc_dtorEnd, 1, wxALL|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 0);
+	BoxSizer14->Add(FlexGridSizer1, 0, wxALL|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL, 0);
+	BoxSizer13->Add(BoxSizer14, 0, wxALL|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL, 0);
+	BoxSizer9->Add(BoxSizer13, 0, wxALL|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL, 0);
+	StaticText10 = new wxStaticText(Panel4, ID_STATICTEXT7, _("Note: a default destructor is created for the derived type if the contructor is "), wxDefaultPosition, wxDefaultSize, 0, _T("ID_STATICTEXT7"));
+	BoxSizer9->Add(StaticText10, 0, wxTOP|wxLEFT|wxRIGHT|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL, 5);
+	StaticText12 = new wxStaticText(Panel4, ID_STATICTEXT9, _("         created but the destructor is not found."), wxDefaultPosition, wxDefaultSize, 0, _T("ID_STATICTEXT9"));
+	BoxSizer9->Add(StaticText12, 0, wxALL|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL, 0);
+	Panel4->SetSizer(BoxSizer9);
+	BoxSizer9->Fit(Panel4);
+	BoxSizer9->SetSizeHints(Panel4);
+	nb_settings->AddPage(Panel2, _("General"), false);
+	nb_settings->AddPage(Panel1, _("Types"), false);
+	nb_settings->AddPage(Panel3, _("Constructor"), false);
+	nb_settings->AddPage(Panel4, _("Destructor"), false);
+	BoxSizer6->Add(nb_settings, 1, wxALL|wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5);
+	BoxSizer1->Add(BoxSizer6, 1, wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5);
 	StdDialogButtonSizer1 = new wxStdDialogButtonSizer();
 	StdDialogButtonSizer1->AddButton(new wxButton(this, wxID_OK, wxEmptyString));
 	StdDialogButtonSizer1->AddButton(new wxButton(this, wxID_CANCEL, wxEmptyString));
@@ -92,6 +216,10 @@ Bindto::Bindto(wxWindow* parent, ParserF* pParser)
 	Connect(ID_BUTTON_EDIT,wxEVT_COMMAND_BUTTON_CLICKED,(wxObjectEventFunction)&Bindto::OnEdit);
 	Connect(ID_BUTTON_REMOVE,wxEVT_COMMAND_BUTTON_CLICKED,(wxObjectEventFunction)&Bindto::OnRemove);
 	Connect(ID_BUTTON_DEFAULTS,wxEVT_COMMAND_BUTTON_CLICKED,(wxObjectEventFunction)&Bindto::OnDefaults);
+	Connect(ID_CHECKBOX4,wxEVT_COMMAND_CHECKBOX_CLICKED,(wxObjectEventFunction)&Bindto::OnClick_cbCtorStart);
+	Connect(ID_CHECKBOX5,wxEVT_COMMAND_CHECKBOX_CLICKED,(wxObjectEventFunction)&Bindto::OnClick_cbCtorEnd);
+	Connect(ID_CHECKBOX1,wxEVT_COMMAND_CHECKBOX_CLICKED,(wxObjectEventFunction)&Bindto::OnClick_cbDtorStart);
+	Connect(ID_CHECKBOX2,wxEVT_COMMAND_CHECKBOX_CLICKED,(wxObjectEventFunction)&Bindto::OnClick_cbDtorEnd);
 	//*)
 
     lv_Types->InsertColumn(0,_T("Fortran"));
@@ -112,15 +240,68 @@ Bindto::Bindto(wxWindow* parent, ParserF* pParser)
     if (m_TabSize == -1)
         m_TabSize = 4;
 
-    FillTypeMap();
+    LoadInitialValues();
     FillTypeList();
-
     for (int i=0; i< lv_Types->GetColumnCount(); i++)
     {
         lv_Types->SetColumnWidth(i,wxLIST_AUTOSIZE);
         if (lv_Types->GetColumnWidth(i) > 200)
             lv_Types->SetColumnWidth(i,200);
     }
+
+    tc_bindCName->SetValue(m_BindCName);
+    if (m_CtorStartsWith.IsEmpty())
+    {
+        cb_ctorStart->SetValue(false);
+        tc_ctorStart->SetValue(_T("ctor_"));
+        tc_ctorStart->Enable(false);
+    }
+    else
+    {
+        cb_ctorStart->SetValue(true);
+        tc_ctorStart->SetValue(m_CtorStartsWith);
+        tc_ctorStart->Enable(true);
+    }
+
+    if (m_CtorEndsWith.IsEmpty())
+    {
+        cb_ctorEnd->SetValue(false);
+        tc_ctorEnd->SetValue(_T("_ctor"));
+        tc_ctorEnd->Enable(false);
+    }
+    else
+    {
+        cb_ctorEnd->SetValue(true);
+        tc_ctorEnd->SetValue(m_CtorEndsWith);
+        tc_ctorEnd->Enable(true);
+    }
+
+    if (m_DtorStartsWith.IsEmpty())
+    {
+        cb_dtorStart->SetValue(false);
+        tc_dtorStart->SetValue(_T("dtor_"));
+        tc_dtorStart->Enable(false);
+    }
+    else
+    {
+        cb_dtorStart->SetValue(true);
+        tc_dtorStart->SetValue(m_DtorStartsWith);
+        tc_dtorStart->Enable(true);
+    }
+
+    if (m_DtorEndsWith.IsEmpty())
+    {
+        cb_dtorEnd->SetValue(false);
+        tc_dtorEnd->SetValue(_T("_dtor"));
+        tc_dtorEnd->Enable(false);
+    }
+    else
+    {
+        cb_dtorEnd->SetValue(true);
+        tc_dtorEnd->SetValue(m_DtorEndsWith);
+        tc_dtorEnd->Enable(true);
+    }
+    cb_ctorDef->SetValue(m_AutoCreateCtor);
 }
 
 Bindto::~Bindto()
@@ -144,7 +325,7 @@ void Bindto::FillTypeList()
     }
 }
 
-void Bindto::FillTypeMap()
+void Bindto::LoadInitialValues()
 {
     m_IsTypeMapDefault = false;
     LoadBindToConfig();
@@ -219,10 +400,9 @@ void Bindto::FillTypeMapDefault()
     bTypes.Add(_T("complex(c_double_complex)"));
     cTypes.Add(_T("double complex"));
 
-    // requires <stdbool.h> and logical() function to convert from and to
-    fTypes.Add(_T("logical(1)"));
-    bTypes.Add(_T("logical(c_bool)"));
-    cTypes.Add(_T("bool"));
+    fTypes.Add(_T("logical"));
+    bTypes.Add(_T("integer(c_int)"));
+    cTypes.Add(_T("int"));
 
     fTypes.Add(_T("character"));
     bTypes.Add(_T("character(kind=c_char)"));
@@ -268,36 +448,49 @@ void Bindto::LoadBindToConfig()
         bct.Add(cT);
         m_TypeMap[fT] = bct;
     }
+
+    m_BindCName = cfg->Read(_T("/bind_to/bind_c_name"), PROCNAME_KEY);
+    m_CtorStartsWith = cfg->Read(_T("/bind_to/ctor_start"), wxEmptyString);
+    m_CtorEndsWith = cfg->Read(_T("/bind_to/ctor_end"), wxEmptyString);
+    m_AutoCreateCtor = cfg->ReadBool(_T("/bind_to/ctor_auto"), true);
+    m_DtorStartsWith = cfg->Read(_T("/bind_to/dtor_start"), wxEmptyString);
+    m_DtorEndsWith = cfg->Read(_T("/bind_to/dtor_end"), wxEmptyString);
 }
 
 void Bindto::SaveBindToConfig()
 {
-
     ConfigManager* cfg = Manager::Get()->GetConfigManager(_T("fortran_project"));
     if (!cfg)
         return;
     cfg->DeleteSubPath(_T("/bind_to"));
 
-    if (m_IsTypeMapDefault)
-        return; // no need to save default types
-
-    TypeMap::iterator it;
-    int count = 0;
-    for (it = m_TypeMap.begin(); it != m_TypeMap.end(); ++it)
+    if (!m_IsTypeMapDefault) // no need to save default types
     {
-        wxString fT = it->first;
-        wxString bT = it->second[0];
-        wxString cT = it->second[1];
+        TypeMap::iterator it;
+        int count = 0;
+        for (it = m_TypeMap.begin(); it != m_TypeMap.end(); ++it)
+        {
+            wxString fT = it->first;
+            wxString bT = it->second[0];
+            wxString cT = it->second[1];
 
-        ++count;
-        wxString key;
-        key.Printf(_T("/bind_to/type%d/f_type"), count);
-        cfg->Write(key, fT);
-        key.Printf(_T("/bind_to/type%d/b_type"), count);
-        cfg->Write(key, bT);
-        key.Printf(_T("/bind_to/type%d/c_type"), count);
-        cfg->Write(key, cT);
+            ++count;
+            wxString key;
+            key.Printf(_T("/bind_to/type%d/f_type"), count);
+            cfg->Write(key, fT);
+            key.Printf(_T("/bind_to/type%d/b_type"), count);
+            cfg->Write(key, bT);
+            key.Printf(_T("/bind_to/type%d/c_type"), count);
+            cfg->Write(key, cT);
+        }
     }
+
+    cfg->Write(_T("/bind_to/bind_c_name"), m_BindCName);
+    cfg->Write(_T("/bind_to/ctor_start"), m_CtorStartsWith);
+    cfg->Write(_T("/bind_to/ctor_end"), m_CtorEndsWith);
+    cfg->Write(_T("/bind_to/ctor_auto"), m_AutoCreateCtor);
+    cfg->Write(_T("/bind_to/dtor_start"), m_DtorStartsWith);
+    cfg->Write(_T("/bind_to/dtor_end"), m_DtorEndsWith);
 }
 
 void Bindto::OnOK(wxCommandEvent& event)
@@ -307,6 +500,39 @@ void Bindto::OnOK(wxCommandEvent& event)
         btin = bindToProject;
     else
         btin = bindToFile;
+
+    if (tc_bindCName->GetValue().Trim().IsEmpty())
+        m_BindCName = PROCNAME_KEY;
+    else
+    {
+        m_BindCName = tc_bindCName->GetValue();
+        m_BindCName.Replace(_T(" "), _T(""));
+    }
+
+    if (cb_ctorStart->GetValue())
+        m_CtorStartsWith = tc_ctorStart->GetValue();
+    else
+        m_CtorStartsWith = wxEmptyString;
+    m_CtorStartsWith.Replace(_T(" "), _T(""));
+
+    if (cb_ctorEnd->GetValue())
+        m_CtorEndsWith = tc_ctorEnd->GetValue();
+    else
+        m_CtorEndsWith = wxEmptyString;
+    m_CtorEndsWith.Replace(_T(" "), _T(""));
+    m_AutoCreateCtor = cb_ctorDef->GetValue();
+
+    if (cb_dtorStart->GetValue())
+        m_DtorStartsWith = tc_dtorStart->GetValue();
+    else
+        m_DtorStartsWith = wxEmptyString;
+    m_DtorStartsWith.Replace(_T(" "), _T(""));
+
+    if (cb_dtorEnd->GetValue())
+        m_DtorEndsWith = tc_dtorEnd->GetValue();
+    else
+        m_DtorEndsWith = wxEmptyString;
+    m_DtorEndsWith.Replace(_T(" "), _T(""));
 
     SaveBindToConfig();
     MakeBindTo(btin);
@@ -412,7 +638,11 @@ void Bindto::FileBindTo(const wxString& filename)
     m_WriteStrCtoF = false;
     m_WriteStrFtoC = false;
     m_WriteStrLen = false;
+    m_WriteIntToLog = false;
+    m_WriteLogToInt = false;
     m_Indent  = 0;
+    wxFileName fn(fileToken->m_Filename);
+    wxString globModName = fn.GetName() + _T("_proc_bc");
 
     TokensArrayF* fchen = &fileToken->m_Children;
     for (size_t i=0; i<fchen->GetCount(); i++)
@@ -422,9 +652,7 @@ void Bindto::FileBindTo(const wxString& filename)
         {
             if (!inModuleGM)
             {
-                wxFileName fn(fileToken->m_Filename);
-                wxString modName = fn.GetName() + _T("_proc_bc");
-                txtBindGM << _T("module ") << modName << _T("\n");
+                txtBindGM << _T("module ") << globModName << _T("\n");
                 m_Indent++;
                 txtBindGM << GetIS() << _T("use, intrinsic :: iso_c_binding\n");
                 txtBindGM << GetIS() << _T("$#$#%^@@place for helper module$#@%\n");
@@ -434,19 +662,23 @@ void Bindto::FileBindTo(const wxString& filename)
                 txtHeadersGM << _T("// Global procedures\n");
             }
             m_Indent = 1;
-            BindProcedure(txtBindGM, txtHeadersGM, fchen->Item(i), true);
+            BindProcedure(txtBindGM, txtHeadersGM, fchen->Item(i), globModName, true);
         }
         else if (fchen->Item(i)->m_TokenKind == tkModule)
         {
-            txtBindMod << _T("module ") << fchen->Item(i)->m_Name << _T("_bc\n");
+            wxString modName = fchen->Item(i)->m_Name;
+            txtBindMod << _T("module ") << modName << _T("_bc\n");
             m_Indent = 1;
-            txtBindMod << GetIS() << _T("use :: ") << fchen->Item(i)->m_Name << _T("\n");
+            txtBindMod << GetIS() << _T("use :: ") << modName << _T("\n");
             txtBindMod << GetIS() << _T("use, intrinsic :: iso_c_binding\n");
             txtBindMod << GetIS() << _T("$#$#%^@@place for helper module$#@%\n");
             txtBindMod << GetIS() << _T("implicit none\n");
             txtBindMod << _T("contains\n\n");
 
-            txtHeadersMod << _T("\n// Module '") << fchen->Item(i)->m_Name << _T("' procedures\n");
+            txtHeadersMod << _T("\n// Module '") << modName << _T("' procedures\n");
+            m_DefinedTypes.clear();
+            m_AllocatedTypes.clear();
+            m_DeallocatedTypes.clear();
 
             TokensArrayF* mchil = &fchen->Item(i)->m_Children;
             for (size_t j=0; j<mchil->GetCount(); j++)
@@ -455,7 +687,7 @@ void Bindto::FileBindTo(const wxString& filename)
                     mchil->Item(j)->m_TokenKind == tkFunction) &&
                     mchil->Item(j)->m_TokenAccess == taPublic)
                 {
-                    BindProcedure(txtBindMod, txtHeadersMod, mchil->Item(j), false);
+                    BindProcedure(txtBindMod, txtHeadersMod, mchil->Item(j), modName, false);
                 }
                 else if (mchil->Item(j)->m_TokenKind == tkInterfaceExplicit &&
                          mchil->Item(j)->m_TokenAccess == taPublic)
@@ -467,7 +699,7 @@ void Bindto::FileBindTo(const wxString& filename)
                             intchs->Item(k)->m_TokenKind == tkFunction) &&
                             intchs->Item(k)->m_TokenAccess == taPublic)
                         {
-                            BindProcedure(txtBindMod, txtHeadersMod, intchs->Item(k), false);
+                            BindProcedure(txtBindMod, txtHeadersMod, intchs->Item(k), modName, false);
                         }
                     }
                 }
@@ -486,12 +718,19 @@ void Bindto::FileBindTo(const wxString& filename)
                                 mchil->Item(l)->m_TokenAccess == taPrivate &&   // items with taPublic are called separately
                                 mchil->Item(l)->m_Name.IsSameAs(iname))
                             {
-                                BindProcedure(txtBindMod, txtHeadersMod, mchil->Item(l), false, mchil->Item(j)->m_DisplayName);
+                                BindProcedure(txtBindMod, txtHeadersMod, mchil->Item(l), modName, false, mchil->Item(j)->m_DisplayName);
                             }
                         }
                     }
                 }
+                else if (mchil->Item(j)->m_TokenKind == tkType &&
+                         mchil->Item(j)->m_TokenAccess == taPublic)
+                {
+                    m_DefinedTypes.insert(mchil->Item(j)->m_Name);
+                }
             }
+            AddConstructors(txtBindMod, txtHeadersMod, modName);
+            AddDestructors(txtBindMod, txtHeadersMod, modName);
             txtBindMod << _T("end module\n\n");
         }
     }
@@ -618,7 +857,7 @@ wxString Bindto::CreateBindFilename(const wxString& filename, bool header)
 }
 
 
-void Bindto::BindProcedure(wxString& txtBind, wxString& txtHeaders, TokenF* token, bool isGlobal, wxString callName)
+void Bindto::BindProcedure(wxString& txtBind, wxString& txtHeaders, TokenF* token, const wxString& moduleName, bool isGlobal, wxString callName)
 {
     wxString txtBindProc;
     wxString txtBindFirst;
@@ -633,7 +872,7 @@ void Bindto::BindProcedure(wxString& txtBind, wxString& txtHeaders, TokenF* toke
     wxArrayString additionalCalls2;
     std::map<wxString,wxString> changedNamesMap;
     wxString procName = token->m_Name + _T("_bc");
-    wxString cName = token->m_Name;
+    wxString cName = GetCName(token->m_Name, moduleName);
     bool bindKindSubroutine = true;
     if (token->m_TokenKind == tkSubroutine)
         txtBindFirst << GetIS() << _T("subroutine ");
@@ -702,6 +941,14 @@ void Bindto::BindProcedure(wxString& txtBind, wxString& txtHeaders, TokenF* toke
             additionalCalls.Add(_T("allocate(") + fName + _T(")"));
             additionalCalls2.Add(funResVar + _T(" = c_loc(") + fName + _T(")"));
             funResVar = fName;
+            m_AllocatedTypes.insert(funTypeDec);
+        }
+        else if (tya[0].StartsWith(_T("logical")) && tya[1].StartsWith(_T("integer")))
+        {
+            additionalDeclar.Add(funTypeDec + _T(" :: ") + funResVar + _T("_f"));
+            additionalCalls2.Add(funResVar + _T(" = log_to_int(") + funResVar + _T("_f)"));
+            changedNamesMap[funResVar] = funResVar + _T("_f");
+            m_WriteLogToInt = true;
         }
     }
     else if (token->m_TokenKind == tkSubroutine)
@@ -727,6 +974,7 @@ void Bindto::BindProcedure(wxString& txtBind, wxString& txtHeaders, TokenF* toke
                     AddDimVariablesFromDoc(dimVarNames, nDimVarAdd, argToken->m_DocString);
                 if (nDimVarAdd > 0)
                     AddDimVariables(argArr, dimVarNames, nDimVarAdd, _T("m"));
+
                 if (!tya[0].StartsWith(_T("type(c_ptr)")) && tya[1].StartsWith(_T("type(c_ptr)")))
                 {
                     wxString fDec = tya[0];
@@ -736,26 +984,42 @@ void Bindto::BindProcedure(wxString& txtBind, wxString& txtHeaders, TokenF* toke
                     fDec.Replace(_T(", intent(out)"),_T(""));
                     fDec.Replace(_T(", intent(inout)"),_T(""));
                     wxString bvName = argToken->m_Name + _T("_fp");
-                    wxString fDecHid;
-                    int nAD;
-                    HideAssumedShape(fDec, fDecHid, nAD);
-                    if (nAD > 0)
-                    {
-                        size_t nVNini = dimVarNamesFP.size();
-                        AddDimVariablesFromDoc(dimVarNamesFP, nAD, argToken->m_DocString);
-                        if (nAD > 0)
-                            AddDimVariables(argArr, dimVarNamesFP, nAD, _T("mdt"));
 
-                        wxString varShape = _T(", [");
-                        for (size_t ivn = nVNini; ivn<dimVarNamesFP.size(); ivn++)
-                        {
-                            varShape << dimVarNamesFP.Item(ivn) << _T(",");
-                        }
-                        varShape = varShape.Mid(0,varShape.size()-1) + _T("]");
-                        additionalCalls.Add(_T("call c_f_pointer(") + argToken->m_Name + _T(", ") + bvName + varShape + _T(")"));
+                    if (IsConstructor(token) && i == 0)
+                    {
+                        additionalCalls.Add(_T("allocate(") + bvName + _T(")"));
+                        additionalCalls.Add(argToken->m_Name + _T(" = c_loc(") + bvName + _T(")"));
+                        m_AllocatedTypes.insert(fDec);
                     }
                     else
-                        additionalCalls.Add(_T("call c_f_pointer(") + argToken->m_Name + _T(", ") + bvName + _T(")"));
+                    {
+                        wxString fDecHid;
+                        int nAD;
+                        HideAssumedShape(fDec, fDecHid, nAD);
+                        if (nAD > 0)
+                        {
+                            size_t nVNini = dimVarNamesFP.size();
+                            AddDimVariablesFromDoc(dimVarNamesFP, nAD, argToken->m_DocString);
+                            if (nAD > 0)
+                                AddDimVariables(argArr, dimVarNamesFP, nAD, _T("mdt"));
+
+                            wxString varShape = _T(", [");
+                            for (size_t ivn = nVNini; ivn<dimVarNamesFP.size(); ivn++)
+                            {
+                                varShape << dimVarNamesFP.Item(ivn) << _T(",");
+                            }
+                            varShape = varShape.Mid(0,varShape.size()-1) + _T("]");
+                            additionalCalls.Add(_T("call c_f_pointer(") + argToken->m_Name + _T(", ") + bvName + varShape + _T(")"));
+                        }
+                        else
+                            additionalCalls.Add(_T("call c_f_pointer(") + argToken->m_Name + _T(", ") + bvName + _T(")"));
+
+                        if (IsDestructor(token) && i == 0)
+                        {
+                            additionalCalls2.Add(_T("deallocate(") + bvName + _T(")"));
+                            m_DeallocatedTypes.insert(fDec);
+                        }
+                    }
 
                     additionalDeclar.Add(fDec + _T(", pointer :: ") + bvName);
                     changedNamesMap[argToken->m_Name] = bvName;
@@ -795,6 +1059,36 @@ void Bindto::BindProcedure(wxString& txtBind, wxString& txtHeaders, TokenF* toke
                         m_WriteStrFtoC = true;
                     }
                     changedNamesMap[argToken->m_Name] = argToken->m_Name + _T("_f");
+                }
+                else if (tya[0].StartsWith(_T("logical")) && tya[1].StartsWith(_T("integer")))
+                {
+                    wxString fDec = tya[0];
+                    fDec.Replace(_T(", intent(in)"),_T(""));
+                    fDec.Replace(_T(", intent(out)"),_T(""));
+                    fDec.Replace(_T(", intent(inout)"),_T(""));
+                    wxString bvName = argToken->m_Name + _T("_f");
+                    wxString fDecHid;
+                    int nAD;
+                    HideAssumedShape(fDec, fDecHid, nAD);
+                    if (nAD > 0)
+                    {
+                        AddDimVariablesFromDoc(dimVarNames, nAD, argToken->m_DocString);
+                        if (nAD > 0)
+                            AddDimVariables(argArr, dimVarNames, nAD, _T("mdt"));
+                    }
+
+                    additionalDeclar.Add(fDec + _T(" :: ") + bvName);
+                    if (tya[0].Find(_T("intent(out)")) == wxNOT_FOUND)
+                    {
+                        additionalCalls.Add(bvName + _T(" = int_to_log(") + argToken->m_Name + _T(")"));
+                        m_WriteIntToLog = true;
+                    }
+                    if (tya[0].Find(_T("intent(in)")) == wxNOT_FOUND)
+                    {
+                        additionalCalls2.Add(argToken->m_Name + _T(" = log_to_int(") + bvName + _T(")"));
+                        m_WriteLogToInt = true;
+                    }
+                    changedNamesMap[argToken->m_Name] = bvName;
                 }
                 txtBindSecond << GetIS() << tya[1] << _T(" :: ") << argToken->m_Name;
                 txtHeaders << tya[2] << _T(" ") << argToken->m_Name << tya[3];
@@ -867,8 +1161,10 @@ void Bindto::BindProcedure(wxString& txtBind, wxString& txtHeaders, TokenF* toke
     {
         if (funTypeDec.StartsWith(_T("character")))
             txtBindSecond << GetIS() << funResVar << _T("_f = ") << callName << _T("(");
-        else
+        else if (changedNamesMap.count(funResVar) == 0)
             txtBindSecond << GetIS() << funResVar << _T(" = ") << callName << _T("(");
+        else
+            txtBindSecond << GetIS() << changedNamesMap[funResVar] << _T(" = ") << callName << _T("(");
     }
 
     for (size_t i=0; i<argArr.GetCount(); i++)
@@ -1219,6 +1515,9 @@ wxString Bindto::GetFunctionDeclaration(TokenF* token)
         ftarr.Add(_T("real("));
         ftarr.Add(_T("doubleprecision("));
         ftarr.Add(_T("complex("));
+        ftarr.Add(_T("logical("));
+        ftarr.Add(_T("type("));
+        ftarr.Add(_T("class("));
         for (size_t i=0; i<ftarr.size(); i++)
         {
             int iPos = strLw.Find(ftarr.Item(i));
@@ -1237,6 +1536,7 @@ wxString Bindto::GetFunctionDeclaration(TokenF* token)
         ftarr.Add(_T("real"));
         ftarr.Add(_T("doubleprecision"));
         ftarr.Add(_T("complex"));
+        ftarr.Add(_T("logical"));
         for (size_t i=0; i<ftarr.size(); i++)
         {
             int iPos = strLw.Find(ftarr.Item(i));
@@ -1643,10 +1943,41 @@ void Bindto::GetFunStrLen(wxArrayString &strLen)
     strLen.Add(_T("end function"));
 }
 
+void Bindto::GetFunIntToLog(wxArrayString &strArr)
+{
+    wxString tab;
+    tab.Append(' ',m_TabSize);
+    strArr.Add(_T("elemental function int_to_log(int_val)"));
+    strArr.Add(tab + _T("integer(c_int), intent(in) :: int_val"));
+    strArr.Add(tab + _T("logical :: int_to_log\n"));
+    strArr.Add(tab + _T("if (int_val == 0) then"));
+    strArr.Add(tab + tab + _T("int_to_log = .false."));
+    strArr.Add(tab + _T("else"));
+    strArr.Add(tab + tab + _T("int_to_log = .true."));
+    strArr.Add(tab + _T("end if"));
+    strArr.Add(_T("end function"));
+}
+
+void Bindto::GetFunLogToInt(wxArrayString &strArr)
+{
+    wxString tab;
+    tab.Append(' ',m_TabSize);
+    strArr.Add(_T("elemental function log_to_int(log_val)"));
+    strArr.Add(tab + _T("logical, intent(in) :: log_val"));
+    strArr.Add(tab + _T("integer(c_int) :: log_to_int\n"));
+    strArr.Add(tab + _T("if (log_val) then"));
+    strArr.Add(tab + tab + _T("log_to_int = 1"));
+    strArr.Add(tab + _T("else"));
+    strArr.Add(tab + tab + _T("log_to_int = 0"));
+    strArr.Add(tab + _T("end if"));
+    strArr.Add(_T("end function"));
+}
+
 wxString Bindto::GetHelperModule()
 {
     wxString help;
-    if (!m_WriteStrCtoF && !m_WriteStrFtoC && !m_WriteStrLen)
+    if (!m_WriteStrCtoF && !m_WriteStrFtoC && !m_WriteStrLen &&
+        !m_WriteLogToInt && !m_WriteIntToLog)
         return wxEmptyString;
 
     wxString tab;
@@ -1678,6 +2009,22 @@ wxString Bindto::GetHelperModule()
         GetSubStrFtoC(strFtoC);
         for (size_t i=0;i<strFtoC.size();i++)
             help << tab << strFtoC.Item(i) << _T("\n");
+    }
+    if (m_WriteLogToInt)
+    {
+        help << _T("\n");
+        wxArrayString strArr;
+        GetFunLogToInt(strArr);
+        for (size_t i=0;i<strArr.size();i++)
+            help << tab << strArr.Item(i) << _T("\n");
+    }
+    if (m_WriteIntToLog)
+    {
+        help << _T("\n");
+        wxArrayString strArr;
+        GetFunIntToLog(strArr);
+        for (size_t i=0;i<strArr.size();i++)
+            help << tab << strArr.Item(i) << _T("\n");
     }
     help << _T("end module\n");
     return help;
@@ -1756,3 +2103,182 @@ void Bindto::AddDimVariablesFromDoc(wxArrayString& dimVarNames, int& nDimVarAdd,
     nDimVarAdd = 0;
 }
 
+wxString Bindto::GetCName(const wxString& procName, const wxString& moduleName)
+{
+    if (m_BindCName.IsEmpty())
+        return procName;
+    wxString cName = m_BindCName;
+    wxString cName_lw = cName.Lower();
+    wxString keyProc = PROCNAME_KEY;
+    wxString keyModule = MODULENAME_KEY;
+    wxString keyMod = MODNAME_KEY;
+    int idx = cName_lw.Find(keyProc);
+    if (idx != wxNOT_FOUND)
+    {
+        cName = cName.Mid(0,idx) + procName + cName.Mid(idx+keyProc.Len());
+        cName_lw = cName.Lower();
+    }
+    idx = cName_lw.Find(keyModule);
+    if (idx != wxNOT_FOUND)
+    {
+        cName = cName.Mid(0,idx) + moduleName + cName.Mid(idx+keyModule.Len());
+        cName_lw = cName.Lower();
+    }
+    idx = cName_lw.Find(keyMod);
+    if (idx != wxNOT_FOUND)
+    {
+        wxString modName = moduleName;
+        modName.Replace(_T("_"),_T(""));
+        if (modName.Len() > 3)
+            modName = modName.Mid(0,3);
+        cName = cName.Mid(0,idx) + modName + cName.Mid(idx+keyMod.Len());
+    }
+    return cName;
+}
+
+void Bindto::AddDestructors(wxString& txtBind, wxString& txtHeadersMod, const wxString& moduleName)
+{
+    if (m_AllocatedTypes.size() == 0)
+        return;
+
+    wxString txtDest;
+    wxString txtDestH;
+    for ( StrSet::iterator it=m_AllocatedTypes.begin(); it != m_AllocatedTypes.end(); ++it)
+    {
+        wxString type = *it;
+        if (m_DeallocatedTypes.count(type) == 1)
+            continue;
+        type.Replace(_T("type("), _T(""));
+        type.Replace(_T("class("), _T(""));
+        if (type.size() == 0)
+            continue;
+        type = type.Mid(0,type.size()-1);
+        wxString destName = type + _T("_dtor");
+        wxString cDestName = GetCName(destName, moduleName);
+        txtDest << GetIS() << _T("subroutine ") << destName << _T("_bc") << _T("(this_cp) bind(c,name='") << cDestName << _T("')\n");
+        m_Indent++;
+        txtDest << GetIS() << _T("type(c_ptr), intent(in) :: this_cp\n");
+        txtDest << GetIS() << _T("type(") << type << _T("), pointer :: this_fp\n\n");
+        txtDest << GetIS() << _T("call c_f_pointer(this_cp, this_fp)\n");
+        txtDest << GetIS() << _T("deallocate(this_fp)\n");
+        m_Indent--;
+        txtDest << GetIS() << _T("end subroutine\n\n");
+
+        txtDestH << _T("void ") << cDestName << _T("(void** this_cp);\n");
+    }
+    txtBind << txtDest;
+    txtHeadersMod << txtDestH;
+}
+
+void Bindto::AddConstructors(wxString& txtBind, wxString& txtHeadersMod, const wxString& moduleName)
+{
+
+    if (!m_AutoCreateCtor || m_DefinedTypes.size() == 0)
+        return;
+
+    StrSet allocatedTypes;
+    for ( StrSet::iterator it=m_AllocatedTypes.begin(); it != m_AllocatedTypes.end(); ++it)
+    {
+        wxString type = *it;
+        int idx = type.Find(_T("("));
+        if (idx != wxNOT_FOUND)
+        {
+            type = GetToken(type, idx);
+        }
+        if (type.size() == 0)
+            continue;
+        allocatedTypes.insert(type);
+    }
+
+    wxString txtCon;
+    wxString txtConH;
+    for ( StrSet::iterator it=m_DefinedTypes.begin(); it != m_DefinedTypes.end(); ++it)
+    {
+        wxString type = *it;
+        if (allocatedTypes.count(type) == 1)
+            continue;
+
+        wxString conName = type + _T("_ctor");
+        wxString cConName = GetCName(conName, moduleName);
+        wxString fConName = conName + _T("_bc");
+        txtCon << GetIS() << _T("function ") << fConName << _T("() bind(c,name='") << cConName << _T("')\n");
+        m_Indent++;
+        txtCon << GetIS() << _T("type(c_ptr) :: ") << fConName << _T("\n");
+        txtCon << GetIS() << _T("type(") << type << _T("), pointer :: this_fp\n\n");
+        txtCon << GetIS() << _T("allocate(this_fp)\n");
+        txtCon << GetIS() << fConName << _T(" = c_loc(this_fp)\n");
+        m_Indent--;
+        txtCon << GetIS() << _T("end function\n\n");
+
+        txtConH << _T("void* ") << cConName << _T("();\n");
+        m_AllocatedTypes.insert(_T("type(")+type+_T(")"));
+    }
+    txtBind << txtCon;
+    txtHeadersMod << txtConH;
+}
+
+bool Bindto::IsConstructor(TokenF* token)
+{
+    if (token->m_TokenKind == tkSubroutine &&
+        ((!m_CtorStartsWith.IsEmpty() && token->m_Name.StartsWith(m_CtorStartsWith)) ||
+        (!m_CtorEndsWith.IsEmpty() && token->m_Name.EndsWith(m_CtorEndsWith))) )
+        return true;
+    return false;
+}
+
+bool Bindto::IsDestructor(TokenF* token)
+{
+    if ((!m_DtorStartsWith.IsEmpty() && token->m_Name.StartsWith(m_DtorStartsWith)) ||
+        (!m_DtorEndsWith.IsEmpty() && token->m_Name.EndsWith(m_DtorEndsWith)) )
+        return true;
+    return false;
+}
+
+
+void Bindto::OnClick_cbCtorStart(wxCommandEvent& event)
+{
+    if (cb_ctorStart->IsChecked())
+        tc_ctorStart->Enable(true);
+    else
+    {
+        if (tc_ctorStart->GetValue().Trim().IsEmpty())
+            tc_ctorStart->SetValue(_T("ctor_"));
+        tc_ctorStart->Enable(false);
+    }
+}
+
+void Bindto::OnClick_cbCtorEnd(wxCommandEvent& event)
+{
+    if (cb_ctorEnd->IsChecked())
+        tc_ctorEnd->Enable(true);
+    else
+    {
+        if (tc_ctorEnd->GetValue().Trim().IsEmpty())
+            tc_ctorEnd->SetValue(_T("_ctor"));
+        tc_ctorEnd->Enable(false);
+    }
+}
+
+void Bindto::OnClick_cbDtorStart(wxCommandEvent& event)
+{
+    if (cb_dtorStart->IsChecked())
+        tc_dtorStart->Enable(true);
+    else
+    {
+        if (tc_dtorStart->GetValue().Trim().IsEmpty())
+            tc_dtorStart->SetValue(_T("dtor_"));
+        tc_dtorStart->Enable(false);
+    }
+}
+
+void Bindto::OnClick_cbDtorEnd(wxCommandEvent& event)
+{
+    if (cb_dtorEnd->IsChecked())
+        tc_dtorEnd->Enable(true);
+    else
+    {
+        if (tc_dtorEnd->GetValue().Trim().IsEmpty())
+            tc_dtorEnd->SetValue(_T("_dtor"));
+        tc_dtorEnd->Enable(false);
+    }
+}

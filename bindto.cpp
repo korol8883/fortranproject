@@ -8,18 +8,19 @@
 #include <editormanager.h>
 #include <cbstyledtextctrl.h>
 #include <configmanager.h>
+#include <projectmanager.h>
+#include <cbproject.h>
 #include <wx/regex.h>
 #include <wx/tokenzr.h>
+#include <wx/textdlg.h>
 #include "bindtonewtype.h"
 
 //(*IdInit(Bindto)
 const long Bindto::ID_BTOACTIVEPROJECT = wxNewId();
 const long Bindto::ID_BTOCURRENTFILE = wxNewId();
-const long Bindto::ID_STATICTEXT2 = wxNewId();
 const long Bindto::ID_TEXTCTRL1 = wxNewId();
-const long Bindto::ID_STATICTEXT3 = wxNewId();
-const long Bindto::ID_STATICTEXT8 = wxNewId();
-const long Bindto::ID_STATICTEXT5 = wxNewId();
+const long Bindto::ID_CHECKBOX3 = wxNewId();
+const long Bindto::ID_TEXTCTRL6 = wxNewId();
 const long Bindto::ID_PANEL2 = wxNewId();
 const long Bindto::ID_LV_TYPES = wxNewId();
 const long Bindto::ID_BUTTON_ADD = wxNewId();
@@ -27,21 +28,16 @@ const long Bindto::ID_BUTTON_EDIT = wxNewId();
 const long Bindto::ID_BUTTON_REMOVE = wxNewId();
 const long Bindto::ID_BUTTON_DEFAULTS = wxNewId();
 const long Bindto::ID_PANEL1 = wxNewId();
-const long Bindto::ID_STATICTEXT1 = wxNewId();
 const long Bindto::ID_CHECKBOX4 = wxNewId();
 const long Bindto::ID_TEXTCTRL4 = wxNewId();
 const long Bindto::ID_CHECKBOX5 = wxNewId();
 const long Bindto::ID_TEXTCTRL5 = wxNewId();
-const long Bindto::ID_STATICTEXT4 = wxNewId();
 const long Bindto::ID_CHECKBOX6 = wxNewId();
 const long Bindto::ID_PANEL3 = wxNewId();
-const long Bindto::ID_STATICTEXT6 = wxNewId();
 const long Bindto::ID_CHECKBOX1 = wxNewId();
 const long Bindto::ID_TEXTCTRL2 = wxNewId();
 const long Bindto::ID_CHECKBOX2 = wxNewId();
 const long Bindto::ID_TEXTCTRL3 = wxNewId();
-const long Bindto::ID_STATICTEXT7 = wxNewId();
-const long Bindto::ID_STATICTEXT9 = wxNewId();
 const long Bindto::ID_PANEL4 = wxNewId();
 const long Bindto::ID_NOTEBOOK1 = wxNewId();
 //*)
@@ -60,25 +56,38 @@ wxString MODNAME_KEY = _T("$modname$");
 Bindto::Bindto(wxWindow* parent, ParserF* pParser)
 {
 	//(*Initialize(Bindto)
+	wxBoxSizer* BoxSizer15;
 	wxFlexGridSizer* FlexGridSizer1;
 	wxFlexGridSizer* FlexGridSizer2;
 	wxBoxSizer* BoxSizer3;
+	wxBoxSizer* BoxSizer16;
 	wxBoxSizer* BoxSizer10;
+	wxNotebook* nb_settings;
 	wxBoxSizer* BoxSizer7;
 	wxBoxSizer* BoxSizer11;
 	wxBoxSizer* BoxSizer13;
 	wxBoxSizer* BoxSizer2;
 	wxStaticText* StaticText1;
+	wxStaticText* StaticText10;
 	wxBoxSizer* BoxSizer9;
 	wxStaticText* StaticText3;
+	wxStaticText* StaticText8;
+	wxStaticText* StaticText12;
 	wxBoxSizer* BoxSizer4;
+	wxPanel* Panel3;
+	wxStaticText* StaticText7;
 	wxBoxSizer* BoxSizer8;
+	wxStaticText* StaticText4;
 	wxBoxSizer* BoxSizer1;
+	wxStaticText* StaticText5;
 	wxStaticText* StaticText2;
+	wxStaticText* StaticText6;
 	wxBoxSizer* BoxSizer12;
 	wxBoxSizer* BoxSizer14;
+	wxStaticText* StaticText9;
 	wxBoxSizer* BoxSizer6;
 	wxStdDialogButtonSizer* StdDialogButtonSizer1;
+	wxStaticText* StaticText11;
 	wxBoxSizer* BoxSizer5;
 
 	Create(parent, wxID_ANY, _("Bind To"), wxDefaultPosition, wxDefaultSize, wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER, _T("wxID_ANY"));
@@ -99,18 +108,30 @@ Bindto::Bindto(wxWindow* parent, ParserF* pParser)
 	BoxSizer3->Add(rb_CurrentFile, 0, wxALL|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL, 5);
 	BoxSizer7->Add(BoxSizer3, 0, wxALL|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL, 5);
 	BoxSizer8 = new wxBoxSizer(wxHORIZONTAL);
-	StaticText5 = new wxStaticText(Panel2, ID_STATICTEXT2, _("BIND(C, name=#):"), wxDefaultPosition, wxDefaultSize, 0, _T("ID_STATICTEXT2"));
+	StaticText5 = new wxStaticText(Panel2, wxID_ANY, _("BIND(C, name=#):"), wxDefaultPosition, wxDefaultSize, 0, _T("wxID_ANY"));
 	BoxSizer8->Add(StaticText5, 0, wxALL|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5);
 	tc_bindCName = new wxTextCtrl(Panel2, ID_TEXTCTRL1, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, _T("ID_TEXTCTRL1"));
 	tc_bindCName->SetToolTip(_("Write how the names called from C code will be constructed.\nVariables \"$procname$\", \"$modulename$\" and \"$modname$\" will be changed procedure, module and truncated module names corespondingly."));
 	BoxSizer8->Add(tc_bindCName, 1, wxALL|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5);
 	BoxSizer7->Add(BoxSizer8, 0, wxEXPAND|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL, 5);
-	StaticText6 = new wxStaticText(Panel2, ID_STATICTEXT3, _(" Note: $procname$ is changed to the original name of procedure;"), wxDefaultPosition, wxDefaultSize, 0, _T("ID_STATICTEXT3"));
+	StaticText6 = new wxStaticText(Panel2, wxID_ANY, _(" Note: $procname$ is changed to the original name of procedure;"), wxDefaultPosition, wxDefaultSize, 0, _T("wxID_ANY"));
 	BoxSizer7->Add(StaticText6, 0, wxALL|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL, 0);
-	StaticText11 = new wxStaticText(Panel2, ID_STATICTEXT8, _("         $modulename$ is changed to the name of module;"), wxDefaultPosition, wxDefaultSize, 0, _T("ID_STATICTEXT8"));
+	StaticText11 = new wxStaticText(Panel2, wxID_ANY, _("         $modulename$ is changed to the name of module;"), wxDefaultPosition, wxDefaultSize, 0, _T("wxID_ANY"));
 	BoxSizer7->Add(StaticText11, 0, wxALL|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL, 0);
-	StaticText8 = new wxStaticText(Panel2, ID_STATICTEXT5, _("         $modname$ is changed to the truncated name of module."), wxDefaultPosition, wxDefaultSize, 0, _T("ID_STATICTEXT5"));
+	StaticText8 = new wxStaticText(Panel2, wxID_ANY, _("         $modname$ is changed to the truncated name of module."), wxDefaultPosition, wxDefaultSize, 0, _T("wxID_ANY"));
 	BoxSizer7->Add(StaticText8, 0, wxALL|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL, 0);
+	BoxSizer15 = new wxBoxSizer(wxVERTICAL);
+	cb_globalToOne = new wxCheckBox(Panel2, ID_CHECKBOX3, _("Add wrapper code for global procedures into one file"), wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, _T("ID_CHECKBOX3"));
+	cb_globalToOne->SetValue(false);
+	BoxSizer15->Add(cb_globalToOne, 1, wxLEFT|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5);
+	BoxSizer16 = new wxBoxSizer(wxHORIZONTAL);
+	BoxSizer16->Add(30,0,0, wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5);
+	st_globalFilename = new wxStaticText(Panel2, wxID_ANY, _("File name:"), wxDefaultPosition, wxDefaultSize, 0, _T("wxID_ANY"));
+	BoxSizer16->Add(st_globalFilename, 0, wxLEFT|wxRIGHT|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL, 5);
+	tc_globalFilename = new wxTextCtrl(Panel2, ID_TEXTCTRL6, _("myprocedures.f90"), wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, _T("ID_TEXTCTRL6"));
+	BoxSizer16->Add(tc_globalFilename, 1, wxLEFT|wxRIGHT|wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5);
+	BoxSizer15->Add(BoxSizer16, 1, wxEXPAND|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL, 5);
+	BoxSizer7->Add(BoxSizer15, 0, wxTOP|wxBOTTOM|wxALIGN_LEFT|wxALIGN_TOP, 5);
 	Panel2->SetSizer(BoxSizer7);
 	BoxSizer7->Fit(Panel2);
 	BoxSizer7->SetSizeHints(Panel2);
@@ -142,7 +163,7 @@ Bindto::Bindto(wxWindow* parent, ParserF* pParser)
 	BoxSizer2->SetSizeHints(Panel1);
 	Panel3 = new wxPanel(nb_settings, ID_PANEL3, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL, _T("ID_PANEL3"));
 	BoxSizer10 = new wxBoxSizer(wxVERTICAL);
-	StaticText4 = new wxStaticText(Panel3, ID_STATICTEXT1, _("Recognize subroutine, which name starts/ends with # as a constructor:"), wxDefaultPosition, wxDefaultSize, 0, _T("ID_STATICTEXT1"));
+	StaticText4 = new wxStaticText(Panel3, wxID_ANY, _("Recognize subroutine, which name starts/ends with # as a constructor:"), wxDefaultPosition, wxDefaultSize, 0, _T("wxID_ANY"));
 	BoxSizer10->Add(StaticText4, 0, wxALL|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL, 5);
 	BoxSizer11 = new wxBoxSizer(wxHORIZONTAL);
 	BoxSizer12 = new wxBoxSizer(wxHORIZONTAL);
@@ -161,7 +182,7 @@ Bindto::Bindto(wxWindow* parent, ParserF* pParser)
 	BoxSizer12->Add(FlexGridSizer2, 1, wxALL|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 0);
 	BoxSizer11->Add(BoxSizer12, 1, wxALL|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 0);
 	BoxSizer10->Add(BoxSizer11, 0, wxALL|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL, 0);
-	StaticText7 = new wxStaticText(Panel3, ID_STATICTEXT4, _("  Note: Every function which returns the variable of derived type is a constructor."), wxDefaultPosition, wxDefaultSize, 0, _T("ID_STATICTEXT4"));
+	StaticText7 = new wxStaticText(Panel3, wxID_ANY, _("  Note: Every function which returns the variable of derived type is a constructor."), wxDefaultPosition, wxDefaultSize, 0, _T("wxID_ANY"));
 	BoxSizer10->Add(StaticText7, 0, wxTOP|wxLEFT|wxRIGHT|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL, 5);
 	cb_ctorDef = new wxCheckBox(Panel3, ID_CHECKBOX6, _("Create a constructor for every derived type found in a module if no another is found"), wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, _T("ID_CHECKBOX6"));
 	cb_ctorDef->SetValue(false);
@@ -171,7 +192,7 @@ Bindto::Bindto(wxWindow* parent, ParserF* pParser)
 	BoxSizer10->SetSizeHints(Panel3);
 	Panel4 = new wxPanel(nb_settings, ID_PANEL4, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL, _T("ID_PANEL4"));
 	BoxSizer9 = new wxBoxSizer(wxVERTICAL);
-	StaticText9 = new wxStaticText(Panel4, ID_STATICTEXT6, _("Recognize procedure, which name starts/ends with # as a destructor:"), wxDefaultPosition, wxDefaultSize, 0, _T("ID_STATICTEXT6"));
+	StaticText9 = new wxStaticText(Panel4, wxID_ANY, _("Recognize procedure, which name starts/ends with # as a destructor:"), wxDefaultPosition, wxDefaultSize, 0, _T("wxID_ANY"));
 	BoxSizer9->Add(StaticText9, 0, wxALL|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL, 5);
 	BoxSizer13 = new wxBoxSizer(wxHORIZONTAL);
 	BoxSizer14 = new wxBoxSizer(wxHORIZONTAL);
@@ -190,9 +211,9 @@ Bindto::Bindto(wxWindow* parent, ParserF* pParser)
 	BoxSizer14->Add(FlexGridSizer1, 0, wxALL|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL, 0);
 	BoxSizer13->Add(BoxSizer14, 0, wxALL|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL, 0);
 	BoxSizer9->Add(BoxSizer13, 0, wxALL|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL, 0);
-	StaticText10 = new wxStaticText(Panel4, ID_STATICTEXT7, _("Note: a default destructor is created for the derived type if the contructor is "), wxDefaultPosition, wxDefaultSize, 0, _T("ID_STATICTEXT7"));
+	StaticText10 = new wxStaticText(Panel4, wxID_ANY, _("Note: a default destructor is created for the derived type if the contructor is "), wxDefaultPosition, wxDefaultSize, 0, _T("wxID_ANY"));
 	BoxSizer9->Add(StaticText10, 0, wxTOP|wxLEFT|wxRIGHT|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL, 5);
-	StaticText12 = new wxStaticText(Panel4, ID_STATICTEXT9, _("         created but the destructor is not found."), wxDefaultPosition, wxDefaultSize, 0, _T("ID_STATICTEXT9"));
+	StaticText12 = new wxStaticText(Panel4, wxID_ANY, _("         created but the destructor is not found."), wxDefaultPosition, wxDefaultSize, 0, _T("wxID_ANY"));
 	BoxSizer9->Add(StaticText12, 0, wxALL|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL, 0);
 	Panel4->SetSizer(BoxSizer9);
 	BoxSizer9->Fit(Panel4);
@@ -212,6 +233,8 @@ Bindto::Bindto(wxWindow* parent, ParserF* pParser)
 	BoxSizer1->Fit(this);
 	BoxSizer1->SetSizeHints(this);
 
+	Connect(ID_BTOACTIVEPROJECT,wxEVT_COMMAND_RADIOBUTTON_SELECTED,(wxObjectEventFunction)&Bindto::Onrb_ActiveProjectSelect);
+	Connect(ID_BTOCURRENTFILE,wxEVT_COMMAND_RADIOBUTTON_SELECTED,(wxObjectEventFunction)&Bindto::Onrb_ActiveProjectSelect);
 	Connect(ID_BUTTON_ADD,wxEVT_COMMAND_BUTTON_CLICKED,(wxObjectEventFunction)&Bindto::OnAdd);
 	Connect(ID_BUTTON_EDIT,wxEVT_COMMAND_BUTTON_CLICKED,(wxObjectEventFunction)&Bindto::OnEdit);
 	Connect(ID_BUTTON_REMOVE,wxEVT_COMMAND_BUTTON_CLICKED,(wxObjectEventFunction)&Bindto::OnRemove);
@@ -262,6 +285,15 @@ Bindto::Bindto(wxWindow* parent, ParserF* pParser)
         tc_ctorStart->SetValue(m_CtorStartsWith);
         tc_ctorStart->Enable(true);
     }
+
+    cb_globalToOne->SetValue(m_OneGProcFile);
+    tc_globalFilename->SetValue(m_OneGProcFileName);
+    bool enab = false;
+    if (rb_ActiveProject->GetValue())
+        enab = true;
+    cb_globalToOne->Enable(enab);
+    tc_globalFilename->Enable(enab);
+    st_globalFilename->Enable(enab);
 
     if (m_CtorEndsWith.IsEmpty())
     {
@@ -400,6 +432,11 @@ void Bindto::FillTypeMapDefault()
     bTypes.Add(_T("complex(c_double_complex)"));
     cTypes.Add(_T("double complex"));
 
+    //requires <complex.h>
+    fTypes.Add(_T("complex(16)"));
+    bTypes.Add(_T("complex(c_long_double_complex)"));
+    cTypes.Add(_T("long double complex"));
+
     fTypes.Add(_T("logical"));
     bTypes.Add(_T("integer(c_int)"));
     cTypes.Add(_T("int"));
@@ -449,6 +486,8 @@ void Bindto::LoadBindToConfig()
         m_TypeMap[fT] = bct;
     }
 
+    m_OneGProcFile = cfg->ReadBool(_T("/bind_to/one_gproc_file"), true);
+    m_OneGProcFileName = cfg->Read(_T("/bind_to/one_gproc_filename"), _T("procedures_bc.f90"));
     m_BindCName = cfg->Read(_T("/bind_to/bind_c_name"), PROCNAME_KEY);
     m_CtorStartsWith = cfg->Read(_T("/bind_to/ctor_start"), wxEmptyString);
     m_CtorEndsWith = cfg->Read(_T("/bind_to/ctor_end"), wxEmptyString);
@@ -485,6 +524,8 @@ void Bindto::SaveBindToConfig()
         }
     }
 
+    cfg->Write(_T("/bind_to/one_gproc_file"), m_OneGProcFile);
+    cfg->Write(_T("/bind_to/one_gproc_filename"), m_OneGProcFileName);
     cfg->Write(_T("/bind_to/bind_c_name"), m_BindCName);
     cfg->Write(_T("/bind_to/ctor_start"), m_CtorStartsWith);
     cfg->Write(_T("/bind_to/ctor_end"), m_CtorEndsWith);
@@ -508,6 +549,17 @@ void Bindto::OnOK(wxCommandEvent& event)
         m_BindCName = tc_bindCName->GetValue();
         m_BindCName.Replace(_T(" "), _T(""));
     }
+
+    m_OneGProcFile = cb_globalToOne->GetValue();
+    m_OneGProcFileName = tc_globalFilename->GetValue();
+    if (m_OneGProcFileName.Trim().Trim(false).IsEmpty())
+    {
+        m_OneGProcFileName = _T("procedures_bc.f90");
+    }
+    if (btin == bindToProject && m_OneGProcFile)
+        m_UseOneGlobalFile = true;
+    else
+        m_UseOneGlobalFile = false;
 
     if (cb_ctorStart->GetValue())
         m_CtorStartsWith = tc_ctorStart->GetValue();
@@ -539,8 +591,9 @@ void Bindto::OnOK(wxCommandEvent& event)
 
     if (m_CreatedMsg.size() > 0)
     {
+        size_t nmsg = std::min(m_CreatedMsg.size(),size_t(5));
         wxString msg;
-        for (size_t i=0; i< m_CreatedMsg.size(); i++)
+        for (size_t i=0; i< nmsg; i++)
         {
             msg << m_CreatedMsg.Item(i) << _T("\n");
         }
@@ -557,50 +610,141 @@ void Bindto::MakeBindTo(BindToIn btin)
 
     if (btin == bindToProject)
     {
-//        cbProject* project = Manager::Get()->GetProjectManager()->GetActiveProject();
-//        if (!project)
-//            return;
-//
-//        wxArrayString nonFFiles;
-//        for (FilesList::iterator it = project->GetFilesList().begin(); it != project->GetFilesList().end(); ++it)
-//        {
-//            ProjectFile* pf = *it;
-//            FortranSourceForm fsForm;
-//            if (g_FortranFileExt.IsFileFortran(pf->file.GetFullPath(), fsForm))
-//                FileBindTo(pf->file.GetFullPath(), chin, tabSize);
-//            else
-//                nonFFiles.Add(pf->file.GetFullName());
-//        }
-//
-//        if (nonFFiles.size() > 0)
-//        {
-//            wxString mstr;
-//            if (nonFFiles.size() == 1)
-//            {
-//                mstr = _("File \"") + nonFFiles[0] + _("\" was not recognized as a Fortran file.");
-//                mstr << _(" The BindTo was not applied for it.");
-//            }
-//            else
-//            {
-//                mstr = _("Files");
-//                size_t i=0;
-//                size_t imax=5;
-//                while (i < nonFFiles.size() && i < imax)
-//                {
-//                    mstr << _("\n\"") << nonFFiles[i] << _T("\"");
-//                    i++;
-//                }
-//                if (nonFFiles.size() > imax)
-//                    mstr << _T("...\n");
-//                else
-//                    mstr << _T("\n");
-//                mstr << wxString::Format(_T("(%d "), nonFFiles.size()) << _("files) ");
-//                mstr << _("were not recognized as the Fortran files.");
-//                mstr << _(" The BindTo was not applied for them.");
-//                cbMessageBox(mstr, _("Info"), wxICON_INFORMATION);
-//            }
-//        }
+        cbProject* project = Manager::Get()->GetProjectManager()->GetActiveProject();
+        if (!project)
+            return;
 
+        m_GlobProceduresFile = _T("");
+        m_GlobProceduresFileH = _T("");
+        m_GlobProceduresCInclude.clear();
+        m_GlobWriteIntToLog = false;
+        m_GlobWriteLogToInt = false;
+        m_GlobWriteStrCtoF = false;
+        m_GlobWriteStrFtoC = false;
+        m_GlobWriteStrLen = false;
+
+        wxArrayString nonFFiles;
+        wxArrayString projFiles;
+        for (FilesList::iterator it = project->GetFilesList().begin(); it != project->GetFilesList().end(); ++it)
+        {
+            projFiles.Add((*it)->file.GetFullPath());
+        }
+        projFiles.Sort();
+        for (size_t i=0; i<projFiles.size(); i++)
+        {
+            FortranSourceForm fsForm;
+            if (g_FortranFileExt.IsFileFortran(projFiles.Item(i), fsForm))
+                FileBindTo(projFiles.Item(i));
+            else
+                nonFFiles.Add(projFiles.Item(i));
+        }
+
+        if (m_UseOneGlobalFile && !m_GlobProceduresFile.IsEmpty())
+        {
+            wxFileName fname(m_OneGProcFileName);
+
+            while (fname.FileExists())
+            {
+                wxString query_overwrite;
+                query_overwrite << _("Warning:\n")
+                  << _("This tool is about OVERWRITE the following existing file:\n")
+                  << fname.GetFullPath()
+                  << _("\n\nAre you sure that you want to OVERWRITE the file?");
+                int answ = cbMessageBox(query_overwrite, _("Confirmation"),
+                                 wxICON_QUESTION | wxYES_NO | wxNO_DEFAULT);
+                if (answ == wxID_NO)
+                {
+                    wxString name = fname.GetFullName();
+                    wxString msg = _("Suggest a new file name:");
+
+                    wxTextEntryDialog dlg(this, msg, _("File name"), name);
+                    if (dlg.ShowModal() == wxID_OK)
+                    {
+                        name = dlg.GetValue().Trim(true).Trim(false);
+                        if (!name.IsEmpty())
+                            fname.SetFullName(name);
+                    }
+                }
+                else if (answ == wxID_YES)
+                    break;
+                else
+                {
+                    wxString msg = _("Generation of the wrapping was canceled!");
+                    cbMessageBox( msg, _("Bindto Info"), wxICON_INFORMATION);
+                    return;
+                }
+            }
+            wxString helperMod = GetHelperModule(true);
+            wxString strGlobMod;
+            m_Indent = 0;
+            strGlobMod << _T("module ") << fname.GetName() << _T("_bc\n");
+            m_Indent++;
+            strGlobMod << GetIS() << _T("use, intrinsic :: iso_c_binding\n");
+            if (!helperMod.IsEmpty())
+                strGlobMod << GetIS() << _T("use :: bindc_helper_bc\n");
+            strGlobMod << GetIS() << _T("implicit none\n");
+            strGlobMod << _T("contains\n\n");
+
+            wxString strGlobModEnd = _T("end module\n");
+
+            wxFile f(fname.GetFullPath(), wxFile::write);
+            cbWrite(f, m_GlobProcWarnMessages + SplitLines(helperMod,Fortran) + strGlobMod +
+                    SplitLines(m_GlobProceduresFile,Fortran) + strGlobModEnd + GetEOLStr(), wxFONTENCODING_UTF8);
+
+            if (!m_GlobProceduresFileH.IsEmpty())
+            {
+                wxFileName hfname(fname);
+                hfname.SetExt(_T("h"));
+
+                wxString hstr1;
+                hstr1 << _T("#ifndef ") << hfname.GetName().Upper() << _T("_H") << _T("\n");
+                hstr1 << _T("#define ") << hfname.GetName().Upper() << _T("_H") << _T("\n\n");
+                StrSet::iterator it;
+                for (it=m_GlobProceduresCInclude.begin(); it != m_GlobProceduresCInclude.end(); ++it)
+                {
+                    hstr1 << *it << _T("\n");
+                }
+                wxString hstr2 = _T("\n#endif");
+
+                wxFile hf(hfname.GetFullPath(), wxFile::write);
+                cbWrite(hf, hstr1 + _T("\n") + SplitLines(m_GlobProceduresFileH,C) + hstr2 + GetEOLStr(), wxFONTENCODING_UTF8);
+            }
+
+            if (!m_GlobProcWarnMessages.IsEmpty())
+            {
+                m_CreatedMsg.Add(_("\nThere were problems met during the generation of wrapping. A message was added to the beginning of ")
+                                 +fname.GetFullName()+_(" file."));
+            }
+        }
+
+        if (nonFFiles.size() > 0)
+        {
+            wxString mstr;
+            if (nonFFiles.size() == 1)
+            {
+                mstr = _("File \"") + nonFFiles[0] + _("\" was not recognized as a Fortran file.");
+                mstr << _(" The BindTo was not applied for it.");
+            }
+            else
+            {
+                mstr = _("Files");
+                size_t i=0;
+                size_t imax=5;
+                while (i < nonFFiles.size() && i < imax)
+                {
+                    mstr << _("\n\"") << nonFFiles[i] << _T("\"");
+                    i++;
+                }
+                if (nonFFiles.size() > imax)
+                    mstr << _T("...\n");
+                else
+                    mstr << _T("\n");
+                mstr << wxString::Format(_T("(%d "), nonFFiles.size()) << _("files) ");
+                mstr << _("were not recognized as the Fortran files.");
+                mstr << _(" The BindTo was not applied for them.");
+                cbMessageBox(mstr, _("Info"), wxICON_INFORMATION);
+            }
+        }
     }
     else
     {
@@ -643,6 +787,7 @@ void Bindto::FileBindTo(const wxString& filename)
     m_Indent  = 0;
     wxFileName fn(fileToken->m_Filename);
     wxString globModName = fn.GetName() + _T("_proc_bc");
+    m_CurFile = fn.GetFullName();
 
     TokensArrayF* fchen = &fileToken->m_Children;
     for (size_t i=0; i<fchen->GetCount(); i++)
@@ -650,7 +795,7 @@ void Bindto::FileBindTo(const wxString& filename)
         if (fchen->Item(i)->m_TokenKind == tkSubroutine ||
             fchen->Item(i)->m_TokenKind == tkFunction)
         {
-            if (!inModuleGM)
+            if (!inModuleGM && !m_UseOneGlobalFile)
             {
                 txtBindGM << _T("module ") << globModName << _T("\n");
                 m_Indent++;
@@ -667,6 +812,7 @@ void Bindto::FileBindTo(const wxString& filename)
         else if (fchen->Item(i)->m_TokenKind == tkModule)
         {
             wxString modName = fchen->Item(i)->m_Name;
+            m_CurModule = modName;
             txtBindMod << _T("module ") << modName << _T("_bc\n");
             m_Indent = 1;
             txtBindMod << GetIS() << _T("use :: ") << modName << _T("\n");
@@ -732,9 +878,10 @@ void Bindto::FileBindTo(const wxString& filename)
             AddConstructors(txtBindMod, txtHeadersMod, modName);
             AddDestructors(txtBindMod, txtHeadersMod, modName);
             txtBindMod << _T("end module\n\n");
+            m_CurModule = wxEmptyString;
         }
     }
-    if (inModuleGM)
+    if (inModuleGM && !m_UseOneGlobalFile)
         txtBindGM << _T("end module\n\n");
 
     wxString helperMod = GetHelperModule();
@@ -755,35 +902,86 @@ void Bindto::FileBindTo(const wxString& filename)
     if (hname.IsEmpty())
         return;
 
-    wxFile f(bfname, wxFile::write);
-    cbWrite(f, m_WarnMessage + SplitLines(helperMod,_T("Fortran")) + SplitLines(txtBindGM,_T("Fortran")) +
-            SplitLines(txtBindMod,_T("Fortran")) + GetEOLStr(), wxFONTENCODING_UTF8);
-
-    wxFileName hfname(hname);
-    wxString hstr1;
-    hstr1 << _T("#ifndef ") << hfname.GetName().Upper() << _T("_H") << _T("\n");
-    hstr1 << _T("#define ") << hfname.GetName().Upper() << _T("_H") << _T("\n\n");
-    if (!m_CInclude.empty())
+    if (m_UseOneGlobalFile)
     {
-        StrSet::iterator it;
-        for (it=m_CInclude.begin(); it != m_CInclude.end(); ++it)
+        if (!txtBindGM.IsEmpty())
         {
-            hstr1 << *it << _T("\n");
+            m_GlobProceduresFile << _T("\n") << txtBindGM;
+            m_GlobProcWarnMessages << m_WarnMessage;
+        }
+
+        if (!txtHeadersGM.IsEmpty())
+            m_GlobProceduresFileH << _T("\n") << txtHeadersGM;
+
+        if (!txtBindMod.IsEmpty())
+        {
+            wxFile f(bfname, wxFile::write);
+            cbWrite(f, m_WarnMessage + SplitLines(helperMod,Fortran) +
+                    SplitLines(txtBindMod,Fortran) + GetEOLStr(), wxFONTENCODING_UTF8);
+        }
+
+        if (!m_CInclude.empty())
+        {
+            StrSet::iterator it;
+            for (it=m_CInclude.begin(); it != m_CInclude.end(); ++it)
+            {
+                m_GlobProceduresCInclude.insert(*it);
+            }
+        }
+
+        if (!m_GlobWriteIntToLog)
+            m_GlobWriteIntToLog = m_WriteIntToLog;
+        if (!m_GlobWriteLogToInt)
+            m_GlobWriteLogToInt = m_WriteLogToInt;
+        if (!m_GlobWriteStrCtoF)
+            m_GlobWriteStrCtoF = m_WriteStrCtoF;
+        if (!m_GlobWriteStrFtoC)
+            m_GlobWriteStrFtoC = m_WriteStrFtoC;
+        if (!m_GlobWriteStrLen)
+            m_GlobWriteStrLen = m_WriteStrLen;
+
+        if (!m_WarnMessage.IsEmpty())
+        {
+            wxString msg;
+            msg << _("\nThere were problems met during the generation of wrapping.");
+            msg << _("\nA message was added to the beginning of generated file.");
+            m_CreatedMsg.Add(msg);
         }
     }
-    wxString hstr2 = _T("\n#endif");
-
-    wxFile hf(hname, wxFile::write);
-    cbWrite(hf, hstr1 + m_CStructs + _T("\n") + SplitLines(txtHeadersGM,_T("C")) + SplitLines(txtHeadersMod,_T("C")) +
-             hstr2 + GetEOLStr(), wxFONTENCODING_UTF8);
-
-    m_CreatedMsg.Add(_("Files ") + bfname.AfterLast('/') + _T(", ") + hname.AfterLast('/') + _(" were created in ")
-                     + hname.BeforeLast('/') + _(" folder."));
-    if (!m_WarnMessage.IsEmpty())
+    else
     {
-        m_CreatedMsg.Add(_("\nThere were problems met during the generation of wrapping. Message was added to the beginning of ")
-                         +bfname.AfterLast('/')+_(" file."));
+        wxFile f(bfname, wxFile::write);
+        cbWrite(f, m_WarnMessage + SplitLines(helperMod,Fortran) + SplitLines(txtBindGM,Fortran) +
+                SplitLines(txtBindMod,Fortran) + GetEOLStr(), wxFONTENCODING_UTF8);
+
+        wxFileName hfname(hname);
+        wxString hstr1;
+        hstr1 << _T("#ifndef ") << hfname.GetName().Upper() << _T("_H") << _T("\n");
+        hstr1 << _T("#define ") << hfname.GetName().Upper() << _T("_H") << _T("\n\n");
+        if (!m_CInclude.empty())
+        {
+            StrSet::iterator it;
+            for (it=m_CInclude.begin(); it != m_CInclude.end(); ++it)
+            {
+                hstr1 << *it << _T("\n");
+            }
+        }
+        wxString hstr2 = _T("\n#endif");
+
+        wxFile hf(hname, wxFile::write);
+        cbWrite(hf, hstr1 + m_CStructs + _T("\n") + SplitLines(txtHeadersGM,C) + SplitLines(txtHeadersMod,C) +
+                 hstr2 + GetEOLStr(), wxFONTENCODING_UTF8);
+
+        wxFileName bfn(bfname);
+        m_CreatedMsg.Add(_("Files ") + bfn.GetFullName() + _T(", ") + hfname.GetFullName() + _(" were created in ")
+                         + hfname.GetFullPath() + _(" folder."));
+        if (!m_WarnMessage.IsEmpty())
+        {
+            m_CreatedMsg.Add(_("\nThere were problems met during the generation of wrapping. A message was added to the beginning of ")
+                             +bfn.GetFullName()+_(" file."));
+        }
     }
+    m_CurFile = wxEmptyString;
 }
 
 /** \brief Get Indent Spaces
@@ -814,13 +1012,12 @@ wxString Bindto::CreateBindFilename(const wxString& filename, bool header)
     while (fname.FileExists())
     {
         wxString query_overwrite;
-        query_overwrite.Printf(
-          _T("Warning:\n")
-          _T("This tool is about OVERWRITE the following existing file:\n")+
-          fname.GetFullPath()+_T("\n\n") +
-          _T("Are you sure that you want to OVERWRITE the file?\n\n")+
-          _T("(If you answer 'No' the existing file will be kept.)"));
-        int answ = cbMessageBox(query_overwrite, _T("Confirmation"),
+        query_overwrite << _("Warning:\n")
+           << _("This tool is about OVERWRITE the following existing file:\n")
+           << fname.GetFullPath()
+           << _("\n\nAre you sure that you want to OVERWRITE the file?\n\n")
+           << _("(If you answer 'No' the existing file will be kept.)");
+        int answ = cbMessageBox(query_overwrite, _("Confirmation"),
                          wxICON_QUESTION | wxYES_NO | wxNO_DEFAULT);
         if (answ == wxID_NO)
         {
@@ -859,6 +1056,7 @@ wxString Bindto::CreateBindFilename(const wxString& filename, bool header)
 
 void Bindto::BindProcedure(wxString& txtBind, wxString& txtHeaders, TokenF* token, const wxString& moduleName, bool isGlobal, wxString callName)
 {
+    m_CurProcedure = token->m_Name;
     wxString txtBindProc;
     wxString txtBindFirst;
     wxString txtBindSecond;
@@ -1187,6 +1385,8 @@ void Bindto::BindProcedure(wxString& txtBind, wxString& txtHeaders, TokenF* toke
     else
         txtBindSecond << GetIS() << _T("end function\n\n");
     txtBind << txtBindFirst << txtBindSecond;
+
+    m_CurProcedure = wxEmptyString;
 }
 
 
@@ -1341,7 +1541,15 @@ wxArrayString Bindto::GetBindType(const wxString& declar, int& nDimVarAdd)
             ftype = declarLw.Mid(0,iPos);
         }
         else //if (iPos == wxNOT_FOUND && jPos == wxNOT_FOUND)
+        {
             ftype = declarLw;
+            int kPos = ftype.Find('*');
+            if (kPos != wxNOT_FOUND)
+            {
+                ftype.Replace(_T("*"),_T("("),false);
+                ftype.Append(_T(")"));
+            }
+        }
     }
 
     wxArrayString retArr;
@@ -1416,7 +1624,11 @@ wxArrayString Bindto::GetBindType(const wxString& declar, int& nDimVarAdd)
     {
         if (m_NotFoundTypes.count(ftype) == 0)
         {
-            m_WarnMessage << _T("WARNING: Fortran type '") << ftype << _T("' was not found between bind types.\n");
+            m_WarnMessage << _("WARNING: Fortran type '") << ftype << _("' was not found between bind types.\n");
+            m_WarnMessage << _("File: ") << m_CurFile;
+            if (!m_CurModule.IsEmpty())
+                m_WarnMessage << _("; Module: ") << m_CurModule;
+            m_WarnMessage << _("; Procedure: ") << m_CurProcedure << _T("\n");
             m_NotFoundTypes.insert(ftype);
         }
         wxArrayString emptArr;
@@ -1646,42 +1858,6 @@ wxString Bindto::GetCDims(wxString vdim)
 }
 
 
-
-//output: "", "[10]", [][5], [][3][5], [n][m], [n][size(a,2)], [:][:]
-
-//    wxArrayString sizArr;
-//    int idx = vdim.Find(_T("size("));
-//    while (idx != wxNOT_FOUND)
-//    {
-//        wxString siz = _T("size") + GetToken(vdim, idx+4);
-//        vdim.Replace(siz,_T("s?"), false);
-//        sizArr.Add(siz);
-//
-//        idx = vdim.Find(_T("size("));
-//    }
-//    wxArrayString dimArr;
-//    wxStringTokenizer tkz(vdim, _T("(), "), wxTOKEN_STRTOK );
-//    while ( tkz.HasMoreTokens() )
-//    {
-//        dimArr.Add(tkz.GetNextToken());
-//    }
-//
-//    wxString cdims;
-//    for (int i=dimArr.GetCount()-1; i>=0; i--)
-//    {
-//        wxString d1;
-//        if (dimArr.Item(i).IsSameAs(_T("s?")) && sizArr.size()>0)
-//        {
-//            d1 = sizArr.Item(sizArr.size()-1);
-//            sizArr.RemoveAt(sizArr.size()-1);
-//        }
-//        else if (!dimArr.Item(i).IsSameAs('*'))
-//            d1 = dimArr.Item(i);
-//        cdims << _T("[") << d1 << _T("]");
-//    }
-//    return cdims;
-//}
-
 void Bindto::OnAdd(wxCommandEvent& event)
 {
     BindtoNewType addNewType(this);
@@ -1725,11 +1901,18 @@ void Bindto::OnAdd(wxCommandEvent& event)
             {
                 ft.Replace(_T("kind="),_T(""));
             }
+            else if (ft.StartsWith(_T("integer*")) ||
+                     ft.StartsWith(_T("real*")) ||
+                     ft.StartsWith(_T("complex*")))
+            {
+                ft.Replace(_T("*"),_T("("),false);
+                ft.Append(_T(")"));
+            }
 
             if (m_TypeMap.count(ft) == 0)
             {
                 bt.Replace(_T(" "),_T(""));
-                ct.Replace(_T(" "),_T(""));
+                ct.Trim(true).Trim(false);
                 wxArrayString bcta;
                 bcta.Add(bt);
                 bcta.Add(ct);
@@ -1807,18 +1990,18 @@ void Bindto::OnDefaults(wxCommandEvent& event)
     FillTypeList();
 }
 
-wxString Bindto::SplitLines(const wxString& txt, const wxString& lang)
+wxString Bindto::SplitLines(const wxString& txt, Language lang)
 {
     size_t llen;
     wxString csym;
     wxString comment;
-    if (lang == _T("Fortran"))
+    if (lang == Fortran)
     {
         llen = 132 - 2;
         csym = _T(" &");
         comment = _T("!");
     }
-    else if (lang == _T("C"))
+    else if (lang == C)
     {
         llen = 100;
         csym = _T("");
@@ -1973,11 +2156,15 @@ void Bindto::GetFunLogToInt(wxArrayString &strArr)
     strArr.Add(_T("end function"));
 }
 
-wxString Bindto::GetHelperModule()
+wxString Bindto::GetHelperModule(bool useGlobal)
 {
     wxString help;
-    if (!m_WriteStrCtoF && !m_WriteStrFtoC && !m_WriteStrLen &&
+    if (!useGlobal && !m_WriteStrCtoF && !m_WriteStrFtoC && !m_WriteStrLen &&
         !m_WriteLogToInt && !m_WriteIntToLog)
+        return wxEmptyString;
+
+    if (useGlobal && !m_GlobWriteStrCtoF && !m_GlobWriteStrFtoC && !m_GlobWriteStrLen &&
+        !m_GlobWriteLogToInt && !m_GlobWriteIntToLog)
         return wxEmptyString;
 
     wxString tab;
@@ -1986,7 +2173,7 @@ wxString Bindto::GetHelperModule()
     help << tab << _T("use, intrinsic :: iso_c_binding\n");
     help << tab << _T("implicit none\n");
     help << _T("contains\n");
-    if (m_WriteStrLen)
+    if ((!useGlobal && m_WriteStrLen) || (useGlobal && m_GlobWriteStrLen))
     {
         help << _T("\n");
         wxArrayString strLen;
@@ -1994,7 +2181,7 @@ wxString Bindto::GetHelperModule()
         for (size_t i=0;i<strLen.size();i++)
             help << tab << strLen.Item(i) << _T("\n");
     }
-    if (m_WriteStrCtoF)
+    if ((!useGlobal && m_WriteStrCtoF) || (useGlobal && m_GlobWriteStrCtoF))
     {
         help << _T("\n");
         wxArrayString strCtoF;
@@ -2002,7 +2189,7 @@ wxString Bindto::GetHelperModule()
         for (size_t i=0;i<strCtoF.size();i++)
             help << tab << strCtoF.Item(i) << _T("\n");
     }
-    if (m_WriteStrFtoC)
+    if ((!useGlobal && m_WriteStrFtoC) || (useGlobal && m_GlobWriteStrFtoC))
     {
         help << _T("\n");
         wxArrayString strFtoC;
@@ -2010,7 +2197,7 @@ wxString Bindto::GetHelperModule()
         for (size_t i=0;i<strFtoC.size();i++)
             help << tab << strFtoC.Item(i) << _T("\n");
     }
-    if (m_WriteLogToInt)
+    if ((!useGlobal && m_WriteLogToInt) || (useGlobal && m_GlobWriteLogToInt))
     {
         help << _T("\n");
         wxArrayString strArr;
@@ -2018,7 +2205,7 @@ wxString Bindto::GetHelperModule()
         for (size_t i=0;i<strArr.size();i++)
             help << tab << strArr.Item(i) << _T("\n");
     }
-    if (m_WriteIntToLog)
+    if ((!useGlobal && m_WriteIntToLog) || (useGlobal && m_GlobWriteIntToLog))
     {
         help << _T("\n");
         wxArrayString strArr;
@@ -2281,4 +2468,15 @@ void Bindto::OnClick_cbDtorEnd(wxCommandEvent& event)
             tc_dtorEnd->SetValue(_T("_dtor"));
         tc_dtorEnd->Enable(false);
     }
+}
+
+void Bindto::Onrb_ActiveProjectSelect(wxCommandEvent& event)
+{
+    bool enab = false;
+    if (rb_ActiveProject->GetValue())
+        enab = true;
+
+    cb_globalToOne->Enable(enab);
+    tc_globalFilename->Enable(enab);
+    st_globalFilename->Enable(enab);
 }

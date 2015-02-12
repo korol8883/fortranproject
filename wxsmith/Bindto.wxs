@@ -9,7 +9,7 @@
 			<object class="sizeritem">
 				<object class="wxBoxSizer" variable="BoxSizer6" member="no">
 					<object class="sizeritem">
-						<object class="wxNotebook" name="ID_NOTEBOOK1" variable="nb_settings" member="yes">
+						<object class="wxNotebook" name="ID_NOTEBOOK1" variable="nb_settings" member="no">
 							<object class="notebookpage">
 								<object class="wxPanel" name="ID_PANEL2" variable="Panel2" member="yes">
 									<object class="wxBoxSizer" variable="BoxSizer7" member="no">
@@ -39,6 +39,7 @@
 													<object class="wxRadioButton" name="ID_BTOACTIVEPROJECT" variable="rb_ActiveProject" member="yes">
 														<label>Active project</label>
 														<style>wxRB_GROUP</style>
+														<handler function="Onrb_ActiveProjectSelect" entry="EVT_RADIOBUTTON" />
 													</object>
 													<flag>wxALL|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL</flag>
 													<border>5</border>
@@ -46,6 +47,7 @@
 												<object class="sizeritem">
 													<object class="wxRadioButton" name="ID_BTOCURRENTFILE" variable="rb_CurrentFile" member="yes">
 														<label>Current file</label>
+														<handler function="Onrb_ActiveProjectSelect" entry="EVT_RADIOBUTTON" />
 													</object>
 													<flag>wxALL|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL</flag>
 													<border>5</border>
@@ -57,7 +59,7 @@
 										<object class="sizeritem">
 											<object class="wxBoxSizer" variable="BoxSizer8" member="no">
 												<object class="sizeritem">
-													<object class="wxStaticText" name="ID_STATICTEXT2" variable="StaticText5" member="yes">
+													<object class="wxStaticText" name="wxID_ANY" variable="StaticText5" member="no">
 														<label>BIND(C, name=#):</label>
 													</object>
 													<flag>wxALL|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
@@ -76,22 +78,64 @@
 											<border>5</border>
 										</object>
 										<object class="sizeritem">
-											<object class="wxStaticText" name="ID_STATICTEXT3" variable="StaticText6" member="yes">
+											<object class="wxStaticText" name="wxID_ANY" variable="StaticText6" member="no">
 												<label> Note: $procname$ is changed to the original name of procedure;</label>
 											</object>
 											<flag>wxALL|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL</flag>
 										</object>
 										<object class="sizeritem">
-											<object class="wxStaticText" name="ID_STATICTEXT8" variable="StaticText11" member="yes">
+											<object class="wxStaticText" name="wxID_ANY" variable="StaticText11" member="no">
 												<label>         $modulename$ is changed to the name of module;</label>
 											</object>
 											<flag>wxALL|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL</flag>
 										</object>
 										<object class="sizeritem">
-											<object class="wxStaticText" name="ID_STATICTEXT5" variable="StaticText8" member="yes">
+											<object class="wxStaticText" name="wxID_ANY" variable="StaticText8" member="no">
 												<label>         $modname$ is changed to the truncated name of module.</label>
 											</object>
 											<flag>wxALL|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL</flag>
+										</object>
+										<object class="sizeritem">
+											<object class="wxBoxSizer" variable="BoxSizer15" member="no">
+												<orient>wxVERTICAL</orient>
+												<object class="sizeritem">
+													<object class="wxCheckBox" name="ID_CHECKBOX3" variable="cb_globalToOne" member="yes">
+														<label>Add wrapper code for global procedures into one file</label>
+													</object>
+													<flag>wxLEFT|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
+													<border>5</border>
+													<option>1</option>
+												</object>
+												<object class="sizeritem">
+													<object class="wxBoxSizer" variable="BoxSizer16" member="no">
+														<object class="spacer">
+															<flag>wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
+															<border>5</border>
+															<size>30,0</size>
+														</object>
+														<object class="sizeritem">
+															<object class="wxStaticText" name="wxID_ANY" variable="st_globalFilename" member="yes">
+																<label>File name:</label>
+															</object>
+															<flag>wxLEFT|wxRIGHT|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL</flag>
+															<border>5</border>
+														</object>
+														<object class="sizeritem">
+															<object class="wxTextCtrl" name="ID_TEXTCTRL6" variable="tc_globalFilename" member="yes">
+																<value>myprocedures.f90</value>
+															</object>
+															<flag>wxLEFT|wxRIGHT|wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
+															<border>5</border>
+															<option>1</option>
+														</object>
+													</object>
+													<flag>wxEXPAND|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL</flag>
+													<border>5</border>
+													<option>1</option>
+												</object>
+											</object>
+											<flag>wxTOP|wxBOTTOM|wxALIGN_LEFT|wxALIGN_TOP</flag>
+											<border>5</border>
 										</object>
 									</object>
 								</object>
@@ -178,11 +222,11 @@
 								<label>Types</label>
 							</object>
 							<object class="notebookpage">
-								<object class="wxPanel" name="ID_PANEL3" variable="Panel3" member="yes">
+								<object class="wxPanel" name="ID_PANEL3" variable="Panel3" member="no">
 									<object class="wxBoxSizer" variable="BoxSizer10" member="no">
 										<orient>wxVERTICAL</orient>
 										<object class="sizeritem">
-											<object class="wxStaticText" name="ID_STATICTEXT1" variable="StaticText4" member="yes">
+											<object class="wxStaticText" name="wxID_ANY" variable="StaticText4" member="no">
 												<label>Recognize subroutine, which name starts/ends with # as a constructor:</label>
 											</object>
 											<flag>wxALL|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL</flag>
@@ -245,7 +289,7 @@
 											<flag>wxALL|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL</flag>
 										</object>
 										<object class="sizeritem">
-											<object class="wxStaticText" name="ID_STATICTEXT4" variable="StaticText7" member="yes">
+											<object class="wxStaticText" name="wxID_ANY" variable="StaticText7" member="no">
 												<label>  Note: Every function which returns the variable of derived type is a constructor.</label>
 											</object>
 											<flag>wxTOP|wxLEFT|wxRIGHT|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL</flag>
@@ -267,7 +311,7 @@
 									<object class="wxBoxSizer" variable="BoxSizer9" member="no">
 										<orient>wxVERTICAL</orient>
 										<object class="sizeritem">
-											<object class="wxStaticText" name="ID_STATICTEXT6" variable="StaticText9" member="yes">
+											<object class="wxStaticText" name="wxID_ANY" variable="StaticText9" member="no">
 												<label>Recognize procedure, which name starts/ends with # as a destructor:</label>
 											</object>
 											<flag>wxALL|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL</flag>
@@ -327,14 +371,14 @@
 											<flag>wxALL|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL</flag>
 										</object>
 										<object class="sizeritem">
-											<object class="wxStaticText" name="ID_STATICTEXT7" variable="StaticText10" member="yes">
+											<object class="wxStaticText" name="wxID_ANY" variable="StaticText10" member="no">
 												<label>Note: a default destructor is created for the derived type if the contructor is </label>
 											</object>
 											<flag>wxTOP|wxLEFT|wxRIGHT|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL</flag>
 											<border>5</border>
 										</object>
 										<object class="sizeritem">
-											<object class="wxStaticText" name="ID_STATICTEXT9" variable="StaticText12" member="yes">
+											<object class="wxStaticText" name="wxID_ANY" variable="StaticText12" member="no">
 												<label>         created but the destructor is not found.</label>
 											</object>
 											<flag>wxALL|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL</flag>

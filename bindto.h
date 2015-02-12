@@ -40,30 +40,22 @@ class Bindto: public wxDialog
 		wxPanel* Panel1;
 		wxCheckBox* cb_dtorStart;
 		wxTextCtrl* tc_dtorStart;
-		wxNotebook* nb_settings;
 		wxCheckBox* cb_ctorEnd;
 		wxButton* bt_Add;
-		wxStaticText* StaticText10;
+		wxStaticText* st_globalFilename;
 		wxPanel* Panel2;
 		wxPanel* Panel4;
 		wxListView* lv_Types;
 		wxCheckBox* cb_ctorStart;
 		wxTextCtrl* tc_ctorStart;
-		wxStaticText* StaticText8;
-		wxStaticText* StaticText12;
 		wxCheckBox* cb_ctorDef;
-		wxPanel* Panel3;
-		wxStaticText* StaticText7;
 		wxButton* bt_Remove;
-		wxStaticText* StaticText4;
-		wxStaticText* StaticText5;
 		wxTextCtrl* tc_dtorEnd;
 		wxCheckBox* cb_dtorEnd;
-		wxStaticText* StaticText6;
+		wxTextCtrl* tc_globalFilename;
 		wxTextCtrl* tc_bindCName;
 		wxTextCtrl* tc_ctorEnd;
-		wxStaticText* StaticText9;
-		wxStaticText* StaticText11;
+		wxCheckBox* cb_globalToOne;
 		wxRadioButton* rb_CurrentFile;
 		//*)
 
@@ -72,11 +64,9 @@ class Bindto: public wxDialog
 		//(*Identifiers(Bindto)
 		static const long ID_BTOACTIVEPROJECT;
 		static const long ID_BTOCURRENTFILE;
-		static const long ID_STATICTEXT2;
 		static const long ID_TEXTCTRL1;
-		static const long ID_STATICTEXT3;
-		static const long ID_STATICTEXT8;
-		static const long ID_STATICTEXT5;
+		static const long ID_CHECKBOX3;
+		static const long ID_TEXTCTRL6;
 		static const long ID_PANEL2;
 		static const long ID_LV_TYPES;
 		static const long ID_BUTTON_ADD;
@@ -84,21 +74,16 @@ class Bindto: public wxDialog
 		static const long ID_BUTTON_REMOVE;
 		static const long ID_BUTTON_DEFAULTS;
 		static const long ID_PANEL1;
-		static const long ID_STATICTEXT1;
 		static const long ID_CHECKBOX4;
 		static const long ID_TEXTCTRL4;
 		static const long ID_CHECKBOX5;
 		static const long ID_TEXTCTRL5;
-		static const long ID_STATICTEXT4;
 		static const long ID_CHECKBOX6;
 		static const long ID_PANEL3;
-		static const long ID_STATICTEXT6;
 		static const long ID_CHECKBOX1;
 		static const long ID_TEXTCTRL2;
 		static const long ID_CHECKBOX2;
 		static const long ID_TEXTCTRL3;
-		static const long ID_STATICTEXT7;
-		static const long ID_STATICTEXT9;
 		static const long ID_PANEL4;
 		static const long ID_NOTEBOOK1;
 		//*)
@@ -114,7 +99,14 @@ class Bindto: public wxDialog
 		void OnClick_cbCtorEnd(wxCommandEvent& event);
 		void OnClick_cbDtorStart(wxCommandEvent& event);
 		void OnClick_cbDtorEnd(wxCommandEvent& event);
+		void Onrb_ActiveProjectSelect(wxCommandEvent& event);
 		//*)
+
+		enum Language
+		{
+		    Fortran,
+		    C,
+		};
 
 		ParserF* m_pParser;
         TokenF*  m_pTokenCurrent;
@@ -122,6 +114,8 @@ class Bindto: public wxDialog
         int m_TabSize;
         TypeMap m_TypeMap;
         bool m_IsTypeMapDefault;
+        bool m_OneGProcFile;
+        wxString m_OneGProcFileName;
         wxString m_BindCName;
         wxString m_CtorStartsWith;
         wxString m_CtorEndsWith;
@@ -129,6 +123,16 @@ class Bindto: public wxDialog
         wxString m_DtorStartsWith;
         wxString m_DtorEndsWith;
 
+        bool m_UseOneGlobalFile;
+        wxString m_GlobProceduresFile;
+        wxString m_GlobProceduresFileH;
+        wxString m_GlobProcWarnMessages;
+        StrSet m_GlobProceduresCInclude;
+        bool m_GlobWriteStrFtoC;
+        bool m_GlobWriteStrCtoF;
+        bool m_GlobWriteStrLen;
+        bool m_GlobWriteIntToLog;
+        bool m_GlobWriteLogToInt;
         wxString m_WarnMessage;
         StrSet m_NotFoundTypes;
         wxString m_CStructs;
@@ -142,6 +146,9 @@ class Bindto: public wxDialog
         StrSet m_DefinedTypes;
         StrSet m_AllocatedTypes;
         StrSet m_DeallocatedTypes;
+        wxString m_CurProcedure;
+        wxString m_CurModule;
+        wxString m_CurFile;
 
         void FillTypeList();
         void LoadInitialValues();
@@ -159,13 +166,13 @@ class Bindto: public wxDialog
         wxString GetToken(const wxString& txt, int iPos);
         wxString GetFunctionDeclaration(TokenF* token);
         wxString GetCDims(wxString vdim);
-        wxString SplitLines(const wxString& txt, const wxString& lang);
+        wxString SplitLines(const wxString& txt, Language lang);
         void GetSubStrFtoC(wxArrayString& strFtoC);
         void GetSubStrCtoF(wxArrayString& strCtoF);
         void GetFunStrLen(wxArrayString& strLen);
         void GetFunIntToLog(wxArrayString& strArr);
         void GetFunLogToInt(wxArrayString& strArr);
-        wxString GetHelperModule();
+        wxString GetHelperModule(bool useGlobal = false);
         void PrepareAssumedShapeVariables(wxString& txtBindSecond, wxArrayString& argArr, wxArrayString& dimVarNames,
                                           wxArrayString& additionalDeclar, wxArrayString& addVarNames, wxArrayString& addVarNamesC);
         void AddDimVariables(wxArrayString& argArr, wxArrayString& dimVarNames, int nDimVarAdd, wxString varFirstPart);

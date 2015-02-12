@@ -69,9 +69,9 @@ BindtoNewType::~BindtoNewType()
 
 void BindtoNewType::OnOK(wxCommandEvent& event)
 {
-    if (tc_Fortran->GetValue() == wxEmptyString ||
-        tc_BindC->GetValue() == wxEmptyString ||
-        tc_C->GetValue() == wxEmptyString)
+    if (tc_Fortran->GetValue().Trim() == wxEmptyString ||
+        tc_BindC->GetValue().Trim() == wxEmptyString ||
+        tc_C->GetValue().Trim() == wxEmptyString)
     {
         wxString mstr = _T("All text fields should be filled!");
         cbMessageBox(mstr, _("Error"), wxICON_ERROR);

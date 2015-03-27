@@ -227,7 +227,7 @@
 										<orient>wxVERTICAL</orient>
 										<object class="sizeritem">
 											<object class="wxStaticText" name="wxID_ANY" variable="StaticText4" member="no">
-												<label>Recognize subroutine, which name starts/ends with # as a constructor:</label>
+												<label>Recognize procedure, which name starts/ends with # as a constructor:</label>
 											</object>
 											<flag>wxALL|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL</flag>
 											<border>5</border>
@@ -288,20 +288,6 @@
 											</object>
 											<flag>wxALL|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL</flag>
 										</object>
-										<object class="sizeritem">
-											<object class="wxStaticText" name="wxID_ANY" variable="StaticText7" member="no">
-												<label>  Note: Every function which returns the variable of derived type is a constructor.</label>
-											</object>
-											<flag>wxTOP|wxLEFT|wxRIGHT|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL</flag>
-											<border>5</border>
-										</object>
-										<object class="sizeritem">
-											<object class="wxCheckBox" name="ID_CHECKBOX6" variable="cb_ctorDef" member="yes">
-												<label>Create a constructor for every derived type found in a module if no another is found</label>
-											</object>
-											<flag>wxALL|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL</flag>
-											<border>5</border>
-										</object>
 									</object>
 								</object>
 								<label>Constructor</label>
@@ -312,7 +298,7 @@
 										<orient>wxVERTICAL</orient>
 										<object class="sizeritem">
 											<object class="wxStaticText" name="wxID_ANY" variable="StaticText9" member="no">
-												<label>Recognize procedure, which name starts/ends with # as a destructor:</label>
+												<label>Recognize subroutine, which name starts/ends with # as a destructor:</label>
 											</object>
 											<flag>wxALL|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL</flag>
 											<border>5</border>
@@ -372,14 +358,14 @@
 										</object>
 										<object class="sizeritem">
 											<object class="wxStaticText" name="wxID_ANY" variable="StaticText10" member="no">
-												<label>Note: a default destructor is created for the derived type if the contructor is </label>
+												<label>Note: a default destructor is created for the derived type if</label>
 											</object>
 											<flag>wxTOP|wxLEFT|wxRIGHT|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL</flag>
 											<border>5</border>
 										</object>
 										<object class="sizeritem">
 											<object class="wxStaticText" name="wxID_ANY" variable="StaticText12" member="no">
-												<label>         created but the destructor is not found.</label>
+												<label>         another destructor is not found.</label>
 											</object>
 											<flag>wxALL|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL</flag>
 										</object>

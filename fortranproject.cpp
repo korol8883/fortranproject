@@ -447,9 +447,9 @@ void FortranProject::BuildMenu(wxMenuBar* menuBar)
         submenuJump->Enable(idMenuJumpHome, false);
         submenuJump->Enable(idMenuJumpForward, false);
 
-        m_FortranToolsMenu->Insert(0, idMenuBindTo, _("Bind to C"));
-        m_FortranToolsMenu->Insert(0, idMenuTab2Space, _("Tab2space"));
-        m_FortranToolsMenu->Insert(0, idMenuChangeCase, _("Change case"));
+        m_FortranToolsMenu->Insert(0, idMenuBindTo, _("Bind To..."));
+        m_FortranToolsMenu->Insert(0, idMenuTab2Space, _("Tab2space..."));
+        m_FortranToolsMenu->Insert(0, idMenuChangeCase, _("Change case..."));
         m_FortranToolsMenu->Insert(0, idMenuGenerateMakefile, _("Generate Makefile"));
         m_FortranToolsMenu->Insert(0, idMenuJump, _("Jump"), submenuJump);
     }

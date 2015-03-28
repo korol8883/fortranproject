@@ -1123,7 +1123,6 @@ void FortranProject::CodeComplete(const int pos, cbEditor* ed, std::vector<CCTok
         control->AutoCompSetIgnoreCase(true);
         control->AutoCompSetCancelAtStart(true);
         control->AutoCompSetFillUps(wxEmptyString);
-        control->AutoCompSetChooseSingle(cfg->ReadBool(_T("/auto_select_one"), false));
         control->AutoCompSetAutoHide(true);
         control->AutoCompSetDropRestOfWord(m_IsAutoPopup ? false : true);
         ed->GetControl()->AutoCompSetSeparator('\n');
@@ -1376,9 +1375,6 @@ std::vector<FortranProject::CCToken> FortranProject::GetTokenAt(int position, cb
     cbStyledTextCtrl* control = ed->GetControl();
 
     if ((m_ShowedCallTip && control->CallTipActive()) || control->AutoCompActive())
-        return tokens;
-
-    if (!Manager::Get()->GetConfigManager(_T("fortran_project"))->ReadBool(_T("eval_tooltip"), true))
         return tokens;
 
     const int style = control->GetStyleAt(position);
@@ -1811,7 +1807,6 @@ wxString FortranProject::GetDocumentation(const CCToken& tok)
 
     wxString doc;
     TokenFlat* token = tokens->Item(tok.id);
-    //doc << token->m_DisplayName + _T("\n") + token->m_DocString;
 
     bool hasDoc;
     doc = HtmlDoc::GenerateHtmlDoc(token, tok.id, hasDoc);

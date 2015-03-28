@@ -33,7 +33,6 @@ class FPOptionsDlg : public cbConfigurationPanel
 		void OnSliderScroll(wxScrollEvent& event);
 		void OnUpdateUI(wxUpdateUIEvent& event);
 	private:
-		void UpdateSliderLabel();
 		bool ValidateReplacementToken(wxString& from, wxString& to);
 		NativeParserF* m_pNativeParser;
         FortranProject* m_pFortranProject;

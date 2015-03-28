@@ -24,7 +24,6 @@
 
 BEGIN_EVENT_TABLE(FPOptionsDlg, wxPanel)
     EVT_UPDATE_UI(-1, FPOptionsDlg::OnUpdateUI)
-    EVT_COMMAND_SCROLL(XRCID("sliderDelay"), FPOptionsDlg::OnSliderScroll)
 END_EVENT_TABLE()
 
 FPOptionsDlg::FPOptionsDlg(wxWindow* parent, NativeParserF* np, FortranProject* fp)
@@ -36,14 +35,10 @@ FPOptionsDlg::FPOptionsDlg(wxWindow* parent, NativeParserF* np, FortranProject* 
     wxXmlResource::Get()->LoadPanel(this, parent, _T("dlgFPSettings"));
 
     XRCCTRL(*this, "chkNoCC", wxCheckBox)->SetValue(!cfg->ReadBool(_T("/use_code_completion"), true));
-    XRCCTRL(*this, "chkEvalTooltip", wxCheckBox)->SetValue(cfg->ReadBool(_T("/eval_tooltip"), true));
-    XRCCTRL(*this, "chkAutoSelectOne", wxCheckBox)->SetValue(cfg->ReadBool(_T("/auto_select_one"), false));
     XRCCTRL(*this, "chkSmartCodeCompletion", wxCheckBox)->SetValue(cfg->ReadBool(_T("/use_smart_code_completion"), true));
     XRCCTRL(*this, "chkOnlyUseAssociated", wxCheckBox)->SetValue(cfg->ReadBool(_T("/only_use_associated"), true));
     XRCCTRL(*this, "chkShowHiddenEntities", wxCheckBox)->SetValue(cfg->ReadBool(_T("/show_hidden_entities"), false));
     XRCCTRL(*this, "chkShowTypeVariables", wxCheckBox)->SetValue(cfg->ReadBool(_T("/show_type_variables"), true));
-    XRCCTRL(*this, "chkAutoLaunch", wxCheckBox)->SetValue(cfg->ReadBool(_T("/auto_launch"), true));
-    XRCCTRL(*this, "spnAutoLaunchChars", wxSpinCtrl)->SetValue(cfg->ReadInt(_T("/auto_launch_chars"), 2));
     XRCCTRL(*this, "spnMaxMatches", wxSpinCtrl)->SetValue(cfg->ReadInt(_T("/max_matches"), 16384));
 
     XRCCTRL(*this, "chkNoSB", wxCheckBox)->SetValue(!cfg->ReadBool(_T("/use_symbols_browser"), true));
@@ -65,10 +60,6 @@ FPOptionsDlg::FPOptionsDlg(wxWindow* parent, NativeParserF* np, FortranProject* 
 
     XRCCTRL(*this, "rbCase", wxRadioBox)->SetSelection(cfg->ReadInt(_T("/keywords_case"), 0));
 
-    int timerDelay = cfg->ReadInt(_T("/cc_delay"), 500);
-    XRCCTRL(*this, "sliderDelay", wxSlider)->SetValue(timerDelay / 100);
-    UpdateSliderLabel();
-
     XRCCTRL(*this, "chkCallTipsArrays", wxCheckBox)->SetValue(cfg->ReadBool(_T("/call_tip_arrays"), true));
 
     XRCCTRL(*this, "chkNoFortranInfo", wxCheckBox)->SetValue(!cfg->ReadBool(_T("/use_log_window"), true));
@@ -86,36 +77,14 @@ FPOptionsDlg::~FPOptionsDlg()
 {
 }
 
-void FPOptionsDlg::UpdateSliderLabel()
-{
-    int position = XRCCTRL(*this, "sliderDelay", wxSlider)->GetValue();
-    wxString lbl;
-    if (position >= 10)
-        lbl.Printf(_("%d.%d sec"), position / 10, position % 10);
-    else
-        lbl.Printf(_("%d ms"), position * 100);
-    XRCCTRL(*this, "lblDelay", wxStaticText)->SetLabel(lbl);
-}
-
-void FPOptionsDlg::OnSliderScroll(wxScrollEvent& event)
-{
-    UpdateSliderLabel();
-}
-
 void FPOptionsDlg::OnUpdateUI(wxUpdateUIEvent& event)
 {
     bool en = !XRCCTRL(*this, "chkNoCC", wxCheckBox)->GetValue();
-    bool auto_launch = XRCCTRL(*this, "chkAutoLaunch", wxCheckBox)->GetValue();
 
-    XRCCTRL(*this, "chkEvalTooltip", wxCheckBox)->Enable(en);
-    XRCCTRL(*this, "chkAutoSelectOne", wxCheckBox)->Enable(en);
     XRCCTRL(*this, "chkSmartCodeCompletion", wxCheckBox)->Enable(en);
     XRCCTRL(*this, "chkOnlyUseAssociated", wxCheckBox)->Enable(en);
     XRCCTRL(*this, "chkShowHiddenEntities", wxCheckBox)->Enable(en);
-    XRCCTRL(*this, "chkAutoLaunch", wxCheckBox)->Enable(en);
-    XRCCTRL(*this, "spnAutoLaunchChars", wxSpinCtrl)->Enable(en && auto_launch);
     XRCCTRL(*this, "spnMaxMatches", wxSpinCtrl)->Enable(en);
-    XRCCTRL(*this, "sliderDelay", wxSlider)->Enable(en);
     XRCCTRL(*this, "rbCase", wxRadioBox)->Enable(en);
     XRCCTRL(*this, "chkKL_1", wxCheckBox)->Enable(en);
     XRCCTRL(*this, "chkKL_2", wxCheckBox)->Enable(en);
@@ -144,19 +113,13 @@ void FPOptionsDlg::OnApply()
 
     // force parser to read its options that we write in the config
     cfg->Write(_T("/use_code_completion"), (bool)!XRCCTRL(*this, "chkNoCC", wxCheckBox)->GetValue());
-    int timerDelay = XRCCTRL(*this, "sliderDelay", wxSlider)->GetValue() * 100;
-    cfg->Write(_T("/cc_delay"), (int)timerDelay);
 
     // set all other member options
-    cfg->Write(_T("/auto_select_one"), (bool)XRCCTRL(*this, "chkAutoSelectOne", wxCheckBox)->GetValue());
     cfg->Write(_T("/use_smart_code_completion"), (bool)XRCCTRL(*this, "chkSmartCodeCompletion", wxCheckBox)->GetValue());
     cfg->Write(_T("/only_use_associated"), (bool)XRCCTRL(*this, "chkOnlyUseAssociated", wxCheckBox)->GetValue());
     cfg->Write(_T("/show_hidden_entities"), (bool)XRCCTRL(*this, "chkShowHiddenEntities", wxCheckBox)->GetValue());
     cfg->Write(_T("/show_type_variables"), (bool)XRCCTRL(*this, "chkShowTypeVariables", wxCheckBox)->GetValue());
-    cfg->Write(_T("/auto_launch"), (bool)XRCCTRL(*this, "chkAutoLaunch", wxCheckBox)->GetValue());
-    cfg->Write(_T("/auto_launch_chars"), (int)XRCCTRL(*this, "spnAutoLaunchChars", wxSpinCtrl)->GetValue());
     cfg->Write(_T("/max_matches"), (int)XRCCTRL(*this, "spnMaxMatches", wxSpinCtrl)->GetValue());
-    cfg->Write(_T("/eval_tooltip"), (bool)XRCCTRL(*this, "chkEvalTooltip", wxCheckBox)->GetValue());
 
     cfg->Write(_T("/use_symbols_browser"), (bool)!XRCCTRL(*this, "chkNoSB", wxCheckBox)->GetValue());
     cfg->Write(_T("/as_floating_window"), (bool)XRCCTRL(*this, "chkFloatSB", wxCheckBox)->GetValue());
